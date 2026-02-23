@@ -51,12 +51,13 @@ src/
 
 When running as an autonomous agent (via `agent/loop.sh`):
 
-- **One task per iteration** — implement exactly one prd.json task per run
-- **Never modify prd.json** — only loop.sh updates task status
+- **Task source** — GitHub issues with `agent` label (not prd.json)
+- **Label workflow** — `agent` → `planned` → `doing` → `done`
+- **One task per iteration** — implement exactly one GitHub issue per run
 - **Never modify progress.txt** — only loop.sh appends entries
 - **Tests are mandatory** — `cargo test` must pass before committing
 - **Clippy must pass** — `cargo clippy --all-targets -- -D warnings`
 - **Fix code, not tests** — if tests fail, fix the implementation
 - **Conventional Commits** — see `.claude/rules/git.md`
-- **Branch naming** — `agent/<task-id>` (e.g., `agent/phase2-001`)
+- **Branch naming** — `agent/issue-<number>` (e.g., `agent/issue-24`)
 - **No direct push to main** — always create a PR
