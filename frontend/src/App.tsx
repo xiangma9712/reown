@@ -1,25 +1,22 @@
 import { useState, useCallback, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import * as Tabs from "@radix-ui/react-tabs";
 import { WorktreeTab } from "./components/WorktreeTab";
 import { BranchTab } from "./components/BranchTab";
 import { DiffTab } from "./components/DiffTab";
 import { PrTab } from "./components/PrTab";
 import { ConfirmDialog } from "./components/ConfirmDialog";
+import { Layout } from "./components/Layout";
 import "./style.css";
 
-const TAB_ORDER = ["worktree", "branch", "diff", "pr"] as const;
-type TabName = (typeof TAB_ORDER)[number];
+const NAV_ITEMS = [
+  { id: "worktree", labelKey: "tabs.worktrees", shortcut: "W" },
+  { id: "branch", labelKey: "tabs.branches", shortcut: "B" },
+  { id: "diff", labelKey: "tabs.diff", shortcut: "D" },
+  { id: "pr", labelKey: "tabs.prs", shortcut: "P" },
+] as const;
 
-const TAB_KEYS: Record<TabName, { labelKey: string; shortcut: string }> = {
-  worktree: { labelKey: "tabs.worktrees", shortcut: "W" },
-  branch: { labelKey: "tabs.branches", shortcut: "B" },
-  diff: { labelKey: "tabs.diff", shortcut: "D" },
-  pr: { labelKey: "tabs.prs", shortcut: "P" },
-};
+type TabName = (typeof NAV_ITEMS)[number]["id"];
 
 export function App() {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabName>("worktree");
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
@@ -73,8 +70,9 @@ export function App() {
         case "Tab":
           e.preventDefault();
           setActiveTab((prev) => {
-            const idx = TAB_ORDER.indexOf(prev);
-            return TAB_ORDER[(idx + 1) % TAB_ORDER.length];
+            const ids = NAV_ITEMS.map((item) => item.id);
+            const idx = ids.indexOf(prev);
+            return ids[(idx + 1) % ids.length] as TabName;
           });
           break;
       }
@@ -85,49 +83,15 @@ export function App() {
   }, [confirmDialog]);
 
   return (
-    <div className="mx-auto max-w-[1200px] p-6">
-      <header className="mb-8 text-center">
-        <h1 className="mb-1 text-3xl text-white">{t("app.title")}</h1>
-        <p className="text-[0.95rem] text-text-secondary">
-          {t("app.tagline")}
-        </p>
-      </header>
-
-      <Tabs.Root
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as TabName)}
-      >
-        <Tabs.List className="mb-6 flex border-b border-border">
-          {TAB_ORDER.map((tab) => (
-            <Tabs.Trigger
-              key={tab}
-              value={tab}
-              className={`cursor-pointer border-b-2 border-transparent bg-transparent px-5 py-2.5 text-[0.9rem] text-text-secondary transition-colors duration-150 hover:text-text-primary data-[state=active]:border-b-accent data-[state=active]:font-semibold data-[state=active]:text-accent`}
-            >
-              {t(TAB_KEYS[tab].labelKey)}
-              <span
-                className={`ml-1.5 inline-block rounded-sm border border-border-hover bg-bg-hint px-1 align-middle text-[0.65rem] font-semibold leading-[1.4] text-text-muted data-[state=active]:border-accent data-[state=active]:bg-accent/10 data-[state=active]:text-accent`}
-                data-state={activeTab === tab ? "active" : "inactive"}
-              >
-                {TAB_KEYS[tab].shortcut}
-              </span>
-            </Tabs.Trigger>
-          ))}
-        </Tabs.List>
-
-        <Tabs.Content value="worktree">
-          <WorktreeTab />
-        </Tabs.Content>
-        <Tabs.Content value="branch">
-          <BranchTab showConfirm={showConfirm} />
-        </Tabs.Content>
-        <Tabs.Content value="diff">
-          <DiffTab />
-        </Tabs.Content>
-        <Tabs.Content value="pr">
-          <PrTab />
-        </Tabs.Content>
-      </Tabs.Root>
+    <Layout
+      navItems={[...NAV_ITEMS]}
+      activeId={activeTab}
+      onSelect={(id) => setActiveTab(id as TabName)}
+    >
+      {activeTab === "worktree" && <WorktreeTab />}
+      {activeTab === "branch" && <BranchTab showConfirm={showConfirm} />}
+      {activeTab === "diff" && <DiffTab />}
+      {activeTab === "pr" && <PrTab />}
 
       <ConfirmDialog
         open={confirmDialog !== null}
@@ -135,6 +99,6 @@ export function App() {
         onConfirm={() => handleConfirm(true)}
         onCancel={() => handleConfirm(false)}
       />
-    </div>
+    </Layout>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { WorktreeInfo } from "../types";
+import { Card } from "./Card";
 
 export function WorktreeTab() {
   const { t } = useTranslation();
@@ -62,7 +63,7 @@ export function WorktreeTab() {
 
   return (
     <div>
-      <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+      <Card className="flex flex-col">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
           {t("worktree.title")}
         </h2>
@@ -173,7 +174,7 @@ export function WorktreeTab() {
             </div>
           )}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

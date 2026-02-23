@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { BranchInfo } from "../types";
 import { BranchActionMenu } from "./BranchActionMenu";
+import { Card } from "./Card";
 
 interface Props {
   showConfirm: (message: string) => Promise<boolean>;
@@ -103,7 +104,7 @@ export function BranchTab({ showConfirm }: Props) {
 
   return (
     <div>
-      <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+      <Card className="flex flex-col">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
           {t("branch.title")}
         </h2>
@@ -192,7 +193,7 @@ export function BranchTab({ showConfirm }: Props) {
             </div>
           )}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }
