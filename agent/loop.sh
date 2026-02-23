@@ -307,6 +307,66 @@ _Automatically posted by agent/loop.sh_"
     fi
   fi
 
+  # ── Step 3b: Split issues marked as needs-split ────────────────────────────
+  SPLIT_ISSUES=$(jq '[.[] | select(
+    (.labels | map(.name) | index("needs-split")) != null and
+    (.labels | map(.name) | index("done")) == null
+  )]' "$ISSUES_FILE")
+
+  SPLIT_COUNT=$(echo "$SPLIT_ISSUES" | jq length)
+  if [[ "$SPLIT_COUNT" -gt 0 ]]; then
+    log "Found $SPLIT_COUNT issues needing split..."
+    SPLIT_PROMPT=$(cat "$SCRIPT_DIR/prompts/split.md")
+    INTENT_FOR_SPLIT=$(cat "$REPO_ROOT/docs/INTENT.md" 2>/dev/null || echo "(not found)")
+
+    echo "$SPLIT_ISSUES" | jq -c '.[]' | while IFS= read -r split_issue; do
+      S_NUM=$(echo "$split_issue" | jq -r '.number')
+      S_TITLE=$(echo "$split_issue" | jq -r '.title')
+      S_BODY=$(echo "$split_issue" | jq -r '.body // ""')
+
+      SPLIT_INPUT="$SPLIT_PROMPT
+
+## docs/INTENT.md
+$INTENT_FOR_SPLIT
+
+## Issue to Split
+
+- **Number**: #$S_NUM
+- **Title**: $S_TITLE
+- **Body**: $S_BODY"
+
+      log "Splitting issue #$S_NUM..."
+      SPLIT_OUTPUT=$(claude -p "$SPLIT_INPUT" \
+        --max-turns "$ROADMAP_MAX_TURNS" \
+        --max-budget-usd "$MAX_BUDGET_USD" \
+        2>/dev/null) || true
+
+      SPLIT_JSON=$(echo "$SPLIT_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
+
+      if echo "$SPLIT_JSON" | jq empty 2>/dev/null; then
+        echo "$SPLIT_JSON" | jq -c '.[]' | while IFS= read -r sub; do
+          SUB_TITLE=$(echo "$sub" | jq -r '.title')
+          SUB_BODY=$(echo "$sub" | jq -r '.body')
+          SUB_LABELS=$(echo "$sub" | jq -r '.labels // ["agent"] | join(",")')
+
+          if gh issue create --title "$SUB_TITLE" --body "$SUB_BODY" --label "$SUB_LABELS" 2>/dev/null; then
+            log "Created sub-issue: $SUB_TITLE"
+          else
+            log "WARN: Failed to create sub-issue: $SUB_TITLE"
+          fi
+        done
+
+        # Close parent issue
+        gh issue comment "$S_NUM" --body "Split into sub-issues by agent/loop.sh. Closing parent." 2>/dev/null || true
+        gh issue edit "$S_NUM" --add-label "done" --remove-label "needs-split" 2>/dev/null || true
+        gh issue close "$S_NUM" 2>/dev/null || true
+        log "Parent issue #$S_NUM closed after split"
+      else
+        log "WARN: Split agent output invalid JSON for issue #$S_NUM. Skipping."
+      fi
+    done
+  fi
+
   # ── Step 4: Select next task from GitHub issues ─────────────────────────────
   # Pick the oldest issue with 'agent' + 'planned' labels, but NOT 'doing', 'done', 'needs-split'
   TASK_ISSUE_JSON=$(jq 'map(select(
