@@ -20,26 +20,34 @@ cargo clippy --all-targets -- -D warnings
 
 ```
 lib/                        — shared library (reown crate)
-  lib.rs                    — crate root, re-exports git, github
+  lib.rs                    — crate root, re-exports git, github, ui
   git/
-    mod.rs                  — re-exports branch, diff, worktree
+    mod.rs                  — open_repo() + re-exports branch, diff, worktree
     branch.rs               — BranchInfo, list/create/switch/delete branches
     diff.rs                 — FileDiff, DiffChunk, diff_workdir(), diff_commit()
     worktree.rs             — WorktreeInfo, list/add worktrees
+    test_utils.rs           — shared test utilities
   github/
     mod.rs                  — re-exports pull_request, types
     pull_request.rs         — PrInfo, list_pull_requests()
     types.rs                — GitHub API response types
+  ui/
+    mod.rs                  — re-exports pull_request
+    pull_request.rs         — PR display utilities
 
 app/                        — Tauri desktop app (entry point)
   src/main.rs               — Tauri commands (IPC bridge to reown lib)
+  src/error.rs              — AppError struct (structured error for frontend)
   tauri.conf.json           — Tauri config, bundler settings
   build.rs                  — Tauri build script
 
-frontend/                   — Web frontend (HTML/CSS/JS)
-  src/index.html            — App shell
-  src/style.css             — Styles
-  src/main.js               — Frontend logic, Tauri invoke calls
+frontend/                   — Web frontend (React + TypeScript)
+  src/main.tsx              — React entry point
+  src/App.tsx               — Main app component (tab UI)
+  src/types.ts              — TypeScript type definitions (mirrors Rust structs)
+  src/invoke.ts             — Tauri IPC wrapper
+  src/components/           — UI components (WorktreeTab, BranchTab, DiffTab, PrTab)
+  src/i18n/                 — i18n (ja/en)
 ```
 
 ## Key Patterns
