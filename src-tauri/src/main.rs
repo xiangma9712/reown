@@ -1,33 +1,196 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use serde::Serialize;
+// ── Branch commands ─────────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize)]
-pub struct BranchInfoResponse {
-    pub name: String,
-    pub is_head: bool,
-    pub upstream: Option<String>,
+#[tauri::command]
+fn list_branches(repo_path: String) -> Result<Vec<reown::git::branch::BranchInfo>, String> {
+    reown::git::branch::list_branches(&repo_path).map_err(|e| format!("{e:#}"))
 }
 
 #[tauri::command]
-fn list_branches() -> Result<Vec<BranchInfoResponse>, String> {
-    let branches =
-        reown::git::branch::list_branches(".").map_err(|e| format!("{e:#}"))?;
-
-    Ok(branches
-        .into_iter()
-        .map(|b| BranchInfoResponse {
-            name: b.name,
-            is_head: b.is_head,
-            upstream: b.upstream,
-        })
-        .collect())
+fn create_branch(repo_path: String, name: String) -> Result<(), String> {
+    reown::git::branch::create_branch(&repo_path, &name).map_err(|e| format!("{e:#}"))
 }
+
+#[tauri::command]
+fn switch_branch(repo_path: String, name: String) -> Result<(), String> {
+    reown::git::branch::switch_branch(&repo_path, &name).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+fn delete_branch(repo_path: String, name: String) -> Result<(), String> {
+    reown::git::branch::delete_branch(&repo_path, &name).map_err(|e| format!("{e:#}"))
+}
+
+// ── Worktree commands ───────────────────────────────────────────────────────
+
+#[tauri::command]
+fn list_worktrees(repo_path: String) -> Result<Vec<reown::git::worktree::WorktreeInfo>, String> {
+    reown::git::worktree::list_worktrees(&repo_path).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+fn add_worktree(repo_path: String, worktree_path: String, branch: String) -> Result<(), String> {
+    reown::git::worktree::add_worktree(&repo_path, &worktree_path, &branch)
+        .map_err(|e| format!("{e:#}"))
+}
+
+// ── Diff commands ───────────────────────────────────────────────────────────
+
+#[tauri::command]
+fn diff_workdir(repo_path: String) -> Result<Vec<reown::git::diff::FileDiff>, String> {
+    reown::git::diff::diff_workdir(&repo_path).map_err(|e| format!("{e:#}"))
+}
+
+#[tauri::command]
+fn diff_commit(
+    repo_path: String,
+    commit_sha: String,
+) -> Result<Vec<reown::git::diff::FileDiff>, String> {
+    reown::git::diff::diff_commit(&repo_path, &commit_sha).map_err(|e| format!("{e:#}"))
+}
+
+// ── GitHub commands ─────────────────────────────────────────────────────────
+
+#[tauri::command]
+fn list_pull_requests(
+    owner: String,
+    repo: String,
+    token: String,
+) -> Result<Vec<reown::github::PrInfo>, String> {
+    reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+        .map_err(|e| format!("{e:#}"))
+}
+
+// ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![list_branches])
+        .invoke_handler(tauri::generate_handler![
+            list_branches,
+            create_branch,
+            switch_branch,
+            delete_branch,
+            list_worktrees,
+            add_worktree,
+            diff_workdir,
+            diff_commit,
+            list_pull_requests,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use reown::git::branch::BranchInfo;
+    use reown::git::diff::{DiffChunk, DiffLineInfo, FileDiff, FileStatus, LineOrigin};
+    use reown::git::worktree::WorktreeInfo;
+    use reown::github::PrInfo;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_branch_info_serializes() {
+        let info = BranchInfo {
+            name: "main".to_string(),
+            is_head: true,
+            upstream: Some("origin/main".to_string()),
+        };
+        let json = serde_json::to_value(&info).unwrap();
+        assert_eq!(json["name"], "main");
+        assert_eq!(json["is_head"], true);
+        assert_eq!(json["upstream"], "origin/main");
+    }
+
+    #[test]
+    fn test_worktree_info_serializes() {
+        let info = WorktreeInfo {
+            name: "feature".to_string(),
+            path: PathBuf::from("/tmp/wt"),
+            branch: Some("feature-branch".to_string()),
+            is_main: false,
+            is_locked: false,
+        };
+        let json = serde_json::to_value(&info).unwrap();
+        assert_eq!(json["name"], "feature");
+        assert_eq!(json["branch"], "feature-branch");
+        assert_eq!(json["is_main"], false);
+        assert_eq!(json["is_locked"], false);
+    }
+
+    #[test]
+    fn test_file_diff_serializes() {
+        let diff = FileDiff {
+            old_path: Some("a.rs".to_string()),
+            new_path: Some("a.rs".to_string()),
+            status: FileStatus::Modified,
+            chunks: vec![DiffChunk {
+                header: "@@ -1,3 +1,4 @@".to_string(),
+                lines: vec![DiffLineInfo {
+                    origin: LineOrigin::Addition,
+                    old_lineno: None,
+                    new_lineno: Some(4),
+                    content: "new line\n".to_string(),
+                }],
+            }],
+        };
+        let json = serde_json::to_value(&diff).unwrap();
+        assert_eq!(json["old_path"], "a.rs");
+        assert_eq!(json["status"], "Modified");
+        assert_eq!(json["chunks"][0]["header"], "@@ -1,3 +1,4 @@");
+        assert_eq!(json["chunks"][0]["lines"][0]["origin"], "Addition");
+        assert_eq!(json["chunks"][0]["lines"][0]["new_lineno"], 4);
+        assert!(json["chunks"][0]["lines"][0]["old_lineno"].is_null());
+    }
+
+    #[test]
+    fn test_pr_info_serializes() {
+        let pr = PrInfo {
+            number: 42,
+            title: "Add feature".to_string(),
+            author: "alice".to_string(),
+            state: "open".to_string(),
+            head_branch: "feature-x".to_string(),
+            updated_at: "2025-01-15T10:30:00Z".to_string(),
+            additions: 100,
+            deletions: 20,
+            changed_files: 5,
+        };
+        let json = serde_json::to_value(&pr).unwrap();
+        assert_eq!(json["number"], 42);
+        assert_eq!(json["title"], "Add feature");
+        assert_eq!(json["author"], "alice");
+        assert_eq!(json["state"], "open");
+        assert_eq!(json["head_branch"], "feature-x");
+        assert_eq!(json["additions"], 100);
+        assert_eq!(json["deletions"], 20);
+        assert_eq!(json["changed_files"], 5);
+    }
+
+    #[test]
+    fn test_file_status_all_variants_serialize() {
+        for (status, expected) in [
+            (FileStatus::Added, "Added"),
+            (FileStatus::Deleted, "Deleted"),
+            (FileStatus::Modified, "Modified"),
+            (FileStatus::Renamed, "Renamed"),
+            (FileStatus::Other, "Other"),
+        ] {
+            let json = serde_json::to_value(&status).unwrap();
+            assert_eq!(json, expected);
+        }
+    }
+
+    #[test]
+    fn test_line_origin_all_variants_serialize() {
+        let json = serde_json::to_value(&LineOrigin::Addition).unwrap();
+        assert_eq!(json, "Addition");
+        let json = serde_json::to_value(&LineOrigin::Deletion).unwrap();
+        assert_eq!(json, "Deletion");
+        let json = serde_json::to_value(&LineOrigin::Context).unwrap();
+        assert_eq!(json, "Context");
+        let json = serde_json::to_value(&LineOrigin::Other('=')).unwrap();
+        assert_eq!(json["Other"], "=");
+    }
 }

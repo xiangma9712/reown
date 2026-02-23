@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use git2::{Delta, DiffDelta, DiffHunk, DiffLine, Repository};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub enum LineOrigin {
     Addition,
     Deletion,
@@ -20,7 +20,7 @@ impl From<char> for LineOrigin {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DiffLineInfo {
     pub origin: LineOrigin,
     pub old_lineno: Option<u32>,
@@ -28,13 +28,13 @@ pub struct DiffLineInfo {
     pub content: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DiffChunk {
     pub header: String,
     pub lines: Vec<DiffLineInfo>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct FileDiff {
     pub old_path: Option<String>,
     pub new_path: Option<String>,
@@ -42,7 +42,7 @@ pub struct FileDiff {
     pub chunks: Vec<DiffChunk>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub enum FileStatus {
     Added,
     Deleted,
