@@ -18,7 +18,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MAX_ITERATIONS=0       # 0 = infinite
 MAX_BUDGET_USD=5       # per claude invocation
 AGENT_LABEL="agent"
-SLEEP_SECONDS=30
+SLEEP_SECONDS=5
 ROADMAP_MAX_TURNS=10
 IMPLEMENT_MAX_TURNS=30
 FIX_MAX_TURNS=15
@@ -138,6 +138,31 @@ cleanup_branch() {
   git branch -D "$branch" 2>/dev/null || true
 }
 
+# Rate limit detection — uses a flag file so it works across subshells (pipes).
+RATE_LIMIT_FLAG="/tmp/claude/agent-rate-limited"
+rm -f "$RATE_LIMIT_FLAG"
+
+# Check if a stderr log file contains rate limit errors from Claude CLI.
+# Returns 0 (true) if rate limit detected, 1 otherwise.
+check_rate_limit() {
+  local stderr_file="$1"
+  if [[ -f "$stderr_file" ]] && grep -qi "rate limit\|rate_limit\|429\|too many requests\|overloaded" "$stderr_file" 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
+# Check if rate limit has been flagged (works across subshells).
+is_rate_limited() {
+  [[ -f "$RATE_LIMIT_FLAG" ]]
+}
+
+# Flag rate limit and log a fatal message. Safe to call from subshells.
+flag_rate_limit() {
+  touch "$RATE_LIMIT_FLAG"
+  log "FATAL: Claude API rate limit hit. Stopping loop to avoid further throttling."
+}
+
 # Check if any Rust-related files changed on the current branch vs main
 has_rust_changes() {
   cd "$REPO_ROOT"
@@ -251,10 +276,12 @@ $NEW_ISSUES
 \`\`\`"
 
     log "Running roadmap agent to triage $NEW_ISSUE_COUNT new issues..."
+    ROADMAP_STDERR="/tmp/claude/agent-roadmap-stderr.log"
     ROADMAP_OUTPUT=$(claude -p "$ROADMAP_INPUT" \
       --max-turns "$ROADMAP_MAX_TURNS" \
       --max-budget-usd "$MAX_BUDGET_USD" \
-      2>/dev/null) || true
+      2>"$ROADMAP_STDERR") || true
+    if check_rate_limit "$ROADMAP_STDERR"; then flag_rate_limit; break; fi
 
     # Extract JSON from output (between ```json and ```)
     TRIAGE_JSON=$(echo "$ROADMAP_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
@@ -345,10 +372,12 @@ $INTENT_FOR_SPLIT
 - **Body**: $S_BODY"
 
       log "Splitting issue #$S_NUM..."
+      SPLIT_STDERR="/tmp/claude/agent-split-stderr.log"
       SPLIT_OUTPUT=$(claude -p "$SPLIT_INPUT" \
         --max-turns "$ROADMAP_MAX_TURNS" \
         --max-budget-usd "$MAX_BUDGET_USD" \
-        2>/dev/null) || true
+        2>"$SPLIT_STDERR") || true
+      if check_rate_limit "$SPLIT_STDERR"; then flag_rate_limit; break; fi
 
       SPLIT_JSON=$(echo "$SPLIT_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
 
@@ -375,6 +404,8 @@ $INTENT_FOR_SPLIT
       fi
     done
   fi
+
+  if is_rate_limited; then break; fi
 
   # ── Step 4: Select next task from GitHub issues ─────────────────────────────
   # Pick the oldest issue with 'agent' + 'planned' labels, but NOT 'doing', 'done', 'needs-split'
@@ -442,6 +473,14 @@ $INTENT_FOR_SPLIT
        2>"$CLAUDE_STDERR"
   CLAUDE_EXIT=$?
 
+  # Rate limit check — stop the entire loop
+  if check_rate_limit "$CLAUDE_STDERR"; then
+    flag_rate_limit
+    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+    cleanup_branch "$BRANCH_NAME"
+    break
+  fi
+
   if [[ $CLAUDE_EXIT -ne 0 ]] || grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
     if grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
       log "ERROR: Implementation agent hit resource limit for #$TASK_ISSUE. Needs split."
@@ -460,11 +499,18 @@ $INTENT_FOR_SPLIT
     log "Rust files changed — running cargo test and clippy..."
     if ! cargo test 2>/dev/null; then
       log "WARN: Tests failed after implementation. Attempting fix..."
+      FIX_STDERR="/tmp/claude/agent-fix-stderr.log"
       claude -p "cargo test is failing. Read the test output, find the root cause, and fix the implementation (not the tests). Then run cargo test again to verify." \
         --max-turns "$FIX_MAX_TURNS" \
         --max-budget-usd "$MAX_BUDGET_USD" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        2>/dev/null || true
+        2>"$FIX_STDERR" || true
+      if check_rate_limit "$FIX_STDERR"; then
+        flag_rate_limit
+        gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+        cleanup_branch "$BRANCH_NAME"
+        break
+      fi
 
       if ! cargo test 2>/dev/null; then
         log "ERROR: Tests still failing for #$TASK_ISSUE. Skipping."
@@ -477,11 +523,18 @@ $INTENT_FOR_SPLIT
 
     if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
       log "WARN: Clippy failed. Attempting fix..."
+      FIX_STDERR="/tmp/claude/agent-fix-stderr.log"
       claude -p "cargo clippy --all-targets -- -D warnings is failing. Fix all clippy warnings in the code you changed." \
         --max-turns "$FIX_MAX_TURNS" \
         --max-budget-usd "$MAX_BUDGET_USD" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        2>/dev/null || true
+        2>"$FIX_STDERR" || true
+      if check_rate_limit "$FIX_STDERR"; then
+        flag_rate_limit
+        gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+        cleanup_branch "$BRANCH_NAME"
+        break
+      fi
 
       if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
         log "ERROR: Clippy still failing for #$TASK_ISSUE. Skipping."
@@ -513,11 +566,18 @@ $INTENT_FOR_SPLIT
       if has_rust_changes; then
         if ! cargo test 2>/dev/null || ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
           log "WARN: Tests/clippy failed after committing leftover changes. Invoking fix agent..."
+          FIX_STDERR="/tmp/claude/agent-fix-stderr.log"
           claude -p "There were uncommitted changes that have been staged and committed. Now cargo test or clippy is failing. Fix the issues, commit, and ensure the tree is clean." \
             --max-turns "$FIX_MAX_TURNS" \
             --max-budget-usd "$MAX_BUDGET_USD" \
             --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-            2>/dev/null || true
+            2>"$FIX_STDERR" || true
+          if check_rate_limit "$FIX_STDERR"; then
+            flag_rate_limit
+            gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+            cleanup_branch "$BRANCH_NAME"
+            break 2  # break out of both the for loop and the while loop
+          fi
         fi
       fi
     fi
@@ -610,11 +670,17 @@ Generated by agent/loop.sh"
 
     if [[ "$attempt" -eq 1 ]]; then
       log "CI failed. Attempting fix..."
+      FIX_STDERR="/tmp/claude/agent-fix-stderr.log"
       claude -p "CI checks failed for this PR. Read the CI logs, fix the issues, commit, and push." \
         --max-turns "$FIX_MAX_TURNS" \
         --max-budget-usd "$MAX_BUDGET_USD" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        2>/dev/null || true
+        2>"$FIX_STDERR" || true
+      if check_rate_limit "$FIX_STDERR"; then
+        flag_rate_limit
+        gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+        break 2  # break out of CI for-loop and main while-loop
+      fi
       cd "$REPO_ROOT"
       git push 2>/dev/null || true
     fi
