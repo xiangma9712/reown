@@ -2,9 +2,11 @@ import { useState, useEffect, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { WorktreeInfo } from "../types";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { Input } from "./Input";
+import { Loading } from "./Loading";
 
 export function WorktreeTab() {
   const { t } = useTranslation();
@@ -70,11 +72,7 @@ export function WorktreeTab() {
           {t("worktree.title")}
         </h2>
         <div className="scrollbar-custom mb-4 min-h-[120px] max-h-[360px] flex-1 overflow-y-auto">
-          {loading && (
-            <p className="p-2 text-[0.9rem] text-text-secondary">
-              {t("common.loading")}
-            </p>
-          )}
+          {loading && <Loading />}
           {error && (
             <p className="p-2 text-[0.9rem] text-danger">
               {t("common.error", { message: error })}
@@ -101,14 +99,14 @@ export function WorktreeTab() {
                 {wt.name}
               </span>
               {wt.is_locked && (
-                <span className="ml-2 inline-block rounded-sm bg-danger px-1.5 py-0.5 text-[0.7rem] text-white">
+                <Badge variant="danger" className="ml-2">
                   {t("worktree.locked")}
-                </span>
+                </Badge>
               )}
               {!wt.branch && (
-                <span className="ml-2 inline-block rounded-sm bg-status-modified-bg px-1.5 py-0.5 text-[0.7rem] text-warning">
+                <Badge variant="warning" className="ml-2">
                   {t("worktree.detached")}
-                </span>
+                </Badge>
               )}
               <div className="mt-0.5 text-[0.8rem] text-text-secondary">
                 {t("worktree.branchLabel", {

@@ -2,19 +2,23 @@ import { useState, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { PrInfo } from "../types";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import { Loading } from "./Loading";
 
-function stateClass(state: string): string {
+function stateVariant(
+  state: string,
+): "success" | "danger" | "purple" | "default" {
   switch (state) {
     case "open":
-      return "bg-status-added-bg text-accent";
+      return "success";
     case "closed":
-      return "bg-status-deleted-bg text-danger";
+      return "danger";
     case "merged":
-      return "bg-pr-merged-bg text-purple";
+      return "purple";
     default:
-      return "bg-btn-secondary text-text-secondary";
+      return "default";
   }
 }
 
@@ -106,11 +110,7 @@ export function PrTab() {
           )}
         </div>
         <div className="scrollbar-custom overflow-y-auto">
-          {loading && (
-            <p className="p-2 text-[0.9rem] text-text-secondary">
-              {t("common.loading")}
-            </p>
-          )}
+          {loading && <Loading />}
           {error && (
             <p className="p-2 text-[0.9rem] text-danger">
               {t("common.error", { message: error })}
@@ -133,11 +133,7 @@ export function PrTab() {
                 <span className="text-[0.9rem] font-medium text-text-primary">
                   {pr.title}
                 </span>
-                <span
-                  className={`shrink-0 rounded-sm px-1.5 py-0.5 text-[0.7rem] font-semibold ${stateClass(pr.state)}`}
-                >
-                  {pr.state}
-                </span>
+                <Badge variant={stateVariant(pr.state)}>{pr.state}</Badge>
               </div>
               <div className="mt-0.5 flex gap-4 text-xs text-text-secondary">
                 <span>@{pr.author}</span>
