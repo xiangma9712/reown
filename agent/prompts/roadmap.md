@@ -43,18 +43,25 @@ reown aims to **replace GitHub PR review** with a better developer experience. F
      - `passed`: `false`
      - `issue`: the issue number
 3. For large issues (scope > 1 module or > ~200 lines), split into sub-tasks
-4. Adjust priorities if needed — lower number = higher priority
+4. **Re-prioritize**: issue-based tasks must come before unpassed seed tasks. Re-number seed task priorities upward to make room. Lower number = higher priority.
 5. Do NOT remove existing tasks or change `passed` status
-6. Do NOT renumber existing task IDs
+6. Do NOT re-add task IDs or issue numbers that exist in `prd.archive.json`
 
 ## Priority Guidelines
 
-Priority should reflect both dependency order and INTENT alignment:
-- **Foundational tasks first** (deps, API client, config) — they unblock everything
-- **local-gui** tasks next — the TUI is the core product surface
-- **review-support** tasks — the primary differentiator vs GitHub PR review
-- **automation** tasks — depend on risk classification being done first
-- **dev-support** tasks — complementary features, lower urgency
+**GitHub Issues ALWAYS take priority over pre-planned seed tasks.**
+
+Human-created issues represent real, immediate needs. Pre-planned seed tasks are a backlog — they can wait.
+
+When assigning priority to a new issue-based task:
+1. **Re-number existing unpassed seed tasks upward** to make room if needed
+2. Place the issue-based task **ahead of all seed tasks** that are not yet passed
+3. Only exception: if the issue depends on an unpassed seed task, place it right after that dependency
+
+Among issue-based tasks, prioritize by:
+- Dependency order (blockers first)
+- INTENT pillar importance: review-support > local-gui > automation > dev-support
+- Issue urgency signals (bug > feature, labels, user emphasis)
 
 ## Project Context
 
