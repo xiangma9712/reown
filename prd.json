@@ -69,7 +69,7 @@
       "description": "Issue #6 identifies a major requirement misunderstanding: reown should be a native macOS GUI app, not a TUI. This task sets up the frontend foundation. Add a Tauri (or similar Rust-native GUI framework) project alongside the existing Rust backend. Configure the build to produce a native macOS .app bundle. The existing git2/reqwest backend logic in src/git/ and src/github/ is retained as the core library; only the presentation layer changes. This is the foundational step for the local-gui pillar: ローカルベースのGUIツールで画面の切り替えや移動なくレビューを行う.",
       "pillar": "local-gui",
       "priority": 14,
-      "passed": false,
+      "passed": true,
       "issue": 6
     },
     {

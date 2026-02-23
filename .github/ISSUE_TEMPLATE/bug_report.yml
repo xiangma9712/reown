@@ -1,0 +1,94 @@
+name: Bug Report
+description: Report a bug to help improve reown
+labels: ["bug", "agent"]
+body:
+  - type: input
+    id: title_summary
+    attributes:
+      label: Summary
+      description: A short, descriptive summary of the bug (e.g. "Diff view crashes on binary files")
+      placeholder: "<component>: <what goes wrong>"
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What is the expected correct behavior?
+      placeholder: |
+        Describe what should happen when the bug is fixed.
+        Example: "The diff view should skip binary files and show a placeholder instead of crashing."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide context to reproduce the bug and understand where it occurs.
+      value: |
+        **Steps to reproduce:**
+        1.
+        2.
+        3.
+
+        **Actual behavior:**
+
+
+        **Environment:**
+        - OS:
+        - reown version:
+        - Rust version:
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define the conditions that must be met for this bug to be considered fixed.
+      placeholder: |
+        - [ ] <specific condition that must be true>
+        - [ ] No regression in existing tests
+        - [ ] cargo test passes
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of reown is affected?
+      options:
+        - Diff viewer
+        - Branch management
+        - Worktree management
+        - PR list / GitHub integration
+        - UI / rendering
+        - CLI / startup
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - crash — app panics or exits unexpectedly
+        - major — feature is broken or unusable
+        - minor — feature works but has issues
+        - cosmetic — visual or formatting issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Any additional context, logs, screenshots, or references.
+      placeholder: Paste error logs, stack traces, or screenshots here.
+    validations:
+      required: false
