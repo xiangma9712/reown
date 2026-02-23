@@ -3,6 +3,7 @@ use crate::git::{
     diff::{self, FileDiff},
     worktree::{self, WorktreeInfo},
 };
+use crate::github::PrInfo;
 use anyhow::Result;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -10,6 +11,7 @@ pub enum View {
     Worktrees,
     Branches,
     Diff,
+    PullRequests,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,6 +43,9 @@ pub struct App {
     pub diff_file_sel: usize,
     pub diff_scroll: u16,
 
+    // Pull Requests tab
+    pub pull_requests: Vec<PrInfo>,
+    pub pr_sel: usize,
 }
 
 impl App {
@@ -90,6 +95,8 @@ impl App {
             file_diffs,
             diff_file_sel: 0,
             diff_scroll: 0,
+            pull_requests: Vec::new(),
+            pr_sel: 0,
         })
     }
 
@@ -150,6 +157,13 @@ impl App {
         } else if self.diff_file_sel >= d_len {
             self.diff_file_sel = d_len - 1;
         }
+
+        let pr_len = self.pull_requests.len();
+        if pr_len == 0 {
+            self.pr_sel = 0;
+        } else if self.pr_sel >= pr_len {
+            self.pr_sel = pr_len - 1;
+        }
     }
 
     // ── Navigation ────────────────────────────────────────────────────────
@@ -173,6 +187,11 @@ impl App {
                     self.diff_scroll = 0;
                 }
             }
+            View::PullRequests => {
+                if !self.pull_requests.is_empty() {
+                    self.pr_sel = (self.pr_sel + 1).min(self.pull_requests.len() - 1);
+                }
+            }
         }
     }
 
@@ -187,6 +206,9 @@ impl App {
             View::Diff => {
                 self.diff_file_sel = self.diff_file_sel.saturating_sub(1);
                 self.diff_scroll = 0;
+            }
+            View::PullRequests => {
+                self.pr_sel = self.pr_sel.saturating_sub(1);
             }
         }
     }

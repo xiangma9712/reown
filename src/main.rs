@@ -103,13 +103,15 @@ fn run_app(
                         app.view = match app.view {
                             View::Worktrees => View::Branches,
                             View::Branches => View::Diff,
-                            View::Diff => View::Worktrees,
+                            View::Diff => View::PullRequests,
+                            View::PullRequests => View::Worktrees,
                         };
                     }
                     // View shortcuts
                     KeyCode::Char('w') => app.view = View::Worktrees,
                     KeyCode::Char('b') => app.view = View::Branches,
                     KeyCode::Char('d') => app.view = View::Diff,
+                    KeyCode::Char('p') => app.view = View::PullRequests,
                     // Navigation
                     KeyCode::Down | KeyCode::Char('j') => {
                         if app.view == View::Diff {
@@ -154,7 +156,7 @@ fn run_app(
                                     .into(),
                             );
                         }
-                        View::Diff => {}
+                        View::Diff | View::PullRequests => {}
                     },
                     KeyCode::Enter => {
                         if app.view == View::Branches {
@@ -206,6 +208,8 @@ fn draw(frame: &mut ratatui::Frame, app: &App) {
         Span::styled(" [b] Branches ", tab_style(View::Branches)),
         Span::raw(" "),
         Span::styled(" [d] Diff ", tab_style(View::Diff)),
+        Span::raw(" "),
+        Span::styled(" [p] PRs ", tab_style(View::PullRequests)),
         Span::raw("  ─  Tab:next  q:quit  r:refresh"),
     ]);
     frame.render_widget(
@@ -240,6 +244,15 @@ fn draw(frame: &mut ratatui::Frame, app: &App) {
                 &app.file_diffs,
                 app.diff_file_sel,
                 app.diff_scroll,
+                true,
+            );
+        }
+        View::PullRequests => {
+            ui::pull_request::render_pull_requests(
+                frame,
+                outer[1],
+                &app.pull_requests,
+                app.pr_sel,
                 true,
             );
         }
