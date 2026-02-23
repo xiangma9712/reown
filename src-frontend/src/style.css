@@ -36,6 +36,44 @@ body {
   color: #a0a0b0;
 }
 
+/* ── Tab navigation ────────────────────────────────────────────── */
+
+.tab-nav {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.tab-btn {
+  padding: 0.6rem 1.2rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #a0a0b0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+  color: #e0e0e0;
+}
+
+.tab-btn.active {
+  color: #4ec9b0;
+  border-bottom-color: #4ec9b0;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
 /* ── Panels layout ──────────────────────────────────────────────── */
 
 .panels {
@@ -340,4 +378,243 @@ body {
 .list-container::-webkit-scrollbar-thumb {
   background-color: #3a3a5e;
   border-radius: 3px;
+}
+
+/* ── Diff layout ───────────────────────────────────────────────── */
+
+.diff-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1rem;
+  min-height: 500px;
+}
+
+.diff-file-list .list-container {
+  max-height: none;
+  flex: 1;
+}
+
+.diff-file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid #2a2a3e;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.diff-file-item:last-child {
+  border-bottom: none;
+}
+
+.diff-file-item:hover {
+  background-color: #1a1a2e;
+}
+
+.diff-file-item.selected {
+  background-color: #1a2a3e;
+  border-left: 2px solid #4ec9b0;
+}
+
+.diff-file-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.diff-file-status.added {
+  background-color: #2a4a2a;
+  color: #4ec9b0;
+}
+
+.diff-file-status.deleted {
+  background-color: #4a2a2a;
+  color: #e06c75;
+}
+
+.diff-file-status.modified {
+  background-color: #3a3a2a;
+  color: #e5c07b;
+}
+
+.diff-file-status.renamed {
+  background-color: #2a2a4a;
+  color: #61afef;
+}
+
+.diff-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e0e0e0;
+}
+
+/* ── Diff content ──────────────────────────────────────────────── */
+
+.diff-view {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.diff-content {
+  flex: 1;
+  overflow: auto;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.diff-chunk-header {
+  padding: 0.3rem 0.75rem;
+  background-color: #1a1a3e;
+  color: #61afef;
+  font-size: 0.75rem;
+  border-top: 1px solid #2a2a3e;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.diff-line {
+  display: flex;
+  white-space: pre;
+}
+
+.diff-lineno {
+  display: inline-block;
+  min-width: 3.5em;
+  padding: 0 0.5rem;
+  text-align: right;
+  color: #5a5a7e;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.diff-line-content {
+  flex: 1;
+  padding: 0 0.5rem;
+}
+
+.diff-line.addition {
+  background-color: rgba(78, 201, 176, 0.1);
+}
+
+.diff-line.addition .diff-line-content {
+  color: #4ec9b0;
+}
+
+.diff-line.deletion {
+  background-color: rgba(224, 108, 117, 0.1);
+}
+
+.diff-line.deletion .diff-line-content {
+  color: #e06c75;
+}
+
+.diff-line.context .diff-line-content {
+  color: #a0a0b0;
+}
+
+.diff-content::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.diff-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.diff-content::-webkit-scrollbar-thumb {
+  background-color: #3a3a5e;
+  border-radius: 3px;
+}
+
+/* ── PR list ───────────────────────────────────────────────────── */
+
+.pr-form-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.pr-form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.pr-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.pr-item:last-child {
+  border-bottom: none;
+}
+
+.pr-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.pr-number {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+  color: #61afef;
+  font-weight: 600;
+}
+
+.pr-title {
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pr-state {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.pr-state.open {
+  background-color: #2a4a2a;
+  color: #4ec9b0;
+}
+
+.pr-state.closed {
+  background-color: #4a2a2a;
+  color: #e06c75;
+}
+
+.pr-state.merged {
+  background-color: #3a2a4a;
+  color: #c678dd;
+}
+
+.pr-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #a0a0b0;
+  margin-top: 0.2rem;
+}
+
+.pr-stat {
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.pr-stat.additions {
+  color: #4ec9b0;
+}
+
+.pr-stat.deletions {
+  color: #e06c75;
 }
