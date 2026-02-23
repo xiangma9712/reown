@@ -8,9 +8,65 @@
 </head>
 <body>
   <div id="app">
-    <h1>Hello reown</h1>
-    <p>エージェントPRの嵐の時代でも、コードベースを自分のものに。</p>
-    <div id="branches"></div>
+    <header class="app-header">
+      <h1>reown</h1>
+      <p class="tagline">エージェントPRの嵐の時代でも、コードベースを自分のものに。</p>
+    </header>
+
+    <div class="panels">
+      <!-- Worktree管理パネル -->
+      <section class="panel" id="worktree-panel">
+        <h2>ワークツリー</h2>
+        <div id="worktree-list" class="list-container">
+          <p class="loading">読み込み中…</p>
+        </div>
+        <div class="form-section">
+          <h3>新規ワークツリー作成</h3>
+          <form id="worktree-form">
+            <div class="form-group">
+              <label for="wt-path">パス</label>
+              <input type="text" id="wt-path" placeholder="/path/to/worktree" required>
+            </div>
+            <div class="form-group">
+              <label for="wt-branch">ブランチ名</label>
+              <input type="text" id="wt-branch" placeholder="feature-branch" required>
+            </div>
+            <button type="submit" class="btn btn-primary">作成</button>
+          </form>
+          <div id="worktree-message" class="message"></div>
+        </div>
+      </section>
+
+      <!-- Branch管理パネル -->
+      <section class="panel" id="branch-panel">
+        <h2>ブランチ</h2>
+        <div id="branch-list" class="list-container">
+          <p class="loading">読み込み中…</p>
+        </div>
+        <div class="form-section">
+          <h3>新規ブランチ作成</h3>
+          <form id="branch-form">
+            <div class="form-group">
+              <label for="branch-name">ブランチ名</label>
+              <input type="text" id="branch-name" placeholder="new-branch" required>
+            </div>
+            <button type="submit" class="btn btn-primary">作成</button>
+          </form>
+          <div id="branch-message" class="message"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 削除確認ダイアログ -->
+    <div id="confirm-dialog" class="dialog-overlay" hidden>
+      <div class="dialog">
+        <p id="confirm-message"></p>
+        <div class="dialog-actions">
+          <button id="confirm-cancel" class="btn btn-secondary">キャンセル</button>
+          <button id="confirm-ok" class="btn btn-danger">削除</button>
+        </div>
+      </div>
+    </div>
   </div>
   <script src="main.js"></script>
 </body>
