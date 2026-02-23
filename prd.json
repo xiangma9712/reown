@@ -15,7 +15,7 @@
       "description": "Add serde, serde_json, and reqwest (with rustls-tls) to Cargo.toml. Create a src/github/ module stub with mod.rs that re-exports types. Ensure cargo build succeeds with new deps.",
       "pillar": "local-gui",
       "priority": 1,
-      "passed": false,
+      "passed": true,
       "issue": null
     },
     {
