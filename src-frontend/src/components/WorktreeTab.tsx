@@ -1,8 +1,10 @@
 import { useState, useEffect, FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { WorktreeInfo } from "../types";
 
 export function WorktreeTab() {
+  const { t } = useTranslation();
   const [worktrees, setWorktrees] = useState<WorktreeInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,12 +46,15 @@ export function WorktreeTab() {
         worktreePath: wtPath.trim(),
         branch: wtBranch.trim(),
       });
-      setFormMessage({ text: "ワークツリーを作成しました。", type: "success" });
+      setFormMessage({ text: t("worktree.created"), type: "success" });
       setWtPath("");
       setWtBranch("");
       await loadWorktrees();
     } catch (err) {
-      setFormMessage({ text: `エラー: ${err}`, type: "error" });
+      setFormMessage({
+        text: t("common.error", { message: err }),
+        type: "error",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -59,18 +64,22 @@ export function WorktreeTab() {
     <div>
       <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
-          ワークツリー
+          {t("worktree.title")}
         </h2>
         <div className="scrollbar-custom mb-4 min-h-[120px] max-h-[360px] flex-1 overflow-y-auto">
           {loading && (
-            <p className="p-2 text-[0.9rem] text-text-secondary">読み込み中…</p>
+            <p className="p-2 text-[0.9rem] text-text-secondary">
+              {t("common.loading")}
+            </p>
           )}
           {error && (
-            <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+            <p className="p-2 text-[0.9rem] text-danger">
+              {t("common.error", { message: error })}
+            </p>
           )}
           {!loading && !error && worktrees.length === 0 && (
             <p className="p-2 text-[0.9rem] italic text-text-secondary">
-              ワークツリーがありません。
+              {t("worktree.empty")}
             </p>
           )}
           {worktrees.map((wt, index) => (
@@ -90,26 +99,28 @@ export function WorktreeTab() {
               </span>
               {wt.is_locked && (
                 <span className="ml-2 inline-block rounded-sm bg-danger px-1.5 py-0.5 text-[0.7rem] text-white">
-                  locked
+                  {t("worktree.locked")}
                 </span>
               )}
               {!wt.branch && (
                 <span className="ml-2 inline-block rounded-sm bg-status-modified-bg px-1.5 py-0.5 text-[0.7rem] text-warning">
-                  detached
+                  {t("worktree.detached")}
                 </span>
               )}
               <div className="mt-0.5 text-[0.8rem] text-text-secondary">
-                ブランチ: {wt.branch ?? "(detached)"}
+                {t("worktree.branchLabel", {
+                  name: wt.branch ?? "(detached)",
+                })}
               </div>
               <div className="mt-0.5 text-[0.8rem] text-text-secondary">
-                パス: {wt.path}
+                {t("worktree.pathLabel", { path: wt.path })}
               </div>
             </div>
           ))}
         </div>
         <div className="border-t border-border pt-4">
           <h3 className="mb-3 text-[0.9rem] text-text-primary/80">
-            新規ワークツリー作成
+            {t("worktree.createNew")}
           </h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-2.5">
@@ -117,7 +128,7 @@ export function WorktreeTab() {
                 htmlFor="wt-path"
                 className="mb-0.5 block text-[0.8rem] text-text-secondary"
               >
-                パス
+                {t("worktree.path")}
               </label>
               <input
                 type="text"
@@ -134,7 +145,7 @@ export function WorktreeTab() {
                 htmlFor="wt-branch"
                 className="mb-0.5 block text-[0.8rem] text-text-secondary"
               >
-                ブランチ名
+                {t("worktree.branchName")}
               </label>
               <input
                 type="text"
@@ -151,7 +162,7 @@ export function WorktreeTab() {
               className="cursor-pointer rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               disabled={submitting}
             >
-              作成
+              {t("common.create")}
             </button>
           </form>
           {formMessage && (

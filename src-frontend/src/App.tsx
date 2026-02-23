@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { WorktreeTab } from "./components/WorktreeTab";
 import { BranchTab } from "./components/BranchTab";
 import { DiffTab } from "./components/DiffTab";
@@ -9,14 +10,15 @@ import "./style.css";
 const TAB_ORDER = ["worktree", "branch", "diff", "pr"] as const;
 type TabName = (typeof TAB_ORDER)[number];
 
-const TAB_LABELS: Record<TabName, { label: string; shortcut: string }> = {
-  worktree: { label: "Worktrees", shortcut: "W" },
-  branch: { label: "Branches", shortcut: "B" },
-  diff: { label: "Diff", shortcut: "D" },
-  pr: { label: "PRs", shortcut: "P" },
+const TAB_KEYS: Record<TabName, { labelKey: string; shortcut: string }> = {
+  worktree: { labelKey: "tabs.worktrees", shortcut: "W" },
+  branch: { labelKey: "tabs.branches", shortcut: "B" },
+  diff: { labelKey: "tabs.diff", shortcut: "D" },
+  pr: { labelKey: "tabs.prs", shortcut: "P" },
 };
 
 export function App() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabName>("worktree");
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
@@ -84,9 +86,9 @@ export function App() {
   return (
     <div className="mx-auto max-w-[1200px] p-6">
       <header className="mb-8 text-center">
-        <h1 className="mb-1 text-3xl text-white">reown</h1>
+        <h1 className="mb-1 text-3xl text-white">{t("app.title")}</h1>
         <p className="text-[0.95rem] text-text-secondary">
-          エージェントPRの嵐の時代でも、コードベースを自分のものに。
+          {t("app.tagline")}
         </p>
       </header>
 
@@ -101,7 +103,7 @@ export function App() {
             }`}
             onClick={() => setActiveTab(tab)}
           >
-            {TAB_LABELS[tab].label}
+            {t(TAB_KEYS[tab].labelKey)}
             <span
               className={`ml-1.5 inline-block rounded-sm border border-border-hover bg-bg-hint px-1 align-middle text-[0.65rem] font-semibold leading-[1.4] text-text-muted ${
                 activeTab === tab
@@ -109,7 +111,7 @@ export function App() {
                   : ""
               }`}
             >
-              {TAB_LABELS[tab].shortcut}
+              {TAB_KEYS[tab].shortcut}
             </span>
           </button>
         ))}

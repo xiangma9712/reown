@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "reown",
+    "tagline": "Own your codebase, even in the age of agent PR storms."
+  },
+  "tabs": {
+    "worktrees": "Worktrees",
+    "branches": "Branches",
+    "diff": "Diff",
+    "prs": "PRs"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Error: {{message}}",
+    "create": "Create",
+    "delete": "Delete",
+    "cancel": "Cancel"
+  },
+  "worktree": {
+    "title": "Worktrees",
+    "empty": "No worktrees found.",
+    "created": "Worktree created.",
+    "createNew": "Create New Worktree",
+    "path": "Path",
+    "branchName": "Branch name",
+    "branchLabel": "Branch: {{name}}",
+    "pathLabel": "Path: {{path}}",
+    "locked": "locked",
+    "detached": "detached"
+  },
+  "branch": {
+    "title": "Branches",
+    "empty": "No branches found.",
+    "created": "Branch '{{name}}' created.",
+    "switched": "Switched to branch '{{name}}'.",
+    "deleted": "Branch '{{name}}' deleted.",
+    "confirmDelete": "Delete branch '{{name}}'? This action cannot be undone.",
+    "createNew": "Create New Branch",
+    "branchName": "Branch name",
+    "switch": "Switch",
+    "upstream": "upstream: {{name}}"
+  },
+  "diff": {
+    "changedFiles": "Changed Files",
+    "loadPrompt": "Please load the diff.",
+    "loadButton": "Load Working Directory Diff",
+    "selectFile": "Select a file from the list on the left.",
+    "noDiffContent": "No diff content (possibly a binary file)."
+  },
+  "pr": {
+    "title": "Pull Requests",
+    "owner": "Owner",
+    "repo": "Repo",
+    "token": "Token",
+    "fetch": "Fetch",
+    "fillAllFields": "Please fill in all fields.",
+    "empty": "Enter the form above to fetch PR information.",
+    "files": "{{count}} files"
+  }
+}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { FileDiff } from "../types";
 
@@ -40,6 +41,7 @@ function getOriginString(
 }
 
 export function DiffTab() {
+  const { t } = useTranslation();
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
@@ -70,16 +72,18 @@ export function DiffTab() {
       <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
         <aside className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
           <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
-            変更ファイル
+            {t("diff.changedFiles")}
           </h2>
           <div className="scrollbar-custom flex-1 overflow-y-auto">
             {diffs.length === 0 && !loading && !error && (
               <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                Diffを読み込んでください。
+                {t("diff.loadPrompt")}
               </p>
             )}
             {error && (
-              <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+              <p className="p-2 text-[0.9rem] text-danger">
+                {t("common.error", { message: error })}
+              </p>
             )}
             {diffs.map((diff, index) => (
               <div
@@ -111,7 +115,7 @@ export function DiffTab() {
               onClick={handleLoad}
               disabled={loading}
             >
-              ワークディレクトリのDiffを読み込む
+              {t("diff.loadButton")}
             </button>
           </div>
         </aside>
@@ -124,12 +128,12 @@ export function DiffTab() {
           <div className="scrollbar-custom flex-1 overflow-auto font-mono text-[0.8rem] leading-relaxed">
             {!selectedDiff && (
               <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                左のファイル一覧からファイルを選択してください。
+                {t("diff.selectFile")}
               </p>
             )}
             {selectedDiff && selectedDiff.chunks.length === 0 && (
               <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                差分内容がありません（バイナリファイルの可能性）。
+                {t("diff.noDiffContent")}
               </p>
             )}
             {selectedDiff?.chunks.map((chunk, ci) => (
