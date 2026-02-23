@@ -1,6 +1,6 @@
 {
   "project": "reown",
-  "description": "GitHub PR review alternative — TUI tool that understands impact, automates low-risk approvals, and keeps developers in flow",
+  "description": "GitHub PR review alternative — native macOS GUI tool that understands impact, automates low-risk approvals, and keeps developers in flow",
   "intent": "docs/INTENT.md",
   "pillars": [
     "review-support: 変更の影響範囲・リスク把握、関連差分のみ表示、レビューパターン記憶",
@@ -33,7 +33,7 @@
       "description": "Add View::PullRequests variant. Create src/ui/pull_request.rs with render_pull_requests() following the same pattern as render_branches(). Add 'p' hotkey to switch to PR view. Show PR number, title, author, status. This is the single surface for reviewing agent PRs, Devin/Copilot PRs, and colleague PRs.",
       "pillar": "local-gui",
       "priority": 3,
-      "passed": false,
+      "passed": true,
       "issue": null
     },
     {
@@ -62,6 +62,42 @@
       "priority": 6,
       "passed": false,
       "issue": null
+    },
+    {
+      "id": "phase2-007",
+      "title": "Migrate from TUI to native macOS GUI — project scaffolding",
+      "description": "Issue #6 identifies a major requirement misunderstanding: reown should be a native macOS GUI app, not a TUI. This task sets up the frontend foundation. Add a Tauri (or similar Rust-native GUI framework) project alongside the existing Rust backend. Configure the build to produce a native macOS .app bundle. The existing git2/reqwest backend logic in src/git/ and src/github/ is retained as the core library; only the presentation layer changes. This is the foundational step for the local-gui pillar: ローカルベースのGUIツールで画面の切り替えや移動なくレビューを行う.",
+      "pillar": "local-gui",
+      "priority": 14,
+      "passed": false,
+      "issue": 6
+    },
+    {
+      "id": "phase2-008",
+      "title": "Migrate from TUI to native macOS GUI — frontend views",
+      "description": "Rebuild the main views (worktree list, branch list, diff viewer, PR list) as GUI components in the new frontend framework. Each view should mirror the existing TUI functionality but with proper GUI layout — sidebar navigation, split panes, scrollable panels. Keyboard shortcuts should still work. The GUI must support viewing agent PRs, Devin/Copilot PRs, and colleague PRs in the same window without context switching (INTENT: 同じ場所で画面の切り替えや移動なく行える).",
+      "pillar": "local-gui",
+      "priority": 15,
+      "passed": false,
+      "issue": 6
+    },
+    {
+      "id": "phase2-009",
+      "title": "Migrate from TUI to native macOS GUI — native binary packaging",
+      "description": "Configure the build pipeline to produce a self-contained macOS native binary (.app bundle). Ensure the app can be launched by double-clicking, includes proper Info.plist, icons, and code signing setup. The binary should embed the frontend assets and the Rust backend. Users should be able to run it without installing additional dependencies.",
+      "pillar": "local-gui",
+      "priority": 16,
+      "passed": false,
+      "issue": 6
+    },
+    {
+      "id": "phase2-010",
+      "title": "Create GitHub issue templates with agent label",
+      "description": "Design and create .github/ISSUE_TEMPLATE/ forms that automatically apply the 'agent' label. Design the form fields to be structured for easy agent consumption: clear title format, structured body sections (goal, context, acceptance criteria), and appropriate labels/assignee fields. Include at least a 'feature request' and 'bug report' template. Solves: agentラベルが入力されるようにして、agentとして指示を取り込みやすいように適切なformを設計する.",
+      "pillar": "dev-support",
+      "priority": 17,
+      "passed": false,
+      "issue": 4
     },
     {
       "id": "phase3-001",
