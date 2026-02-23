@@ -60,17 +60,7 @@ src-frontend/               — Web frontend (HTML/CSS/JS)
 5. Add frontend UI in `src-frontend/src/`
 6. Write tests using tempfile pattern
 
-## Autonomous Agent Rules
+## Autonomous Agent
 
-When running as an autonomous agent (via `agent/loop.sh`):
-
-- **Task source** — GitHub issues with `agent` label (not prd.json)
-- **Label workflow** — `agent` → `planned` → `doing` → `done`
-- **One task per iteration** — implement exactly one GitHub issue per run
-- **Never modify progress.txt** — only loop.sh appends entries
-- **Tests are mandatory** — `cargo test` must pass before committing
-- **Clippy must pass** — `cargo clippy --all-targets -- -D warnings`
-- **Fix code, not tests** — if tests fail, fix the implementation
-- **Conventional Commits** — see `.claude/rules/git.md`
-- **Branch naming** — `agent/issue-<number>` (e.g., `agent/issue-24`)
-- **No direct push to main** — always create a PR
+エージェントとして実行する場合は `agent/prompts/` 配下のプロンプトに従うこと。
+タスク実装時は `agent/prompts/implement.md` を参照。
