@@ -17,6 +17,21 @@ function statusLabel(status: string): string {
   }
 }
 
+function statusClass(status: string): string {
+  switch (status) {
+    case "Added":
+      return "bg-status-added-bg text-accent";
+    case "Deleted":
+      return "bg-status-deleted-bg text-danger";
+    case "Modified":
+      return "bg-status-modified-bg text-warning";
+    case "Renamed":
+      return "bg-status-renamed-bg text-info";
+    default:
+      return "bg-btn-secondary text-text-secondary";
+  }
+}
+
 function getOriginString(
   origin: "Addition" | "Deletion" | "Context" | { Other: string }
 ): string {
@@ -51,28 +66,38 @@ export function DiffTab() {
   const selectedDiff = selectedIndex >= 0 ? diffs[selectedIndex] : null;
 
   return (
-    <div className="tab-content active" id="tab-diff">
-      <div className="diff-layout">
-        <aside className="diff-file-list panel">
-          <h2>変更ファイル</h2>
-          <div className="list-container">
+    <div>
+      <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
+        <aside className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+          <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+            変更ファイル
+          </h2>
+          <div className="scrollbar-custom flex-1 overflow-y-auto">
             {diffs.length === 0 && !loading && !error && (
-              <p className="empty">Diffを読み込んでください。</p>
+              <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                Diffを読み込んでください。
+              </p>
             )}
-            {error && <p className="error">エラー: {error}</p>}
+            {error && (
+              <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+            )}
             {diffs.map((diff, index) => (
               <div
                 key={diff.new_path ?? diff.old_path ?? index}
-                className={`diff-file-item${selectedIndex === index ? " selected" : ""}`}
+                className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                  selectedIndex === index
+                    ? "border-l-2 border-l-accent bg-bg-hover"
+                    : ""
+                }`}
                 onClick={() => setSelectedIndex(index)}
               >
                 <span
-                  className={`diff-file-status ${diff.status.toLowerCase()}`}
+                  className={`shrink-0 rounded-sm px-1.5 py-0.5 text-[0.7rem] font-semibold ${statusClass(diff.status)}`}
                 >
                   {statusLabel(diff.status)}
                 </span>
                 <span
-                  className="diff-file-name"
+                  className="truncate text-text-primary"
                   title={diff.new_path ?? diff.old_path ?? ""}
                 >
                   {diff.new_path ?? diff.old_path ?? "(unknown)"}
@@ -80,10 +105,9 @@ export function DiffTab() {
               </div>
             ))}
           </div>
-          <div className="form-section">
+          <div className="border-t border-border pt-4">
             <button
-              className="btn btn-primary"
-              style={{ width: "100%" }}
+              className="w-full cursor-pointer rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               onClick={handleLoad}
               disabled={loading}
             >
@@ -91,49 +115,60 @@ export function DiffTab() {
             </button>
           </div>
         </aside>
-        <section className="diff-view panel">
-          <h2>
+        <section className="flex flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary p-5">
+          <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
             {selectedDiff
               ? (selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff")
               : "Diff"}
           </h2>
-          <div className="diff-content">
+          <div className="scrollbar-custom flex-1 overflow-auto font-mono text-[0.8rem] leading-relaxed">
             {!selectedDiff && (
-              <p className="empty">
+              <p className="p-2 text-[0.9rem] italic text-text-secondary">
                 左のファイル一覧からファイルを選択してください。
               </p>
             )}
             {selectedDiff && selectedDiff.chunks.length === 0 && (
-              <p className="empty">
+              <p className="p-2 text-[0.9rem] italic text-text-secondary">
                 差分内容がありません（バイナリファイルの可能性）。
               </p>
             )}
             {selectedDiff?.chunks.map((chunk, ci) => (
               <div key={ci}>
-                <div className="diff-chunk-header">{chunk.header}</div>
+                <div className="border-y border-border bg-diff-header-bg px-3 py-1 text-xs text-info">
+                  {chunk.header}
+                </div>
                 {chunk.lines.map((line, li) => {
                   const origin = getOriginString(line.origin);
                   const lineClass =
                     origin === "Addition"
-                      ? "diff-line addition"
+                      ? "diff-line-addition"
                       : origin === "Deletion"
-                        ? "diff-line deletion"
-                        : "diff-line context";
+                        ? "diff-line-deletion"
+                        : "";
                   const prefix =
                     origin === "Addition"
                       ? "+"
                       : origin === "Deletion"
                         ? "-"
                         : " ";
+                  const textColor =
+                    origin === "Addition"
+                      ? "text-accent"
+                      : origin === "Deletion"
+                        ? "text-danger"
+                        : "text-text-secondary";
                   return (
-                    <div key={li} className={lineClass}>
-                      <span className="diff-lineno">
+                    <div
+                      key={li}
+                      className={`flex whitespace-pre ${lineClass}`}
+                    >
+                      <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
                         {line.old_lineno ?? ""}
                       </span>
-                      <span className="diff-lineno">
+                      <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
                         {line.new_lineno ?? ""}
                       </span>
-                      <span className="diff-line-content">
+                      <span className={`flex-1 px-2 ${textColor}`}>
                         {prefix}
                         {line.content}
                       </span>

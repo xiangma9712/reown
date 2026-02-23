@@ -13,9 +13,11 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.2.1",
     "@tauri-apps/api": "^2.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.3",

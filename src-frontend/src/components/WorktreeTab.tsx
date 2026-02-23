@@ -56,40 +56,69 @@ export function WorktreeTab() {
   }
 
   return (
-    <div className="tab-content active" id="tab-worktree">
-      <section className="panel" id="worktree-panel">
-        <h2>ワークツリー</h2>
-        <div className="list-container">
-          {loading && <p className="loading">読み込み中…</p>}
-          {error && <p className="error">エラー: {error}</p>}
+    <div>
+      <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+        <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+          ワークツリー
+        </h2>
+        <div className="scrollbar-custom mb-4 min-h-[120px] max-h-[360px] flex-1 overflow-y-auto">
+          {loading && (
+            <p className="p-2 text-[0.9rem] text-text-secondary">読み込み中…</p>
+          )}
+          {error && (
+            <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+          )}
           {!loading && !error && worktrees.length === 0 && (
-            <p className="empty">ワークツリーがありません。</p>
+            <p className="p-2 text-[0.9rem] italic text-text-secondary">
+              ワークツリーがありません。
+            </p>
           )}
           {worktrees.map((wt, index) => (
             <div
               key={wt.path}
-              className={`wt-item${selectedIndex === index ? " selected" : ""}`}
+              className={`cursor-pointer border-b border-border px-3 py-2.5 font-mono text-[0.85rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                selectedIndex === index
+                  ? "border-l-2 border-l-accent bg-bg-hover"
+                  : ""
+              }`}
               onClick={() => setSelectedIndex(index)}
             >
-              <span className={`wt-name${wt.is_main ? " main" : ""}`}>
+              <span
+                className={`font-bold ${wt.is_main ? "text-accent" : "text-text-primary"}`}
+              >
                 {wt.name}
               </span>
-              {wt.is_locked && <span className="wt-badge locked">locked</span>}
-              {!wt.branch && (
-                <span className="wt-badge detached">detached</span>
+              {wt.is_locked && (
+                <span className="ml-2 inline-block rounded-sm bg-danger px-1.5 py-0.5 text-[0.7rem] text-white">
+                  locked
+                </span>
               )}
-              <div className="wt-detail">
+              {!wt.branch && (
+                <span className="ml-2 inline-block rounded-sm bg-status-modified-bg px-1.5 py-0.5 text-[0.7rem] text-warning">
+                  detached
+                </span>
+              )}
+              <div className="mt-0.5 text-[0.8rem] text-text-secondary">
                 ブランチ: {wt.branch ?? "(detached)"}
               </div>
-              <div className="wt-detail">パス: {wt.path}</div>
+              <div className="mt-0.5 text-[0.8rem] text-text-secondary">
+                パス: {wt.path}
+              </div>
             </div>
           ))}
         </div>
-        <div className="form-section">
-          <h3>新規ワークツリー作成</h3>
+        <div className="border-t border-border pt-4">
+          <h3 className="mb-3 text-[0.9rem] text-text-primary/80">
+            新規ワークツリー作成
+          </h3>
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="wt-path">パス</label>
+            <div className="mb-2.5">
+              <label
+                htmlFor="wt-path"
+                className="mb-0.5 block text-[0.8rem] text-text-secondary"
+              >
+                パス
+              </label>
               <input
                 type="text"
                 id="wt-path"
@@ -97,10 +126,16 @@ export function WorktreeTab() {
                 required
                 value={wtPath}
                 onChange={(e) => setWtPath(e.target.value)}
+                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="wt-branch">ブランチ名</label>
+            <div className="mb-2.5">
+              <label
+                htmlFor="wt-branch"
+                className="mb-0.5 block text-[0.8rem] text-text-secondary"
+              >
+                ブランチ名
+              </label>
               <input
                 type="text"
                 id="wt-branch"
@@ -108,18 +143,21 @@ export function WorktreeTab() {
                 required
                 value={wtBranch}
                 onChange={(e) => setWtBranch(e.target.value)}
+                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="cursor-pointer rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               disabled={submitting}
             >
               作成
             </button>
           </form>
           {formMessage && (
-            <div className={`message ${formMessage.type}`}>
+            <div
+              className={`mt-2 min-h-[1.2em] text-[0.8rem] ${formMessage.type === "success" ? "text-accent" : "text-danger"}`}
+            >
               {formMessage.text}
             </div>
           )}

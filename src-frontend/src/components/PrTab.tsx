@@ -2,6 +2,19 @@ import { useState, FormEvent } from "react";
 import { invoke } from "../invoke";
 import type { PrInfo } from "../types";
 
+function stateClass(state: string): string {
+  switch (state) {
+    case "open":
+      return "bg-status-added-bg text-accent";
+    case "closed":
+      return "bg-status-deleted-bg text-danger";
+    case "merged":
+      return "bg-pr-merged-bg text-purple";
+    default:
+      return "bg-btn-secondary text-text-secondary";
+  }
+}
+
 export function PrTab() {
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
@@ -36,16 +49,20 @@ export function PrTab() {
   }
 
   return (
-    <div className="tab-content active" id="tab-pr">
-      <section className="panel">
-        <h2>Pull Requests</h2>
-        <div
-          className="form-section"
-          style={{ borderTop: "none", paddingTop: 0 }}
-        >
-          <div className="pr-form-row">
-            <div className="form-group">
-              <label htmlFor="pr-owner">Owner</label>
+    <div>
+      <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+        <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+          Pull Requests
+        </h2>
+        <div>
+          <div className="mb-2 flex items-end gap-3">
+            <div className="mb-0 flex-1">
+              <label
+                htmlFor="pr-owner"
+                className="mb-0.5 block text-[0.8rem] text-text-secondary"
+              >
+                Owner
+              </label>
               <input
                 type="text"
                 id="pr-owner"
@@ -53,10 +70,16 @@ export function PrTab() {
                 required
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
+                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="pr-repo">Repo</label>
+            <div className="mb-0 flex-1">
+              <label
+                htmlFor="pr-repo"
+                className="mb-0.5 block text-[0.8rem] text-text-secondary"
+              >
+                Repo
+              </label>
               <input
                 type="text"
                 id="pr-repo"
@@ -64,10 +87,16 @@ export function PrTab() {
                 required
                 value={repo}
                 onChange={(e) => setRepo(e.target.value)}
+                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="pr-token">Token</label>
+            <div className="mb-0 flex-1">
+              <label
+                htmlFor="pr-token"
+                className="mb-0.5 block text-[0.8rem] text-text-secondary"
+              >
+                Token
+              </label>
               <input
                 type="password"
                 id="pr-token"
@@ -75,40 +104,59 @@ export function PrTab() {
                 required
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
+                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
             <button
-              className="btn btn-primary"
-              style={{ alignSelf: "flex-end" }}
+              className="shrink-0 cursor-pointer self-end rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               onClick={() => handleLoad()}
               disabled={loading}
             >
               取得
             </button>
           </div>
-          {formError && <div className="message error">{formError}</div>}
+          {formError && (
+            <div className="mt-2 min-h-[1.2em] text-[0.8rem] text-danger">
+              {formError}
+            </div>
+          )}
         </div>
-        <div className="list-container" style={{ maxHeight: "none" }}>
-          {loading && <p className="loading">読み込み中…</p>}
-          {error && <p className="error">エラー: {error}</p>}
+        <div className="scrollbar-custom overflow-y-auto">
+          {loading && (
+            <p className="p-2 text-[0.9rem] text-text-secondary">読み込み中…</p>
+          )}
+          {error && (
+            <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+          )}
           {!loading && !error && prs.length === 0 && (
-            <p className="empty">
+            <p className="p-2 text-[0.9rem] italic text-text-secondary">
               PR情報を取得するには上のフォームに入力してください。
             </p>
           )}
           {prs.map((pr) => (
-            <div key={pr.number} className="pr-item">
-              <div className="pr-item-header">
-                <span className="pr-number">#{pr.number}</span>
-                <span className="pr-title">{pr.title}</span>
-                <span className={`pr-state ${pr.state}`}>{pr.state}</span>
+            <div
+              key={pr.number}
+              className="border-b border-border px-3 py-3 last:border-b-0"
+            >
+              <div className="mb-1 flex items-center gap-2">
+                <span className="font-mono text-[0.8rem] font-semibold text-info">
+                  #{pr.number}
+                </span>
+                <span className="text-[0.9rem] font-medium text-text-primary">
+                  {pr.title}
+                </span>
+                <span
+                  className={`shrink-0 rounded-sm px-1.5 py-0.5 text-[0.7rem] font-semibold ${stateClass(pr.state)}`}
+                >
+                  {pr.state}
+                </span>
               </div>
-              <div className="pr-meta">
+              <div className="mt-0.5 flex gap-4 text-xs text-text-secondary">
                 <span>@{pr.author}</span>
                 <span>{pr.head_branch}</span>
-                <span className="pr-stat additions">+{pr.additions}</span>
-                <span className="pr-stat deletions">-{pr.deletions}</span>
-                <span className="pr-stat">{pr.changed_files} files</span>
+                <span className="font-mono text-accent">+{pr.additions}</span>
+                <span className="font-mono text-danger">-{pr.deletions}</span>
+                <span className="font-mono">{pr.changed_files} files</span>
               </div>
             </div>
           ))}
