@@ -61,6 +61,27 @@ cleanup_branch() {
   git branch -D "$branch" 2>/dev/null || true
 }
 
+# Detect the Conventional Commits prefix from the branch's commit messages.
+# Examines commits on the current branch (vs main) and returns the most common prefix.
+# Falls back to "feat" if no valid prefix is found.
+detect_commit_prefix() {
+  cd "$REPO_ROOT"
+  local commits prefix_line prefix
+  commits=$(git log main..HEAD --format="%s" 2>/dev/null || echo "")
+  if [[ -z "$commits" ]]; then
+    echo "feat"
+    return
+  fi
+  # Extract the prefix from the first commit (most representative of the task)
+  prefix_line=$(echo "$commits" | tail -n 1)
+  prefix=$(echo "$prefix_line" | grep -oE '^(feat|fix|refactor|docs|test|chore|perf|style)' | head -1)
+  if [[ -n "$prefix" ]]; then
+    echo "$prefix"
+  else
+    echo "feat"
+  fi
+}
+
 # Check if any Rust-related files changed on the current branch vs main
 has_rust_changes() {
   cd "$REPO_ROOT"
