@@ -237,6 +237,232 @@ function showConfirmDialog(message) {
   });
 }
 
+// ── タブ切り替え ─────────────────────────────────────────────────
+
+function setupTabs() {
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+      const tabId = "tab-" + btn.getAttribute("data-tab");
+      document.getElementById(tabId).classList.add("active");
+    });
+  });
+}
+
+// ── Diff表示 ─────────────────────────────────────────────────────
+
+let currentDiffs = [];
+
+async function loadDiff() {
+  const container = document.getElementById("diff-file-list");
+  const msg = document.getElementById("diff-message");
+  const btn = document.getElementById("diff-load-btn");
+  msg.textContent = "";
+  msg.className = "message";
+  btn.disabled = true;
+
+  try {
+    currentDiffs = await invoke("diff_workdir");
+    if (currentDiffs.length === 0) {
+      container.innerHTML = '<p class="empty">変更ファイルがありません。</p>';
+      document.getElementById("diff-content").innerHTML =
+        '<p class="empty">変更がありません。</p>';
+      return;
+    }
+    renderDiffFileList(currentDiffs);
+    // 最初のファイルを自動選択
+    selectDiffFile(0);
+  } catch (err) {
+    container.innerHTML = `<p class="error">エラー: ${escapeHtml(String(err))}</p>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderDiffFileList(diffs) {
+  const container = document.getElementById("diff-file-list");
+  container.innerHTML = "";
+  diffs.forEach((diff, index) => {
+    const div = document.createElement("div");
+    div.className = "diff-file-item";
+    div.setAttribute("data-index", index);
+
+    const statusSpan = document.createElement("span");
+    const statusText = diff.status;
+    statusSpan.className = "diff-file-status " + statusText.toLowerCase();
+    statusSpan.textContent = statusLabel(statusText);
+    div.appendChild(statusSpan);
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "diff-file-name";
+    nameSpan.textContent = diff.new_path || diff.old_path || "(unknown)";
+    nameSpan.title = diff.new_path || diff.old_path || "";
+    div.appendChild(nameSpan);
+
+    div.addEventListener("click", () => selectDiffFile(index));
+    container.appendChild(div);
+  });
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case "Added": return "A";
+    case "Deleted": return "D";
+    case "Modified": return "M";
+    case "Renamed": return "R";
+    default: return "?";
+  }
+}
+
+function selectDiffFile(index) {
+  // ファイルリストの選択状態を更新
+  document.querySelectorAll(".diff-file-item").forEach((el) => {
+    el.classList.toggle("selected", parseInt(el.getAttribute("data-index")) === index);
+  });
+
+  const diff = currentDiffs[index];
+  const title = document.getElementById("diff-view-title");
+  title.textContent = diff.new_path || diff.old_path || "Diff";
+
+  renderDiffContent(diff);
+}
+
+function renderDiffContent(diff) {
+  const container = document.getElementById("diff-content");
+  container.innerHTML = "";
+
+  if (diff.chunks.length === 0) {
+    container.innerHTML = '<p class="empty">差分内容がありません（バイナリファイルの可能性）。</p>';
+    return;
+  }
+
+  for (const chunk of diff.chunks) {
+    // チャンクヘッダー
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "diff-chunk-header";
+    headerDiv.textContent = chunk.header;
+    container.appendChild(headerDiv);
+
+    // 差分行
+    for (const line of chunk.lines) {
+      const lineDiv = document.createElement("div");
+      let lineClass = "diff-line";
+      if (line.origin === "Addition") lineClass += " addition";
+      else if (line.origin === "Deletion") lineClass += " deletion";
+      else lineClass += " context";
+      lineDiv.className = lineClass;
+
+      const oldNo = document.createElement("span");
+      oldNo.className = "diff-lineno";
+      oldNo.textContent = line.old_lineno != null ? line.old_lineno : "";
+
+      const newNo = document.createElement("span");
+      newNo.className = "diff-lineno";
+      newNo.textContent = line.new_lineno != null ? line.new_lineno : "";
+
+      const prefix = line.origin === "Addition" ? "+" : line.origin === "Deletion" ? "-" : " ";
+
+      const content = document.createElement("span");
+      content.className = "diff-line-content";
+      content.textContent = prefix + line.content;
+
+      lineDiv.appendChild(oldNo);
+      lineDiv.appendChild(newNo);
+      lineDiv.appendChild(content);
+      container.appendChild(lineDiv);
+    }
+  }
+}
+
+function setupDiff() {
+  document.getElementById("diff-load-btn").addEventListener("click", loadDiff);
+}
+
+// ── PR一覧 ──────────────────────────────────────────────────────
+
+async function loadPullRequests() {
+  const owner = document.getElementById("pr-owner").value.trim();
+  const repo = document.getElementById("pr-repo").value.trim();
+  const token = document.getElementById("pr-token").value.trim();
+  const container = document.getElementById("pr-list");
+  const msg = document.getElementById("pr-message");
+  const btn = document.getElementById("pr-load-btn");
+
+  if (!owner || !repo || !token) {
+    msg.textContent = "全てのフィールドを入力してください。";
+    msg.className = "message error";
+    return;
+  }
+
+  msg.textContent = "";
+  msg.className = "message";
+  btn.disabled = true;
+  container.innerHTML = '<p class="loading">読み込み中…</p>';
+
+  try {
+    const prs = await invoke("list_pull_requests", { owner, repo, token });
+    if (prs.length === 0) {
+      container.innerHTML = '<p class="empty">オープンなPRがありません。</p>';
+      return;
+    }
+    renderPrList(prs);
+  } catch (err) {
+    container.innerHTML = `<p class="error">エラー: ${escapeHtml(String(err))}</p>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderPrList(prs) {
+  const container = document.getElementById("pr-list");
+  container.innerHTML = "";
+
+  for (const pr of prs) {
+    const div = document.createElement("div");
+    div.className = "pr-item";
+
+    const header = document.createElement("div");
+    header.className = "pr-item-header";
+
+    const number = document.createElement("span");
+    number.className = "pr-number";
+    number.textContent = "#" + pr.number;
+    header.appendChild(number);
+
+    const title = document.createElement("span");
+    title.className = "pr-title";
+    title.textContent = pr.title;
+    header.appendChild(title);
+
+    const state = document.createElement("span");
+    state.className = "pr-state " + pr.state;
+    state.textContent = pr.state;
+    header.appendChild(state);
+
+    div.appendChild(header);
+
+    const meta = document.createElement("div");
+    meta.className = "pr-meta";
+    meta.innerHTML =
+      `<span>@${escapeHtml(pr.author)}</span>` +
+      `<span>${escapeHtml(pr.head_branch)}</span>` +
+      `<span class="pr-stat additions">+${pr.additions}</span>` +
+      `<span class="pr-stat deletions">-${pr.deletions}</span>` +
+      `<span class="pr-stat">${pr.changed_files} files</span>`;
+    div.appendChild(meta);
+
+    container.appendChild(div);
+  }
+}
+
+function setupPr() {
+  document.getElementById("pr-load-btn").addEventListener("click", loadPullRequests);
+}
+
 // ── ユーティリティ ──────────────────────────────────────────────────
 
 function escapeHtml(text) {
@@ -248,8 +474,11 @@ function escapeHtml(text) {
 // ── 初期化 ─────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
+  setupTabs();
   setupWorktreeForm();
   setupBranchForm();
+  setupDiff();
+  setupPr();
   loadWorktrees();
   loadBranches();
 });
