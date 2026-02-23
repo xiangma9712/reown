@@ -81,6 +81,7 @@ pub fn diff_workdir(repo_path: &str) -> Result<Vec<FileDiff>> {
 }
 
 /// Return the diff introduced by `commit_sha` relative to its first parent.
+#[allow(dead_code)] // used in Phase 2 for PR diff display
 pub fn diff_commit(repo_path: &str, commit_sha: &str) -> Result<Vec<FileDiff>> {
     let repo = Repository::discover(repo_path)
         .with_context(|| format!("Failed to open repository at {repo_path}"))?;

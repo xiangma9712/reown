@@ -93,10 +93,18 @@ pub fn render_diff(
                             LineOrigin::Context => (" ", Style::default()),
                             LineOrigin::Other(_) => (" ", Style::default().fg(Color::DarkGray)),
                         };
-                        Line::from(Span::styled(
-                            format!("{prefix}{}", l.content.trim_end_matches('\n')),
-                            style,
-                        ))
+                        let old_no = l.old_lineno.map_or("    ".to_string(), |n| format!("{n:4}"));
+                        let new_no = l.new_lineno.map_or("    ".to_string(), |n| format!("{n:4}"));
+                        Line::from(vec![
+                            Span::styled(
+                                format!("{old_no} {new_no} "),
+                                Style::default().fg(Color::DarkGray),
+                            ),
+                            Span::styled(
+                                format!("{prefix}{}", l.content.trim_end_matches('\n')),
+                                style,
+                            ),
+                        ])
                     })
                     .collect();
                 std::iter::once(header).chain(content)

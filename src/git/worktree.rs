@@ -7,6 +7,7 @@ pub struct WorktreeInfo {
     pub name: String,
     pub path: PathBuf,
     pub branch: Option<String>,
+    #[allow(dead_code)] // used in Phase 2 for worktree filtering
     pub is_main: bool,
     pub is_locked: bool,
 }
