@@ -25,6 +25,7 @@ FIX_MAX_TURNS=15
 CI_MAX_ATTEMPTS=5          # max CI check+fix cycles
 CI_INITIAL_WAIT=60         # seconds to wait before first CI check
 CI_POLL_INTERVAL=30        # seconds between CI status polls
+PROPOSE_MAX_TURNS=10
 
 # ── Parse arguments ───────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -188,6 +189,72 @@ mark_needs_split() {
   fi
 }
 
+# Propose new issues by analyzing the gap between INTENT.md and the codebase.
+# Called when the agent has no issues to work on.
+propose_issues() {
+  cd "$REPO_ROOT"
+
+  # Gather all open issues (not just agent-labeled) to avoid duplicates
+  ALL_ISSUES=$(gh issue list --state open --json number,title,labels --limit 100 2>/dev/null || echo "[]")
+
+  PROPOSE_PROMPT=$(cat "$SCRIPT_DIR/prompts/propose.md")
+  INTENT_CONTENT=$(cat "$REPO_ROOT/docs/INTENT.md" 2>/dev/null || echo "(INTENT.md not found)")
+  README_CONTENT=$(cat "$REPO_ROOT/README.md" 2>/dev/null || echo "(README.md not found)")
+  SRC_FILES=$(find "$REPO_ROOT/src" -name '*.rs' -type f 2>/dev/null | sed "s|$REPO_ROOT/||" | sort)
+
+  PROPOSE_INPUT="$PROPOSE_PROMPT
+
+## docs/INTENT.md (Product Vision)
+$INTENT_CONTENT
+
+## README.md (Current Features & Roadmap)
+$README_CONTENT
+
+## Existing Open GitHub Issues (avoid duplicates)
+\`\`\`json
+$ALL_ISSUES
+\`\`\`
+
+## Source Files (what's currently implemented)
+\`\`\`
+$SRC_FILES
+\`\`\`"
+
+  log "Running propose agent to identify unrealized features..."
+  PROPOSE_STDERR="/tmp/claude/agent-propose-stderr.log"
+  PROPOSE_OUTPUT=$(claude -p "$PROPOSE_INPUT" \
+    --max-turns "$PROPOSE_MAX_TURNS" \
+    --max-budget-usd "$MAX_BUDGET_USD" \
+    2>"$PROPOSE_STDERR") || true
+
+  if check_rate_limit "$PROPOSE_STDERR"; then
+    flag_rate_limit
+    return 1
+  fi
+
+  PROPOSE_JSON=$(echo "$PROPOSE_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
+
+  if echo "$PROPOSE_JSON" | jq empty 2>/dev/null; then
+    PROPOSED_COUNT=$(echo "$PROPOSE_JSON" | jq length)
+    echo "$PROPOSE_JSON" | jq -c '.[]' 2>/dev/null | while IFS= read -r entry; do
+      P_TITLE=$(echo "$entry" | jq -r '.title')
+      P_BODY=$(echo "$entry" | jq -r '.body')
+      P_LABELS=$(echo "$entry" | jq -r '.labels // ["agent"] | join(",")')
+
+      if gh issue create --title "$P_TITLE" --body "$P_BODY" --label "$P_LABELS" 2>/dev/null; then
+        log "Proposed new issue: $P_TITLE"
+      else
+        log "WARN: Failed to create proposed issue: $P_TITLE"
+      fi
+    done
+    log "Propose agent created $PROPOSED_COUNT new issue(s)"
+  else
+    log "WARN: Propose agent output invalid JSON. Skipping."
+  fi
+
+  return 0
+}
+
 # Check if a label exists on the repo, create it if not
 ensure_label_exists() {
   local label_name="$1"
@@ -246,7 +313,9 @@ while true; do
   fi
 
   if [[ "$(jq length "$ISSUES_FILE")" -eq 0 ]]; then
-    log "No open issues with label '$AGENT_LABEL'. Sleeping..."
+    log "No open issues with label '$AGENT_LABEL'. Proposing new issues from INTENT.md gap analysis..."
+    propose_issues || break
+    if is_rate_limited; then break; fi
     sleep "$SLEEP_SECONDS"
     continue
   fi
@@ -420,7 +489,9 @@ $INTENT_FOR_SPLIT
   )) | sort_by(.number) | first // empty' "$ISSUES_FILE")
 
   if [[ -z "$TASK_ISSUE_JSON" || "$TASK_ISSUE_JSON" == "null" ]]; then
-    log "No planned tasks available. Sleeping..."
+    log "No planned tasks available. Proposing new issues from INTENT.md gap analysis..."
+    propose_issues || break
+    if is_rate_limited; then break; fi
     sleep "$SLEEP_SECONDS"
     continue
   fi
