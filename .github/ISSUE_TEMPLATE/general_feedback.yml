@@ -1,0 +1,58 @@
+name: General Feedback
+description: Share feedback, ideas, or requests that don't fit bug reports or feature requests
+labels: ["feedback"]
+body:
+  - type: input
+    id: title_summary
+    attributes:
+      label: Summary
+      description: A short summary of your feedback or request
+      placeholder: "e.g. Improve worktree creation workflow"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this to you?
+      options:
+        - high — blocking or significantly impacting my workflow
+        - medium — would noticeably improve my experience
+        - low — nice to have, no urgency
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does this feedback relate to?
+      options:
+        - product — features, UX, behavior
+        - dev-environment — build, tooling, local setup
+        - workflow — CI/CD, automation, agent loop
+        - documentation — README, docs, comments
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe your feedback, idea, or request in detail. Free-form — any format is welcome.
+      placeholder: |
+        What's on your mind? Describe the problem, suggestion, or idea.
+        Feel free to include examples, screenshots, or references.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any extra context, links, or references.
+      placeholder: Related issues, links, screenshots, etc.
+    validations:
+      required: false
