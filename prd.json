@@ -46,11 +46,38 @@
       "issue": null
     },
     {
+      "id": "phase2-007",
+      "title": "Migrate from TUI to native macOS GUI — project scaffolding",
+      "description": "Issue #6 identifies a major requirement misunderstanding: reown should be a native macOS GUI app, not a TUI. This task sets up the frontend foundation. Add a Tauri (or similar Rust-native GUI framework) project alongside the existing Rust backend. Configure the build to produce a native macOS .app bundle. The existing git2/reqwest backend logic in src/git/ and src/github/ is retained as the core library; only the presentation layer changes. This is the foundational step for the local-gui pillar: ローカルベースのGUIツールで画面の切り替えや移動なくレビューを行う.",
+      "pillar": "local-gui",
+      "priority": 5,
+      "passed": true,
+      "issue": 6
+    },
+    {
+      "id": "phase2-010",
+      "title": "Create GitHub issue templates with agent label",
+      "description": "Design and create .github/ISSUE_TEMPLATE/ forms that automatically apply the 'agent' label. Design the form fields to be structured for easy agent consumption: clear title format, structured body sections (goal, context, acceptance criteria), and appropriate labels/assignee fields. Include at least a 'feature request' and 'bug report' template. Solves: agentラベルが入力されるようにして、agentとして指示を取り込みやすいように適切なformを設計する.",
+      "pillar": "dev-support",
+      "priority": 6,
+      "passed": true,
+      "issue": 4
+    },
+    {
+      "id": "phase2-011",
+      "title": "Add planned label and priority comment to synced issues",
+      "description": "Enhance the roadmap agent workflow (agent/loop.sh or a dedicated script) to provide feedback on GitHub issues after syncing them into prd.json. When an issue with the 'agent' label is incorporated into the task list: (1) apply a 'planned' label to the issue via GitHub API (gh issue edit --add-label planned), (2) post a comment on the issue summarizing the assigned priority, task ID, and planned approach. This closes the feedback loop so issue authors know their request was received and how it will be addressed. Solves: issueをシンクするだけではなくて、取り込み済みであればplanned labelをつけて、優先度や対応方針をコメントする.",
+      "pillar": "dev-support",
+      "priority": 7,
+      "passed": false,
+      "issue": 7
+    },
+    {
       "id": "phase2-005",
       "title": "Change impact summary per PR",
       "description": "For each PR, compute and display a summary: modules affected, lines changed, whether tests are included, public API surface changes. Show as a panel above the diff view. This replaces line-by-line review with intent-level understanding (INTENT: 変更の影響範囲・リスクの把握).",
       "pillar": "review-support",
-      "priority": 5,
+      "priority": 8,
       "passed": false,
       "issue": null
     },
@@ -59,61 +86,16 @@
       "title": "Related-file diff filtering",
       "description": "When viewing a PR diff, allow filtering to show only files related to a selected change. Group files by module/directory. Pressing 'f' on a file shows only that file's diff and files that import/depend on it. Solves: 変更内容に関連するファイル差分だけが見れる.",
       "pillar": "review-support",
-      "priority": 6,
+      "priority": 9,
       "passed": false,
       "issue": null
-    },
-    {
-      "id": "phase2-007",
-      "title": "Migrate from TUI to native macOS GUI — project scaffolding",
-      "description": "Issue #6 identifies a major requirement misunderstanding: reown should be a native macOS GUI app, not a TUI. This task sets up the frontend foundation. Add a Tauri (or similar Rust-native GUI framework) project alongside the existing Rust backend. Configure the build to produce a native macOS .app bundle. The existing git2/reqwest backend logic in src/git/ and src/github/ is retained as the core library; only the presentation layer changes. This is the foundational step for the local-gui pillar: ローカルベースのGUIツールで画面の切り替えや移動なくレビューを行う.",
-      "pillar": "local-gui",
-      "priority": 14,
-      "passed": true,
-      "issue": 6
-    },
-    {
-      "id": "phase2-008",
-      "title": "Migrate from TUI to native macOS GUI — frontend views",
-      "description": "Rebuild the main views (worktree list, branch list, diff viewer, PR list) as GUI components in the new frontend framework. Each view should mirror the existing TUI functionality but with proper GUI layout — sidebar navigation, split panes, scrollable panels. Keyboard shortcuts should still work. The GUI must support viewing agent PRs, Devin/Copilot PRs, and colleague PRs in the same window without context switching (INTENT: 同じ場所で画面の切り替えや移動なく行える).",
-      "pillar": "local-gui",
-      "priority": 15,
-      "passed": false,
-      "issue": 6
-    },
-    {
-      "id": "phase2-009",
-      "title": "Migrate from TUI to native macOS GUI — native binary packaging",
-      "description": "Configure the build pipeline to produce a self-contained macOS native binary (.app bundle). Ensure the app can be launched by double-clicking, includes proper Info.plist, icons, and code signing setup. The binary should embed the frontend assets and the Rust backend. Users should be able to run it without installing additional dependencies.",
-      "pillar": "local-gui",
-      "priority": 16,
-      "passed": false,
-      "issue": 6
-    },
-    {
-      "id": "phase2-010",
-      "title": "Create GitHub issue templates with agent label",
-      "description": "Design and create .github/ISSUE_TEMPLATE/ forms that automatically apply the 'agent' label. Design the form fields to be structured for easy agent consumption: clear title format, structured body sections (goal, context, acceptance criteria), and appropriate labels/assignee fields. Include at least a 'feature request' and 'bug report' template. Solves: agentラベルが入力されるようにして、agentとして指示を取り込みやすいように適切なformを設計する.",
-      "pillar": "dev-support",
-      "priority": 17,
-      "passed": false,
-      "issue": 4
-    },
-    {
-      "id": "phase2-011",
-      "title": "Add planned label and priority comment to synced issues",
-      "description": "Enhance the roadmap agent workflow (agent/loop.sh or a dedicated script) to provide feedback on GitHub issues after syncing them into prd.json. When an issue with the 'agent' label is incorporated into the task list: (1) apply a 'planned' label to the issue via GitHub API (gh issue edit --add-label planned), (2) post a comment on the issue summarizing the assigned priority, task ID, and planned approach. This closes the feedback loop so issue authors know their request was received and how it will be addressed. Solves: issueをシンクするだけではなくて、取り込み済みであればplanned labelをつけて、優先度や対応方針をコメントする.",
-      "pillar": "dev-support",
-      "priority": 18,
-      "passed": false,
-      "issue": 7
     },
     {
       "id": "phase3-001",
       "title": "PR risk classification",
       "description": "Score PRs by risk: low (docs, tests, config only), medium (single module, with tests), high (multi-module, public API, no tests). Display risk level as colored badge in PR list. Risk definitions become the foundation for auto-approve decisions. Heuristics: file count, line count, test presence, module spread, public API changes.",
       "pillar": "review-support",
-      "priority": 7,
+      "priority": 10,
       "passed": false,
       "issue": null
     },
@@ -122,7 +104,7 @@
       "title": "Configuration file support (.reown.toml)",
       "description": "Support .reown.toml in repo root. Fields: github.owner, github.repo, github.token_env, ui.default_view, ui.theme, review.risk_thresholds (customize low/medium/high boundaries), automation.auto_approve (off/low/medium), automation.auto_merge_agents (bool). Load on startup.",
       "pillar": "automation",
-      "priority": 8,
+      "priority": 11,
       "passed": false,
       "issue": null
     },
@@ -131,7 +113,7 @@
       "title": "Auto-approve PRs by risk level",
       "description": "Based on .reown.toml automation.auto_approve setting, automatically approve PRs at or below the configured risk level. Show approve action in PR view with 'a' hotkey for manual approve. Log all auto-approve decisions. Default: disabled. Solves: リスクや影響範囲に応じて自動的にapproveする.",
       "pillar": "automation",
-      "priority": 9,
+      "priority": 12,
       "passed": false,
       "issue": null
     },
@@ -140,7 +122,7 @@
       "title": "Auto-merge for agent PRs",
       "description": "When a PR is from a known coding agent (detected by author or label), and risk is within threshold, enable auto-merge after approval. Add 'm' hotkey for manual merge. Support squash merge. Solves: コーディングエージェントによるPRであればenable auto mergeも行い、マージする.",
       "pillar": "automation",
-      "priority": 10,
+      "priority": 13,
       "passed": false,
       "issue": null
     },
@@ -149,7 +131,7 @@
       "title": "Review pattern memory and suggestion",
       "description": "Store review decisions (approve/request-changes + reason) in a local SQLite or JSON log. When reviewing a new PR, match against past patterns (same module, similar diff shape) and suggest likely review comments. Display suggestions as hints in the diff view. Solves: レビューパターンを記憶し、想定されるコメントをsuggestする.",
       "pillar": "review-support",
-      "priority": 11,
+      "priority": 14,
       "passed": false,
       "issue": null
     },
@@ -158,7 +140,7 @@
       "title": "Development task suggestions from codebase",
       "description": "Scan codebase for TODO/FIXME comments, test coverage gaps, and clippy warnings. Surface as task suggestions in a new 't' view. Each suggestion: title, description, source file:line, estimated scope. Solves: コードベースからTODOやRoadmapを読み取り、開発タスクを提案する.",
       "pillar": "dev-support",
-      "priority": 12,
+      "priority": 15,
       "passed": false,
       "issue": null
     },
@@ -167,9 +149,27 @@
       "title": "One-click worktree creation for suggested tasks",
       "description": "In the task suggestions view ('t'), pressing Enter on a task creates a new worktree + branch and opens a shell there. Reuse existing worktree::add_worktree(). Branch name derived from task title. Solves: 提案した開発タスクはワンクリックでworktreeを作成して開発を始められる.",
       "pillar": "dev-support",
-      "priority": 13,
+      "priority": 16,
       "passed": false,
       "issue": null
+    },
+    {
+      "id": "phase2-008",
+      "title": "Migrate from TUI to native macOS GUI — frontend views",
+      "description": "Rebuild the main views (worktree list, branch list, diff viewer, PR list) as GUI components in the new frontend framework. Each view should mirror the existing TUI functionality but with proper GUI layout — sidebar navigation, split panes, scrollable panels. Keyboard shortcuts should still work. The GUI must support viewing agent PRs, Devin/Copilot PRs, and colleague PRs in the same window without context switching (INTENT: 同じ場所で画面の切り替えや移動なく行える).",
+      "pillar": "local-gui",
+      "priority": 17,
+      "passed": false,
+      "issue": 6
+    },
+    {
+      "id": "phase2-009",
+      "title": "Migrate from TUI to native macOS GUI — native binary packaging",
+      "description": "Configure the build pipeline to produce a self-contained macOS native binary (.app bundle). Ensure the app can be launched by double-clicking, includes proper Info.plist, icons, and code signing setup. The binary should embed the frontend assets and the Rust backend. Users should be able to run it without installing additional dependencies.",
+      "pillar": "local-gui",
+      "priority": 18,
+      "passed": false,
+      "issue": 6
     }
   ]
 }
