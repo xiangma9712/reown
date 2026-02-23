@@ -323,12 +323,20 @@ _Automatically posted by agent/loop.sh_"
 - **Description**: $TASK_DESC"
 
   log "Running implementation agent for $TASK_ID..."
-  if ! claude -p "$IMPLEMENT_INPUT" \
+  CLAUDE_STDERR="/tmp/claude/agent-implement-stderr.log"
+  claude -p "$IMPLEMENT_INPUT" \
        --max-turns "$IMPLEMENT_MAX_TURNS" \
        --max-budget-usd "$MAX_BUDGET_USD" \
        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-       2>/dev/null; then
-    log "ERROR: Implementation agent failed for $TASK_ID"
+       2>"$CLAUDE_STDERR"
+  CLAUDE_EXIT=$?
+
+  if [[ $CLAUDE_EXIT -ne 0 ]] || grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
+    if grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
+      log "ERROR: Implementation agent hit resource limit for $TASK_ID. Needs split."
+    else
+      log "ERROR: Implementation agent failed for $TASK_ID (exit=$CLAUDE_EXIT)"
+    fi
     mark_needs_split "$TASK_ID"
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
