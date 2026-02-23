@@ -29,11 +29,32 @@ while [[ $# -gt 0 ]]; do
       echo "  --max-budget USD     Max budget per claude call (default: 5)"
       echo "  --label LABEL        GitHub issue label to watch (default: agent)"
       echo "  --sleep SECONDS      Sleep between iterations (default: 30)"
+      echo ""
+      echo "Graceful stop:"
+      echo "  Ctrl-C               Stop after current step completes"
+      echo "  touch .agent-stop    Stop before next iteration starts"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+# ── Graceful shutdown ─────────────────────────────────────────────────────────
+STOP_REQUESTED=false
+STOP_FILE="$REPO_ROOT/.agent-stop"
+
+request_stop() {
+  STOP_REQUESTED=true
+  echo ""
+  echo "Graceful stop requested. Will exit after current step completes."
+  echo "  (Press Ctrl-C again to force-quit)"
+  trap - SIGINT SIGTERM  # second signal = immediate exit
+}
+trap request_stop SIGINT SIGTERM
+
+should_stop() {
+  [[ "$STOP_REQUESTED" == "true" ]] || [[ -f "$STOP_FILE" ]]
+}
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 log() {
@@ -73,6 +94,12 @@ while true; do
   iteration=$((iteration + 1))
   if [[ "$MAX_ITERATIONS" -gt 0 && "$iteration" -gt "$MAX_ITERATIONS" ]]; then
     log "Reached max iterations ($MAX_ITERATIONS). Exiting."
+    break
+  fi
+
+  if should_stop; then
+    log "Stop requested. Exiting gracefully."
+    rm -f "$STOP_FILE"
     break
   fi
 
@@ -157,6 +184,12 @@ $CURRENT_PRD
   TASK_ISSUE=$(echo "$TASK" | jq -r '.issue // empty')
 
   log "Selected task: $TASK_ID — $TASK_TITLE"
+
+  if should_stop; then
+    log "Stop requested before implementation. Exiting gracefully."
+    rm -f "$STOP_FILE"
+    break
+  fi
 
   # ── Step 5: Create feature branch & implement ──────────────────────────────
   BRANCH_NAME="agent/$TASK_ID"

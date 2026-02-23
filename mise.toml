@@ -1,2 +1,10 @@
 [tools]
 rust = "latest"
+
+[tasks.agent-loop]
+description = "Run the autonomous agent loop"
+run = "bash agent/loop.sh {{arg(name='args', var=true)}}"
+
+[tasks.agent-stop]
+description = "Gracefully stop the agent loop"
+run = "touch .agent-stop && echo 'Stop requested. Agent will exit after current step.'"
