@@ -14,7 +14,8 @@
     "error": "エラー: {{message}}",
     "create": "作成",
     "delete": "削除",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "confirm": "確認"
   },
   "worktree": {
     "title": "ワークツリー",
@@ -38,7 +39,8 @@
     "createNew": "新規ブランチ作成",
     "branchName": "ブランチ名",
     "switch": "切替",
-    "upstream": "upstream: {{name}}"
+    "upstream": "upstream: {{name}}",
+    "actions": "{{name}} のアクション"
   },
   "diff": {
     "changedFiles": "変更ファイル",

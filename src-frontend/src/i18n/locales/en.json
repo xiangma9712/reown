@@ -14,7 +14,8 @@
     "error": "Error: {{message}}",
     "create": "Create",
     "delete": "Delete",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "confirm": "Confirm"
   },
   "worktree": {
     "title": "Worktrees",
@@ -38,7 +39,8 @@
     "createNew": "Create New Branch",
     "branchName": "Branch name",
     "switch": "Switch",
-    "upstream": "upstream: {{name}}"
+    "upstream": "upstream: {{name}}",
+    "actions": "Actions for {{name}}"
   },
   "diff": {
     "changedFiles": "Changed Files",
