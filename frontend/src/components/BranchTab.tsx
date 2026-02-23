@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { BranchInfo } from "../types";
 import { BranchActionMenu } from "./BranchActionMenu";
+import { Button } from "./Button";
 import { Card } from "./Card";
+import { Input } from "./Input";
 
 interface Props {
   showConfirm: (message: string) => Promise<boolean>;
@@ -161,29 +163,18 @@ export function BranchTab({ showConfirm }: Props) {
           </h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-2.5">
-              <label
-                htmlFor="branch-name"
-                className="mb-0.5 block text-[0.8rem] text-text-secondary"
-              >
-                {t("branch.branchName")}
-              </label>
-              <input
-                type="text"
+              <Input
                 id="branch-name"
+                label={t("branch.branchName")}
                 placeholder="new-branch"
                 required
                 value={branchName}
                 onChange={(e) => setBranchName(e.target.value)}
-                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
-            <button
-              type="submit"
-              className="cursor-pointer rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={submitting}
-            >
+            <Button type="submit" disabled={submitting}>
               {t("common.create")}
-            </button>
+            </Button>
           </form>
           {formMessage && (
             <div

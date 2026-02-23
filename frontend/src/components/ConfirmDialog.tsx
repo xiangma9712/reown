@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import * as Dialog from "@radix-ui/react-dialog";
+import { Button } from "./Button";
 
 interface Props {
   open: boolean;
@@ -24,19 +25,13 @@ export function ConfirmDialog({ open, message, onConfirm, onCancel }: Props) {
           </Dialog.Description>
           <div className="flex justify-end gap-2">
             <Dialog.Close asChild>
-              <button
-                className="cursor-pointer rounded border-none bg-btn-secondary px-3 py-1.5 text-[0.8rem] text-text-primary transition-colors hover:bg-btn-secondary-hover"
-                onClick={onCancel}
-              >
+              <Button variant="secondary" onClick={onCancel}>
                 {t("common.cancel")}
-              </button>
+              </Button>
             </Dialog.Close>
-            <button
-              className="cursor-pointer rounded border-none bg-danger px-3 py-1.5 text-[0.8rem] font-semibold text-white transition-colors hover:bg-danger-hover"
-              onClick={onConfirm}
-            >
+            <Button variant="destructive" onClick={onConfirm}>
               {t("common.delete")}
-            </button>
+            </Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

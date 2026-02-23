@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { FileDiff } from "../types";
+import { Button } from "./Button";
 import { Card } from "./Card";
 
 function statusLabel(status: string): string {
@@ -111,13 +112,13 @@ export function DiffTab() {
             ))}
           </div>
           <div className="border-t border-border pt-4">
-            <button
-              className="w-full cursor-pointer rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+            <Button
+              className="w-full"
               onClick={handleLoad}
               disabled={loading}
             >
               {t("diff.loadButton")}
-            </button>
+            </Button>
           </div>
         </Card>
         <Card className="flex flex-col overflow-hidden">
