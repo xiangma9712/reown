@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use git2::{BranchType, Repository};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BranchInfo {
     pub name: String,
     pub is_head: bool,

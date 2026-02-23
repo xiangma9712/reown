@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use git2::{Repository, Worktree};
 use std::path::PathBuf;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct WorktreeInfo {
     pub name: String,
     pub path: PathBuf,
