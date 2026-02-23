@@ -16,23 +16,32 @@ step_ci() {
       sleep "$CI_INITIAL_WAIT"
     fi
 
-    # Poll CI status until it reaches a terminal state
+    # Poll CI status until it reaches a terminal state (with timeout)
     local CI_DONE=false
     local CI_THIS_ATTEMPT=false
-    local poll
-    for poll in $(seq 1 40); do
+    local poll=0
+    local poll_start
+    poll_start=$(date +%s)
+    while true; do
+      poll=$((poll + 1))
+      local elapsed=$(( $(date +%s) - poll_start ))
+      if [[ "$elapsed" -ge "$CI_POLL_TIMEOUT" ]]; then
+        log "WARN: CI polling timed out after ${elapsed}s (limit ${CI_POLL_TIMEOUT}s) on attempt $attempt."
+        break
+      fi
+
       local CI_STATUS
       CI_STATUS=$(gh pr checks "$PR_URL" 2>/dev/null) || true
 
       if [[ -z "$CI_STATUS" ]]; then
-        log "No CI checks found yet (poll $poll). Waiting..."
+        log "No CI checks found yet (poll $poll, ${elapsed}s elapsed). Waiting..."
         sleep "$CI_POLL_INTERVAL"
         continue
       fi
 
       # Check if any checks are still pending or in progress
       if echo "$CI_STATUS" | grep -qiE "pending|in_progress|queued|running"; then
-        log "CI still running (poll $poll)..."
+        log "CI still running (poll $poll, ${elapsed}s elapsed)..."
         sleep "$CI_POLL_INTERVAL"
         continue
       fi
