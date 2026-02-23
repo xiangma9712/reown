@@ -60,5 +60,27 @@ step_implement() {
     return 1
   fi
 
+  # ── Check if any changes were actually made ──────────────────────────────
+  cd "$REPO_ROOT"
+  local DIFF_FROM_MAIN
+  DIFF_FROM_MAIN=$(git diff main --name-only 2>/dev/null)
+  local UNTRACKED
+  UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null)
+
+  if [[ -z "$DIFF_FROM_MAIN" && -z "$UNTRACKED" ]]; then
+    log "No changes made by implementation agent for #$TASK_ISSUE. Issue is already implemented."
+    gh issue edit "$TASK_ISSUE" --add-label "done" --remove-label "doing" --remove-label "planned" 2>/dev/null || true
+    gh issue comment "$TASK_ISSUE" \
+      --body "このissueの機能は既にmainに実装済みです。エージェントが確認しクローズしました。
+
+---
+_Automatically posted by agent/loop.sh_" 2>/dev/null || true
+    gh issue close "$TASK_ISSUE" 2>/dev/null || true
+    log "Issue #$TASK_ISSUE closed as already implemented."
+    cleanup_branch "$BRANCH_NAME"
+    sleep "$SLEEP_SECONDS"
+    return 1
+  fi
+
   return 0
 }
