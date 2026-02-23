@@ -4,9 +4,9 @@
 
 ## reownとは？
 
-AIエージェントが大量のPRを生成する時代に、コードベースを把握し続けたい開発者のためのTUI（ターミナルUI）Gitツールです。
+AIエージェントが大量のPRを生成する時代に、コードベースを把握し続けたい開発者のためのネイティブデスクトップGitツールです。
 
-コードを1行ずつレビューする代わりに、reownではワークツリー、ブランチ、差分を単一のインタラクティブなインターフェースから管理できます。lazygitにインスパイアされています。
+コードを1行ずつレビューする代わりに、reownではワークツリー、ブランチ、差分を単一のインタラクティブなインターフェースから管理できます。Tauri + Rust で構築されたmacOSネイティブアプリです。
 
 ---
 
@@ -21,38 +21,23 @@ AIエージェントが大量のPRを生成する時代に、コードベース�
 ## 使い方
 
 ```sh
-# ビルド
-cargo build --release
+# 開発モード（ホットリロード付き）
+cd src-tauri && cargo tauri dev
 
-# カレントディレクトリのリポジトリで実行
-./target/release/reown
+# リリースビルド（.appバンドル生成）
+cd src-tauri && cargo tauri build
 
-# 特定のリポジトリに対して実行
-./target/release/reown /path/to/repo
+# ビルドされた.appを起動
+open src-tauri/target/release/bundle/macos/reown.app
 ```
-
-### キーボードショートカット
-
-| キー | 操作 |
-|------|------|
-| `Tab` | ビューを切り替え（ワークツリー → ブランチ → Diff） |
-| `w` | ワークツリービューへ |
-| `b` | ブランチビューへ |
-| `d` | Diffビューへ |
-| `↑` / `k` | 上に移動 |
-| `↓` / `j` | 下に移動 |
-| `↵` | 選択したブランチに切り替え（ブランチビュー） |
-| `c` | ブランチ / ワークツリーを作成 |
-| `x` / `Del` | 選択したブランチを削除 |
-| `r` | リフレッシュ |
-| `q` / `Ctrl-C` | 終了 |
 
 ---
 
 ## 技術スタック
 
 - **言語**: Rust
-- **TUI**: [ratatui](https://ratatui.rs) + crossterm
+- **デスクトップ**: [Tauri 2](https://tauri.app) (macOSネイティブ .app バンドル)
+- **フロントエンド**: HTML / CSS / JavaScript
 - **Git**: [git2-rs](https://github.com/rust-lang/git2-rs) (libgit2バインディング)
 
 ---
