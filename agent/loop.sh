@@ -78,7 +78,41 @@ ensure_clean_main() {
     git checkout -- . 2>/dev/null || true
     git clean -fd 2>/dev/null || true
   fi
-  git pull --ff-only origin main 2>/dev/null || true
+  # Fetch latest remote state before pulling
+  log "Fetching latest from origin..."
+  if ! git fetch origin 2>/dev/null; then
+    log "WARN: git fetch origin failed. Continuing with local state."
+  fi
+  if ! git pull --ff-only origin main 2>/dev/null; then
+    log "WARN: git pull --ff-only failed. Attempting reset to origin/main."
+    git reset --hard origin/main 2>/dev/null || true
+  fi
+}
+
+verify_main_is_latest() {
+  cd "$REPO_ROOT"
+  local local_head remote_head
+  local_head=$(git rev-parse HEAD)
+  remote_head=$(git rev-parse origin/main 2>/dev/null) || true
+  if [[ -z "$remote_head" ]]; then
+    log "WARN: Could not resolve origin/main. Skipping verification."
+    return 0
+  fi
+  if [[ "$local_head" != "$remote_head" ]]; then
+    log "ERROR: Local main ($local_head) does not match origin/main ($remote_head)."
+    log "Attempting to sync..."
+    git fetch origin 2>/dev/null || true
+    git reset --hard origin/main 2>/dev/null || true
+    # Re-check after sync
+    local_head=$(git rev-parse HEAD)
+    remote_head=$(git rev-parse origin/main 2>/dev/null) || true
+    if [[ "$local_head" != "$remote_head" ]]; then
+      log "ERROR: Still out of sync after reset. Aborting iteration."
+      return 1
+    fi
+    log "Synced to origin/main successfully."
+  fi
+  return 0
 }
 
 cleanup_branch() {
@@ -215,6 +249,14 @@ $ARCHIVE_CONTENT
   # ── Step 5: Create feature branch & implement ──────────────────────────────
   BRANCH_NAME="agent/$TASK_ID"
   cd "$REPO_ROOT"
+
+  # Guard: verify main is up-to-date with origin before branching
+  if ! verify_main_is_latest; then
+    log "ERROR: Cannot verify main is latest for $TASK_ID. Skipping iteration."
+    sleep "$SLEEP_SECONDS"
+    continue
+  fi
+
   git checkout -b "$BRANCH_NAME"
 
   IMPLEMENT_PROMPT=$(cat "$SCRIPT_DIR/prompts/implement.md")
