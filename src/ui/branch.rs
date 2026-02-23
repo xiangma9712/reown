@@ -1,4 +1,5 @@
 use crate::git::branch::BranchInfo;
+use crate::i18n;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
@@ -50,7 +51,7 @@ pub fn render_branches(
     let list = List::new(items)
         .block(
             Block::default()
-                .title(" Branches [b]  (c)reate  (x)delete  (↵)switch ")
+                .title(i18n::BRANCH_TITLE)
                 .borders(Borders::ALL)
                 .border_style(border_style),
         )

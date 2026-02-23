@@ -1,6 +1,7 @@
 mod app;
 mod git;
 mod github;
+mod i18n;
 mod ui;
 
 use app::{App, InputMode, View};
@@ -137,24 +138,19 @@ fn run_app(
                     // Refresh
                     KeyCode::Char('r') => {
                         app.refresh();
-                        app.status_msg = Some("Refreshed.".into());
+                        app.status_msg = Some(i18n::STATUS_REFRESHED.into());
                     }
                     // Actions
                     KeyCode::Char('c') => match app.view {
                         View::Branches => {
                             app.input_mode = InputMode::NewBranch;
                             app.input_buf.clear();
-                            app.status_msg = Some(
-                                "New branch name (Enter to confirm, Esc to cancel):".into(),
-                            );
+                            app.status_msg = Some(i18n::BRANCH_PROMPT_NEW.into());
                         }
                         View::Worktrees => {
                             app.input_mode = InputMode::NewWorktree;
                             app.input_buf.clear();
-                            app.status_msg = Some(
-                                "New worktree  path|branch  (Enter to confirm, Esc to cancel):"
-                                    .into(),
-                            );
+                            app.status_msg = Some(i18n::WORKTREE_PROMPT_NEW.into());
                         }
                         View::Diff | View::PullRequests => {}
                     },
@@ -202,15 +198,15 @@ fn draw(frame: &mut ratatui::Frame, app: &App) {
         }
     };
     let header = Line::from(vec![
-        Span::raw(" reown  "),
-        Span::styled(" [w] Worktrees ", tab_style(View::Worktrees)),
+        Span::raw(i18n::HEADER_APP_NAME),
+        Span::styled(i18n::HEADER_TAB_WORKTREES, tab_style(View::Worktrees)),
         Span::raw(" "),
-        Span::styled(" [b] Branches ", tab_style(View::Branches)),
+        Span::styled(i18n::HEADER_TAB_BRANCHES, tab_style(View::Branches)),
         Span::raw(" "),
-        Span::styled(" [d] Diff ", tab_style(View::Diff)),
+        Span::styled(i18n::HEADER_TAB_DIFF, tab_style(View::Diff)),
         Span::raw(" "),
-        Span::styled(" [p] PRs ", tab_style(View::PullRequests)),
-        Span::raw("  ─  Tab:next  q:quit  r:refresh"),
+        Span::styled(i18n::HEADER_TAB_PRS, tab_style(View::PullRequests)),
+        Span::raw(i18n::HEADER_HELP),
     ]);
     frame.render_widget(
         Paragraph::new(header).style(Style::default().bg(Color::DarkGray)),
@@ -261,13 +257,14 @@ fn draw(frame: &mut ratatui::Frame, app: &App) {
     // ── Status bar / input ────────────────────────────────────────────────
     let status_content = match app.input_mode {
         InputMode::Normal => {
-            let msg = app.status_msg.as_deref().unwrap_or(
-                "q:quit  Tab:switch view  ↑↓:navigate  c:create  x/Del:delete  ↵:confirm",
-            );
+            let msg = app
+                .status_msg
+                .as_deref()
+                .unwrap_or(i18n::STATUS_DEFAULT);
             Line::from(Span::styled(msg, Style::default().fg(Color::White)))
         }
         InputMode::NewBranch | InputMode::NewWorktree => {
-            let prompt = app.status_msg.as_deref().unwrap_or("Input:");
+            let prompt = app.status_msg.as_deref().unwrap_or(i18n::STATUS_INPUT_PROMPT);
             Line::from(vec![
                 Span::styled(format!("{prompt} "), Style::default().fg(Color::Yellow)),
                 Span::styled(app.input_buf.clone(), Style::default().fg(Color::White)),

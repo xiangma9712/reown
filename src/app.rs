@@ -4,6 +4,7 @@ use crate::git::{
     worktree::{self, WorktreeInfo},
 };
 use crate::github::PrInfo;
+use crate::i18n;
 use anyhow::Result;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -227,15 +228,15 @@ impl App {
     pub fn confirm_create_branch(&mut self) {
         let name = self.input_buf.trim().to_string();
         if name.is_empty() {
-            self.status_msg = Some("Branch name cannot be empty.".into());
+            self.status_msg = Some(i18n::BRANCH_NAME_EMPTY.into());
         } else {
             match branch::create_branch(&self.repo_path, &name) {
                 Ok(()) => {
-                    self.status_msg = Some(format!("Branch '{name}' created."));
+                    self.status_msg = Some(i18n::branch_created(&name));
                     self.refresh();
                 }
                 Err(e) => {
-                    self.status_msg = Some(format!("Error: {e}"));
+                    self.status_msg = Some(i18n::error_msg(&e));
                 }
             }
         }
@@ -249,11 +250,11 @@ impl App {
             let name = b.name.clone();
             match branch::switch_branch(&self.repo_path, &name) {
                 Ok(()) => {
-                    self.status_msg = Some(format!("Switched to '{name}'."));
+                    self.status_msg = Some(i18n::branch_switched(&name));
                     self.refresh();
                 }
                 Err(e) => {
-                    self.status_msg = Some(format!("Error: {e}"));
+                    self.status_msg = Some(i18n::error_msg(&e));
                 }
             }
         }
@@ -265,11 +266,11 @@ impl App {
             let name = b.name.clone();
             match branch::delete_branch(&self.repo_path, &name) {
                 Ok(()) => {
-                    self.status_msg = Some(format!("Branch '{name}' deleted."));
+                    self.status_msg = Some(i18n::branch_deleted(&name));
                     self.refresh();
                 }
                 Err(e) => {
-                    self.status_msg = Some(format!("Error: {e}"));
+                    self.status_msg = Some(i18n::error_msg(&e));
                 }
             }
         }
@@ -282,17 +283,17 @@ impl App {
         let raw = self.input_buf.trim().to_string();
         let parts: Vec<&str> = raw.splitn(2, '|').collect();
         if parts.len() != 2 || parts[0].is_empty() || parts[1].is_empty() {
-            self.status_msg = Some("Format: <path>|<branch>".into());
+            self.status_msg = Some(i18n::WORKTREE_FORMAT_HINT.into());
         } else {
             let wt_path = parts[0].trim();
             let branch = parts[1].trim();
             match worktree::add_worktree(&self.repo_path, wt_path, branch) {
                 Ok(()) => {
-                    self.status_msg = Some(format!("Worktree '{branch}' added at '{wt_path}'."));
+                    self.status_msg = Some(i18n::worktree_added(wt_path, branch));
                     self.refresh();
                 }
                 Err(e) => {
-                    self.status_msg = Some(format!("Error: {e}"));
+                    self.status_msg = Some(i18n::error_msg(&e));
                 }
             }
         }

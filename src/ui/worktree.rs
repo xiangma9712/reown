@@ -1,4 +1,5 @@
 use crate::git::worktree::WorktreeInfo;
+use crate::i18n;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
@@ -28,7 +29,7 @@ pub fn render_worktrees(
             let branch_label = wt
                 .branch
                 .as_deref()
-                .unwrap_or("(detached HEAD)");
+                .unwrap_or(i18n::WORKTREE_DETACHED_HEAD);
             let path_str = wt.path.to_string_lossy();
             let display_name = if wt.name.len() > 24 {
                 format!("{}…", &wt.name[..23])
@@ -56,7 +57,7 @@ pub fn render_worktrees(
     let list = List::new(items)
         .block(
             Block::default()
-                .title(" Worktrees [w] ")
+                .title(i18n::WORKTREE_TITLE)
                 .borders(Borders::ALL)
                 .border_style(border_style),
         )
