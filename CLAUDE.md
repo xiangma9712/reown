@@ -3,6 +3,11 @@
 Rust TUI Git tool built with ratatui + git2-rs. See @README.md for details.
 See @docs/INTENT.md for the product vision (4 pillars: review-support, local-gui, automation, dev-support).
 
+## コミュニケーション
+
+- **日本語でコミュニケーションする** — Issue、PR、コミットメッセージの本文、ドキュメントは日本語で記述する
+- コミットメッセージのprefix（feat, fix等）は英語のまま使用する
+
 ## Build & Test
 
 ```bash
