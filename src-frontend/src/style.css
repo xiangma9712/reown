@@ -66,6 +66,26 @@ body {
   font-weight: 600;
 }
 
+.shortcut-hint {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #5a5a7e;
+  background-color: #2a2a3e;
+  border: 1px solid #3a3a5e;
+  border-radius: 3px;
+  padding: 0 0.25rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.tab-btn.active .shortcut-hint {
+  color: #4ec9b0;
+  border-color: #4ec9b0;
+  background-color: rgba(78, 201, 176, 0.1);
+}
+
 .tab-content {
   display: none;
 }
@@ -141,6 +161,11 @@ body {
   border-bottom: none;
 }
 
+.wt-item.selected {
+  background-color: #1a2a3e;
+  border-left: 2px solid #4ec9b0;
+}
+
 .wt-name {
   font-weight: bold;
   color: #e0e0e0;
@@ -183,6 +208,11 @@ body {
 
 .branch-item:last-child {
   border-bottom: none;
+}
+
+.branch-item.selected {
+  background-color: #1a2a3e;
+  border-left: 2px solid #4ec9b0;
 }
 
 .branch-info {
@@ -554,6 +584,11 @@ body {
 
 .pr-item:last-child {
   border-bottom: none;
+}
+
+.pr-item.selected {
+  background-color: #1a2a3e;
+  border-left: 2px solid #4ec9b0;
 }
 
 .pr-item-header {

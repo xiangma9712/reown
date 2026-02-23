@@ -15,56 +15,56 @@
 
     <!-- タブナビゲーション -->
     <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="git">Git管理</button>
-      <button class="tab-btn" data-tab="diff">Diff</button>
-      <button class="tab-btn" data-tab="pr">PR一覧</button>
+      <button class="tab-btn active" data-tab="worktree">Worktrees<span class="shortcut-hint">W</span></button>
+      <button class="tab-btn" data-tab="branch">Branches<span class="shortcut-hint">B</span></button>
+      <button class="tab-btn" data-tab="diff">Diff<span class="shortcut-hint">D</span></button>
+      <button class="tab-btn" data-tab="pr">PRs<span class="shortcut-hint">P</span></button>
     </nav>
 
-    <!-- Git管理タブ -->
-    <div class="tab-content active" id="tab-git">
-      <div class="panels">
-        <!-- Worktree管理パネル -->
-        <section class="panel" id="worktree-panel">
-          <h2>ワークツリー</h2>
-          <div id="worktree-list" class="list-container">
-            <p class="loading">読み込み中…</p>
-          </div>
-          <div class="form-section">
-            <h3>新規ワークツリー作成</h3>
-            <form id="worktree-form">
-              <div class="form-group">
-                <label for="wt-path">パス</label>
-                <input type="text" id="wt-path" placeholder="/path/to/worktree" required>
-              </div>
-              <div class="form-group">
-                <label for="wt-branch">ブランチ名</label>
-                <input type="text" id="wt-branch" placeholder="feature-branch" required>
-              </div>
-              <button type="submit" class="btn btn-primary">作成</button>
-            </form>
-            <div id="worktree-message" class="message"></div>
-          </div>
-        </section>
+    <!-- Worktreeタブ -->
+    <div class="tab-content active" id="tab-worktree">
+      <section class="panel" id="worktree-panel">
+        <h2>ワークツリー</h2>
+        <div id="worktree-list" class="list-container">
+          <p class="loading">読み込み中…</p>
+        </div>
+        <div class="form-section">
+          <h3>新規ワークツリー作成</h3>
+          <form id="worktree-form">
+            <div class="form-group">
+              <label for="wt-path">パス</label>
+              <input type="text" id="wt-path" placeholder="/path/to/worktree" required>
+            </div>
+            <div class="form-group">
+              <label for="wt-branch">ブランチ名</label>
+              <input type="text" id="wt-branch" placeholder="feature-branch" required>
+            </div>
+            <button type="submit" class="btn btn-primary">作成</button>
+          </form>
+          <div id="worktree-message" class="message"></div>
+        </div>
+      </section>
+    </div>
 
-        <!-- Branch管理パネル -->
-        <section class="panel" id="branch-panel">
-          <h2>ブランチ</h2>
-          <div id="branch-list" class="list-container">
-            <p class="loading">読み込み中…</p>
-          </div>
-          <div class="form-section">
-            <h3>新規ブランチ作成</h3>
-            <form id="branch-form">
-              <div class="form-group">
-                <label for="branch-name">ブランチ名</label>
-                <input type="text" id="branch-name" placeholder="new-branch" required>
-              </div>
-              <button type="submit" class="btn btn-primary">作成</button>
-            </form>
-            <div id="branch-message" class="message"></div>
-          </div>
-        </section>
-      </div>
+    <!-- Branchタブ -->
+    <div class="tab-content" id="tab-branch">
+      <section class="panel" id="branch-panel">
+        <h2>ブランチ</h2>
+        <div id="branch-list" class="list-container">
+          <p class="loading">読み込み中…</p>
+        </div>
+        <div class="form-section">
+          <h3>新規ブランチ作成</h3>
+          <form id="branch-form">
+            <div class="form-group">
+              <label for="branch-name">ブランチ名</label>
+              <input type="text" id="branch-name" placeholder="new-branch" required>
+            </div>
+            <button type="submit" class="btn btn-primary">作成</button>
+          </form>
+          <div id="branch-message" class="message"></div>
+        </div>
+      </section>
     </div>
 
     <!-- Diffタブ -->

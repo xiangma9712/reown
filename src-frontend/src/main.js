@@ -239,16 +239,29 @@ function showConfirmDialog(message) {
 
 // ── タブ切り替え ─────────────────────────────────────────────────
 
+const TAB_ORDER = ["worktree", "branch", "diff", "pr"];
+
+function switchTab(tabName) {
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  tabBtns.forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  if (btn) btn.classList.add("active");
+  const content = document.getElementById("tab-" + tabName);
+  if (content) content.classList.add("active");
+}
+
+function getActiveTab() {
+  const activeBtn = document.querySelector(".tab-btn.active");
+  return activeBtn ? activeBtn.getAttribute("data-tab") : TAB_ORDER[0];
+}
+
 function setupTabs() {
   const tabBtns = document.querySelectorAll(".tab-btn");
   tabBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
-      tabBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
-      const tabId = "tab-" + btn.getAttribute("data-tab");
-      document.getElementById(tabId).classList.add("active");
+      switchTab(btn.getAttribute("data-tab"));
     });
   });
 }
@@ -471,10 +484,118 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// ── キーボードショートカット ──────────────────────────────────────
+
+function isInputFocused() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName.toLowerCase();
+  return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
+}
+
+function navigateList(direction) {
+  const tab = getActiveTab();
+  let items;
+  if (tab === "worktree") {
+    items = document.querySelectorAll("#worktree-list .wt-item");
+  } else if (tab === "branch") {
+    items = document.querySelectorAll("#branch-list .branch-item");
+  } else if (tab === "diff") {
+    items = document.querySelectorAll("#diff-file-list .diff-file-item");
+  } else if (tab === "pr") {
+    items = document.querySelectorAll("#pr-list .pr-item");
+  }
+
+  if (!items || items.length === 0) return;
+
+  let currentIndex = -1;
+  items.forEach((item, i) => {
+    if (item.classList.contains("selected")) currentIndex = i;
+  });
+
+  let nextIndex;
+  if (direction === "down") {
+    nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+  } else {
+    nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+  }
+
+  items.forEach((item) => item.classList.remove("selected"));
+  items[nextIndex].classList.add("selected");
+  items[nextIndex].scrollIntoView({ block: "nearest" });
+
+  // Diffタブではファイル選択も連動
+  if (tab === "diff") {
+    selectDiffFile(nextIndex);
+  }
+}
+
+async function refreshCurrentView() {
+  const tab = getActiveTab();
+  if (tab === "worktree") {
+    await loadWorktrees();
+  } else if (tab === "branch") {
+    await loadBranches();
+  } else if (tab === "diff") {
+    await loadDiff();
+  } else if (tab === "pr") {
+    await loadPullRequests();
+  }
+}
+
+function setupKeyboardShortcuts() {
+  document.addEventListener("keydown", (e) => {
+    // テキスト入力中はショートカットを無効にする
+    if (isInputFocused()) return;
+    // ダイアログ表示中も無効
+    const dialog = document.getElementById("confirm-dialog");
+    if (dialog && !dialog.hidden) return;
+
+    switch (e.key) {
+      case "Tab":
+        e.preventDefault();
+        {
+          const current = getActiveTab();
+          const idx = TAB_ORDER.indexOf(current);
+          const next = TAB_ORDER[(idx + 1) % TAB_ORDER.length];
+          switchTab(next);
+        }
+        break;
+      case "w":
+        switchTab("worktree");
+        break;
+      case "b":
+        switchTab("branch");
+        break;
+      case "d":
+        switchTab("diff");
+        break;
+      case "p":
+        switchTab("pr");
+        break;
+      case "j":
+      case "ArrowDown":
+        e.preventDefault();
+        navigateList("down");
+        break;
+      case "k":
+      case "ArrowUp":
+        e.preventDefault();
+        navigateList("up");
+        break;
+      case "r":
+        e.preventDefault();
+        refreshCurrentView();
+        break;
+    }
+  });
+}
+
 // ── 初期化 ─────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
+  setupKeyboardShortcuts();
   setupWorktreeForm();
   setupBranchForm();
   setupDiff();
