@@ -92,31 +92,7 @@ pub fn delete_branch(repo_path: &str, name: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use git2::Repository;
-    use tempfile::TempDir;
-
-    fn init_test_repo() -> (TempDir, Repository) {
-        let dir = TempDir::new().unwrap();
-        let repo = Repository::init(dir.path()).unwrap();
-
-        let mut config = repo.config().unwrap();
-        config.set_str("user.name", "Test").unwrap();
-        config.set_str("user.email", "test@test.com").unwrap();
-        drop(config);
-
-        let sig = git2::Signature::now("Test", "test@test.com").unwrap();
-        let tree_id = {
-            let mut index = repo.index().unwrap();
-            index.write_tree().unwrap()
-        };
-        {
-            let tree = repo.find_tree(tree_id).unwrap();
-            repo.commit(Some("HEAD"), &sig, &sig, "init", &tree, &[])
-                .unwrap();
-        }
-
-        (dir, repo)
-    }
+    use crate::git::test_utils::init_test_repo;
 
     #[test]
     fn test_list_branches_single_branch() {
