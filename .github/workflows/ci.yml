@@ -6,12 +6,35 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
 
 jobs:
-  check:
+  # Detect which files changed to skip unnecessary checks
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'src/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - '.github/workflows/ci.yml'
+
+  rust:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,3 +62,18 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
+
+  # Status check that always passes — use this for branch protection rules
+  # so PRs with only non-Rust changes (docs, configs) aren't blocked
+  ci-status:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [rust]
+    steps:
+      - name: Check rust job status
+        run: |
+          if [[ "${{ needs.rust.result }}" == "failure" ]]; then
+            echo "Rust checks failed"
+            exit 1
+          fi
+          echo "CI passed (rust: ${{ needs.rust.result }})"
