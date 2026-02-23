@@ -78,11 +78,11 @@ step_ci() {
   done
 
   if [[ "$CI_PASSED" != "true" ]]; then
-    log "ERROR: CI failed after $CI_MAX_ATTEMPTS attempts for #$TASK_ISSUE. Closing PR and cleaning up."
-    gh pr comment "$PR_URL" --body "CI failed after $CI_MAX_ATTEMPTS attempts. Closing PR and cleaning up." 2>/dev/null || true
+    log "ERROR: CI failed after $CI_MAX_ATTEMPTS attempts for #$TASK_ISSUE. Closing PR and marking as pend."
+    gh pr comment "$PR_URL" --body "CI failed after $CI_MAX_ATTEMPTS attempts. Closing PR and marking as pend." 2>/dev/null || true
     gh pr close "$PR_URL" 2>/dev/null || true
     git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
-    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+    mark_pend "$TASK_ISSUE" "CIが${CI_MAX_ATTEMPTS}回の修正試行後も失敗しています"
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     return 1

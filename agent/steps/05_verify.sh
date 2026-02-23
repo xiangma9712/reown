@@ -23,8 +23,8 @@ step_verify() {
       fi
 
       if ! cargo test 2>/dev/null; then
-        log "ERROR: Tests still failing for #$TASK_ISSUE. Skipping."
-        mark_needs_split "$TASK_ISSUE"
+        log "ERROR: Tests still failing for #$TASK_ISSUE. Marking as pend."
+        mark_pend "$TASK_ISSUE" "cargo test が修正後も失敗しています"
         cleanup_branch "$BRANCH_NAME"
         sleep "$SLEEP_SECONDS"
         return 1
@@ -47,8 +47,8 @@ step_verify() {
       fi
 
       if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
-        log "ERROR: Clippy still failing for #$TASK_ISSUE. Skipping."
-        mark_needs_split "$TASK_ISSUE"
+        log "ERROR: Clippy still failing for #$TASK_ISSUE. Marking as pend."
+        mark_pend "$TASK_ISSUE" "cargo clippy が修正後も失敗しています"
         cleanup_branch "$BRANCH_NAME"
         sleep "$SLEEP_SECONDS"
         return 1
@@ -95,8 +95,8 @@ step_verify() {
   done
 
   if [[ "$VERIFY_CLEAN_PASSED" != "true" ]]; then
-    log "ERROR: Working tree still not clean for #$TASK_ISSUE after fix attempt. Skipping."
-    mark_needs_split "$TASK_ISSUE"
+    log "ERROR: Working tree still not clean for #$TASK_ISSUE after fix attempt. Marking as pend."
+    mark_pend "$TASK_ISSUE" "working tree が修正後もcleanになりません"
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     return 1

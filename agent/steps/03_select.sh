@@ -2,13 +2,14 @@
 # Return: 0=ok, 1=skip iteration, 2=break loop
 
 step_select() {
-  # Pick the oldest issue with 'agent' + 'planned' labels, but NOT 'doing', 'done', 'needs-split'
+  # Pick the oldest issue with 'agent' + 'planned' labels, but NOT 'doing', 'done', 'needs-split', 'pend'
   local TASK_ISSUE_JSON
   TASK_ISSUE_JSON=$(jq 'map(select(
     (.labels | map(.name) | index("planned")) != null and
     (.labels | map(.name) | index("doing")) == null and
     (.labels | map(.name) | index("done")) == null and
-    (.labels | map(.name) | index("needs-split")) == null
+    (.labels | map(.name) | index("needs-split")) == null and
+    (.labels | map(.name) | index("pend")) == null
   )) | sort_by(.number) | first // empty' "$ISSUES_FILE")
 
   if [[ -z "$TASK_ISSUE_JSON" || "$TASK_ISSUE_JSON" == "null" ]]; then
