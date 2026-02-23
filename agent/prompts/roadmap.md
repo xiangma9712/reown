@@ -45,6 +45,7 @@ reown aims to **replace GitHub PR review** with a better developer experience. F
 3. For large issues (scope > 1 module or > ~200 lines), split into sub-tasks
 4. **Re-prioritize**: issue-based tasks must come before unpassed seed tasks. Re-number seed task priorities upward to make room. Lower number = higher priority.
 5. Do NOT remove existing tasks or change `passed` status
+6. Do NOT re-add task IDs or issue numbers that exist in `prd.archive.json`
 
 ## Priority Guidelines
 
