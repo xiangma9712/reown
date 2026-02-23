@@ -1,4 +1,5 @@
 use crate::github::PrInfo;
+use crate::i18n;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
@@ -55,7 +56,7 @@ pub fn render_pull_requests(
     let list = List::new(items)
         .block(
             Block::default()
-                .title(" Pull Requests [p] ")
+                .title(i18n::PR_TITLE)
                 .borders(Borders::ALL)
                 .border_style(border_style),
         )

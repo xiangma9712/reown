@@ -1,4 +1,5 @@
 use crate::git::diff::{FileDiff, FileStatus, LineOrigin};
+use crate::i18n;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -43,7 +44,7 @@ pub fn render_diff(
                 .new_path
                 .as_deref()
                 .or(fd.old_path.as_deref())
-                .unwrap_or("(unknown)");
+                .unwrap_or(i18n::DIFF_UNKNOWN_PATH);
             let line = Line::from(vec![
                 Span::styled(
                     format!("[{status_char}] "),
@@ -65,7 +66,7 @@ pub fn render_diff(
     let file_list = List::new(file_items)
         .block(
             Block::default()
-                .title(" Files ")
+                .title(i18n::DIFF_FILES_TITLE)
                 .borders(Borders::ALL)
                 .border_style(border_style),
         )
@@ -112,7 +113,7 @@ pub fn render_diff(
             .collect()
     } else {
         vec![Line::from(Span::styled(
-            "(no file selected)",
+            i18n::DIFF_NO_FILE_SELECTED,
             Style::default().fg(Color::DarkGray),
         ))]
     };
@@ -122,7 +123,7 @@ pub fn render_diff(
     let diff_para = Paragraph::new(diff_lines)
         .block(
             Block::default()
-                .title(" Diff  (↑↓)scroll  [d] ")
+                .title(i18n::DIFF_CONTENT_TITLE)
                 .borders(Borders::ALL)
                 .border_style(border_style),
         )
