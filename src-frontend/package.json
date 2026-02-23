@@ -1,0 +1,9 @@
+{
+  "name": "reown-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "rm -rf out && mkdir -p out && cp src/index.html src/style.css src/main.js out/",
+    "dev": "npm run build && npx serve out -l 3000"
+  }
+}
