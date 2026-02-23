@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
-use git2::{BranchType, Repository};
+use git2::BranchType;
+
+use super::open_repo;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BranchInfo {
@@ -10,8 +12,7 @@ pub struct BranchInfo {
 
 /// List all local branches for the repository at `repo_path`.
 pub fn list_branches(repo_path: &str) -> Result<Vec<BranchInfo>> {
-    let repo = Repository::discover(repo_path)
-        .with_context(|| format!("Failed to open repository at {repo_path}"))?;
+    let repo = open_repo(repo_path)?;
 
     let mut branches = Vec::new();
     for branch_result in repo.branches(Some(BranchType::Local))? {
@@ -34,8 +35,7 @@ pub fn list_branches(repo_path: &str) -> Result<Vec<BranchInfo>> {
 
 /// Create a new local branch from HEAD.
 pub fn create_branch(repo_path: &str, name: &str) -> Result<()> {
-    let repo = Repository::discover(repo_path)
-        .with_context(|| format!("Failed to open repository at {repo_path}"))?;
+    let repo = open_repo(repo_path)?;
 
     let head_commit = repo
         .head()?
@@ -50,8 +50,7 @@ pub fn create_branch(repo_path: &str, name: &str) -> Result<()> {
 
 /// Switch (checkout) to an existing local branch.
 pub fn switch_branch(repo_path: &str, name: &str) -> Result<()> {
-    let repo = Repository::discover(repo_path)
-        .with_context(|| format!("Failed to open repository at {repo_path}"))?;
+    let repo = open_repo(repo_path)?;
 
     let branch = repo
         .find_branch(name, BranchType::Local)
@@ -73,8 +72,7 @@ pub fn switch_branch(repo_path: &str, name: &str) -> Result<()> {
 
 /// Delete a local branch. Refuses to delete the currently checked-out branch.
 pub fn delete_branch(repo_path: &str, name: &str) -> Result<()> {
-    let repo = Repository::discover(repo_path)
-        .with_context(|| format!("Failed to open repository at {repo_path}"))?;
+    let repo = open_repo(repo_path)?;
 
     let mut branch = repo
         .find_branch(name, BranchType::Local)

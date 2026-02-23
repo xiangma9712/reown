@@ -2,6 +2,8 @@ use anyhow::{Context, Result};
 use git2::{Repository, Worktree};
 use std::path::PathBuf;
 
+use super::open_repo;
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct WorktreeInfo {
     pub name: String,
@@ -14,8 +16,7 @@ pub struct WorktreeInfo {
 
 /// List all worktrees for the given repository path.
 pub fn list_worktrees(repo_path: &str) -> Result<Vec<WorktreeInfo>> {
-    let repo = Repository::discover(repo_path)
-        .with_context(|| format!("Failed to open repository at {repo_path}"))?;
+    let repo = open_repo(repo_path)?;
 
     let mut result = Vec::new();
 
@@ -58,8 +59,7 @@ pub fn list_worktrees(repo_path: &str) -> Result<Vec<WorktreeInfo>> {
 /// Add a new worktree at `path` checked out to `branch` (creates branch if
 /// it doesn't exist).
 pub fn add_worktree(repo_path: &str, worktree_path: &str, branch: &str) -> Result<()> {
-    let repo = Repository::discover(repo_path)
-        .with_context(|| format!("Failed to open repository at {repo_path}"))?;
+    let repo = open_repo(repo_path)?;
 
     let path = std::path::Path::new(worktree_path);
 
