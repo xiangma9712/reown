@@ -1,94 +1,94 @@
-name: Bug Report
-description: Report a bug to help improve reown
+name: バグ報告
+description: reownの改善のためにバグを報告する
 labels: ["bug", "agent"]
 body:
   - type: input
     id: title_summary
     attributes:
-      label: Summary
-      description: A short, descriptive summary of the bug (e.g. "Diff view crashes on binary files")
-      placeholder: "<component>: <what goes wrong>"
+      label: 概要
+      description: バグの短い説明（例：「Diffビューがバイナリファイルでクラッシュする」）
+      placeholder: "<コンポーネント>: <何が問題か>"
     validations:
       required: true
 
   - type: textarea
     id: goal
     attributes:
-      label: Goal
-      description: What is the expected correct behavior?
+      label: ゴール
+      description: 期待される正しい動作は何ですか？
       placeholder: |
-        Describe what should happen when the bug is fixed.
-        Example: "The diff view should skip binary files and show a placeholder instead of crashing."
+        バグが修正された後にどうなるべきかを記述してください。
+        例：「Diffビューはバイナリファイルをスキップし、クラッシュではなくプレースホルダーを表示するべき。」
     validations:
       required: true
 
   - type: textarea
     id: context
     attributes:
-      label: Context
-      description: Provide context to reproduce the bug and understand where it occurs.
+      label: 背景
+      description: バグの再現手順と発生箇所のコンテキストを提供してください。
       value: |
-        **Steps to reproduce:**
+        **再現手順：**
         1.
         2.
         3.
 
-        **Actual behavior:**
+        **実際の動作：**
 
 
-        **Environment:**
+        **環境：**
         - OS:
-        - reown version:
-        - Rust version:
+        - reown バージョン:
+        - Rust バージョン:
     validations:
       required: true
 
   - type: textarea
     id: acceptance_criteria
     attributes:
-      label: Acceptance Criteria
-      description: Define the conditions that must be met for this bug to be considered fixed.
+      label: 受け入れ基準
+      description: このバグが修正されたと見なすための条件を定義してください。
       placeholder: |
-        - [ ] <specific condition that must be true>
-        - [ ] No regression in existing tests
-        - [ ] cargo test passes
+        - [ ] <満たすべき具体的な条件>
+        - [ ] 既存テストのリグレッションがない
+        - [ ] cargo test が通る
     validations:
       required: true
 
   - type: dropdown
     id: component
     attributes:
-      label: Component
-      description: Which part of reown is affected?
+      label: コンポーネント
+      description: reownのどの部分が影響を受けていますか？
       options:
-        - Diff viewer
-        - Branch management
-        - Worktree management
-        - PR list / GitHub integration
-        - UI / rendering
-        - CLI / startup
-        - Other
+        - Diffビューア
+        - ブランチ管理
+        - ワークツリー管理
+        - PRリスト / GitHub連携
+        - UI / レンダリング
+        - CLI / 起動
+        - その他
     validations:
       required: true
 
   - type: dropdown
     id: severity
     attributes:
-      label: Severity
-      description: How severe is this bug?
+      label: 重要度
+      description: このバグの深刻度はどのくらいですか？
       options:
-        - crash — app panics or exits unexpectedly
-        - major — feature is broken or unusable
-        - minor — feature works but has issues
-        - cosmetic — visual or formatting issue
+        - crash — アプリがパニックまたは予期せず終了する
+        - major — 機能が壊れているか使用不能
+        - minor — 機能は動くが問題がある
+        - cosmetic — 表示やフォーマットの問題
     validations:
       required: true
 
   - type: textarea
     id: additional
     attributes:
-      label: Additional Information
-      description: Any additional context, logs, screenshots, or references.
-      placeholder: Paste error logs, stack traces, or screenshots here.
+      label: 補足情報
+      description: 追加のコンテキスト、ログ、スクリーンショット、参考資料等。
+      placeholder: エラーログ、スタックトレース、スクリーンショットをここに貼り付けてください。
     validations:
       required: false

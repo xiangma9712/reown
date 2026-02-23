@@ -1,58 +1,58 @@
-name: General Feedback
-description: Share feedback, ideas, or requests that don't fit bug reports or feature requests
+name: 一般フィードバック
+description: バグ報告や機能リクエストに当てはまらないフィードバック、アイデア、要望を共有する
 labels: ["feedback"]
 body:
   - type: input
     id: title_summary
     attributes:
-      label: Summary
-      description: A short summary of your feedback or request
-      placeholder: "e.g. Improve worktree creation workflow"
+      label: 概要
+      description: フィードバックや要望の短い要約
+      placeholder: "例：ワークツリー作成ワークフローの改善"
     validations:
       required: true
 
   - type: dropdown
     id: priority
     attributes:
-      label: Priority
-      description: How important is this to you?
+      label: 優先度
+      description: あなたにとってどのくらい重要ですか？
       options:
-        - high — blocking or significantly impacting my workflow
-        - medium — would noticeably improve my experience
-        - low — nice to have, no urgency
+        - high — ワークフローをブロックまたは大きく影響している
+        - medium — 体験を顕著に改善する
+        - low — あると嬉しいが、緊急性はない
     validations:
       required: true
 
   - type: dropdown
     id: category
     attributes:
-      label: Category
-      description: What area does this feedback relate to?
+      label: カテゴリ
+      description: このフィードバックはどの領域に関するものですか？
       options:
-        - product — features, UX, behavior
-        - dev-environment — build, tooling, local setup
-        - workflow — CI/CD, automation, agent loop
-        - documentation — README, docs, comments
-        - other
+        - product — 機能、UX、動作
+        - dev-environment — ビルド、ツール、ローカルセットアップ
+        - workflow — CI/CD、自動化、エージェントループ
+        - documentation — README、ドキュメント、コメント
+        - other — その他
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: Describe your feedback, idea, or request in detail. Free-form — any format is welcome.
+      label: 詳細
+      description: フィードバック、アイデア、要望を詳しく記述してください。自由形式で構いません。
       placeholder: |
-        What's on your mind? Describe the problem, suggestion, or idea.
-        Feel free to include examples, screenshots, or references.
+        何を考えていますか？問題、提案、アイデアを記述してください。
+        例、スクリーンショット、参考資料を含めても構いません。
     validations:
       required: true
 
   - type: textarea
     id: additional
     attributes:
-      label: Additional Context
-      description: Any extra context, links, or references.
-      placeholder: Related issues, links, screenshots, etc.
+      label: 補足情報
+      description: 追加のコンテキスト、リンク、参考資料。
+      placeholder: 関連Issue、リンク、スクリーンショット等。
     validations:
       required: false

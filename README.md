@@ -1,76 +1,76 @@
 # reown
 
-> Own your codebase again, even in the age of agent PR storm.
+> エージェントPRの嵐の時代でも、コードベースを自分のものに。
 
-## What is reown?
+## reownとは？
 
-A TUI (terminal UI) Git tool for developers who want to stay on top of their codebase even when AI agents are generating a flood of PRs.
+AIエージェントが大量のPRを生成する時代に、コードベースを把握し続けたい開発者のためのTUI（ターミナルUI）Gitツールです。
 
-Instead of reviewing code line-by-line, reown lets you manage your worktrees, branches, and diffs from a single interactive interface — inspired by lazygit.
-
----
-
-## Features (Phase 1 — Git GUI Foundation)
-
-- **Worktree management** — list all worktrees with their branch and path; create new ones with one keystroke
-- **Branch management** — list, create, switch, and delete local branches
-- **Diff viewer** — browse changed files and view diffs with syntax-highlighted additions/deletions
+コードを1行ずつレビューする代わりに、reownではワークツリー、ブランチ、差分を単一のインタラクティブなインターフェースから管理できます。lazygitにインスパイアされています。
 
 ---
 
-## Usage
+## 機能（Phase 1 — Git GUI基盤）
+
+- **ワークツリー管理** — すべてのワークツリーをブランチとパス付きで一覧表示。ワンキーで新規作成
+- **ブランチ管理** — ローカルブランチの一覧、作成、切り替え、削除
+- **Diffビューア** — 変更ファイルを閲覧し、シンタックスハイライト付きの追加/削除差分を表示
+
+---
+
+## 使い方
 
 ```sh
-# Build
+# ビルド
 cargo build --release
 
-# Run in the current directory's repo
+# カレントディレクトリのリポジトリで実行
 ./target/release/reown
 
-# Run against a specific repo
+# 特定のリポジトリに対して実行
 ./target/release/reown /path/to/repo
 ```
 
-### Keyboard shortcuts
+### キーボードショートカット
 
-| Key | Action |
-|-----|--------|
-| `Tab` | Cycle through views (Worktrees → Branches → Diff) |
-| `w` | Go to Worktrees view |
-| `b` | Go to Branches view |
-| `d` | Go to Diff view |
-| `↑` / `k` | Move up |
-| `↓` / `j` | Move down |
-| `↵` | Switch to selected branch (Branches view) |
-| `c` | Create branch / worktree |
-| `x` / `Del` | Delete selected branch |
-| `r` | Refresh |
-| `q` / `Ctrl-C` | Quit |
+| キー | 操作 |
+|------|------|
+| `Tab` | ビューを切り替え（ワークツリー → ブランチ → Diff） |
+| `w` | ワークツリービューへ |
+| `b` | ブランチビューへ |
+| `d` | Diffビューへ |
+| `↑` / `k` | 上に移動 |
+| `↓` / `j` | 下に移動 |
+| `↵` | 選択したブランチに切り替え（ブランチビュー） |
+| `c` | ブランチ / ワークツリーを作成 |
+| `x` / `Del` | 選択したブランチを削除 |
+| `r` | リフレッシュ |
+| `q` / `Ctrl-C` | 終了 |
 
 ---
 
-## Tech Stack
+## 技術スタック
 
-- **Language**: Rust
+- **言語**: Rust
 - **TUI**: [ratatui](https://ratatui.rs) + crossterm
-- **Git**: [git2-rs](https://github.com/rust-lang/git2-rs) (libgit2 bindings)
+- **Git**: [git2-rs](https://github.com/rust-lang/git2-rs) (libgit2バインディング)
 
 ---
 
-## Roadmap
+## ロードマップ
 
-### Phase 1 — Git GUI Foundation ✅
-- [x] Worktree listing and status display
-- [x] Branch creation, switching, deletion
-- [x] Diff display (file-level and chunk-level)
-- [x] One-keystroke worktree creation
+### Phase 1 — Git GUI基盤 ✅
+- [x] ワークツリーの一覧表示とステータス表示
+- [x] ブランチの作成、切り替え、削除
+- [x] Diff表示（ファイルレベル・チャンクレベル）
+- [x] ワンキーでのワークツリー作成
 
-### Phase 2 — PR Support
-- [ ] Auto-generate PR descriptions (diff → description via AI)
-- [ ] PR list from GitHub API
-- [ ] Abstract-layer review assistance (impact range, intent summary)
+### Phase 2 — PRサポート
+- [ ] PR説明文の自動生成（diff → AI経由で説明文）
+- [ ] GitHub APIからのPRリスト取得
+- [ ] 抽象レイヤーのレビュー支援（影響範囲、意図の要約）
 
-### Phase 3 — Enhanced Developer Experience
-- [ ] Development task suggestions from codebase state
-- [ ] Agent PR triage assistance (priority, risk, impact classification)
-- [ ] Workflow customization
+### Phase 3 — 開発体験の強化
+- [ ] コードベース状態からの開発タスク提案
+- [ ] エージェントPRのトリアージ支援（優先度、リスク、影響の分類）
+- [ ] ワークフローのカスタマイズ
