@@ -78,7 +78,12 @@ ensure_clean_main() {
     git checkout -- . 2>/dev/null || true
     git clean -fd 2>/dev/null || true
   fi
-  git pull --ff-only origin main 2>/dev/null || true
+  log "Pulling latest main from origin..."
+  if ! git pull --ff-only origin main 2>&1; then
+    log "ERROR: git pull --ff-only origin main failed (possible merge conflict or network error)"
+    return 1
+  fi
+  log "main is up to date."
 }
 
 cleanup_branch() {
@@ -121,7 +126,11 @@ while true; do
   log "--- Iteration $iteration ---"
 
   # ── Step 1: Ensure clean main ──────────────────────────────────────────────
-  ensure_clean_main
+  if ! ensure_clean_main; then
+    log "ERROR: Failed to sync main. Aborting this iteration."
+    sleep "$SLEEP_SECONDS"
+    continue
+  fi
 
   # ── Step 2: Sync GitHub Issues ─────────────────────────────────────────────
   ISSUES_FILE="/tmp/claude/agent-issues.json"
