@@ -1,54 +1,58 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod error;
+
+use error::AppError;
+
 // ── Branch commands ─────────────────────────────────────────────────────────
 
 #[tauri::command]
-fn list_branches(repo_path: String) -> Result<Vec<reown::git::branch::BranchInfo>, String> {
-    reown::git::branch::list_branches(&repo_path).map_err(|e| format!("{e:#}"))
+fn list_branches(repo_path: String) -> Result<Vec<reown::git::branch::BranchInfo>, AppError> {
+    reown::git::branch::list_branches(&repo_path).map_err(AppError::git)
 }
 
 #[tauri::command]
-fn create_branch(repo_path: String, name: String) -> Result<(), String> {
-    reown::git::branch::create_branch(&repo_path, &name).map_err(|e| format!("{e:#}"))
+fn create_branch(repo_path: String, name: String) -> Result<(), AppError> {
+    reown::git::branch::create_branch(&repo_path, &name).map_err(AppError::git)
 }
 
 #[tauri::command]
-fn switch_branch(repo_path: String, name: String) -> Result<(), String> {
-    reown::git::branch::switch_branch(&repo_path, &name).map_err(|e| format!("{e:#}"))
+fn switch_branch(repo_path: String, name: String) -> Result<(), AppError> {
+    reown::git::branch::switch_branch(&repo_path, &name).map_err(AppError::git)
 }
 
 #[tauri::command]
-fn delete_branch(repo_path: String, name: String) -> Result<(), String> {
-    reown::git::branch::delete_branch(&repo_path, &name).map_err(|e| format!("{e:#}"))
+fn delete_branch(repo_path: String, name: String) -> Result<(), AppError> {
+    reown::git::branch::delete_branch(&repo_path, &name).map_err(AppError::git)
 }
 
 // ── Worktree commands ───────────────────────────────────────────────────────
 
 #[tauri::command]
-fn list_worktrees(repo_path: String) -> Result<Vec<reown::git::worktree::WorktreeInfo>, String> {
-    reown::git::worktree::list_worktrees(&repo_path).map_err(|e| format!("{e:#}"))
+fn list_worktrees(repo_path: String) -> Result<Vec<reown::git::worktree::WorktreeInfo>, AppError> {
+    reown::git::worktree::list_worktrees(&repo_path).map_err(AppError::git)
 }
 
 #[tauri::command]
-fn add_worktree(repo_path: String, worktree_path: String, branch: String) -> Result<(), String> {
+fn add_worktree(repo_path: String, worktree_path: String, branch: String) -> Result<(), AppError> {
     reown::git::worktree::add_worktree(&repo_path, &worktree_path, &branch)
-        .map_err(|e| format!("{e:#}"))
+        .map_err(AppError::git)
 }
 
 // ── Diff commands ───────────────────────────────────────────────────────────
 
 #[tauri::command]
-fn diff_workdir(repo_path: String) -> Result<Vec<reown::git::diff::FileDiff>, String> {
-    reown::git::diff::diff_workdir(&repo_path).map_err(|e| format!("{e:#}"))
+fn diff_workdir(repo_path: String) -> Result<Vec<reown::git::diff::FileDiff>, AppError> {
+    reown::git::diff::diff_workdir(&repo_path).map_err(AppError::git)
 }
 
 #[tauri::command]
 fn diff_commit(
     repo_path: String,
     commit_sha: String,
-) -> Result<Vec<reown::git::diff::FileDiff>, String> {
-    reown::git::diff::diff_commit(&repo_path, &commit_sha).map_err(|e| format!("{e:#}"))
+) -> Result<Vec<reown::git::diff::FileDiff>, AppError> {
+    reown::git::diff::diff_commit(&repo_path, &commit_sha).map_err(AppError::git)
 }
 
 // ── GitHub commands ─────────────────────────────────────────────────────────
@@ -58,10 +62,10 @@ async fn list_pull_requests(
     owner: String,
     repo: String,
     token: String,
-) -> Result<Vec<reown::github::PrInfo>, String> {
+) -> Result<Vec<reown::github::PrInfo>, AppError> {
     reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
         .await
-        .map_err(|e| format!("{e:#}"))
+        .map_err(AppError::github)
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -85,6 +89,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use crate::error::{AppError, ErrorKind};
     use reown::git::branch::BranchInfo;
     use reown::git::diff::{DiffChunk, DiffLineInfo, FileDiff, FileStatus, LineOrigin};
     use reown::git::worktree::WorktreeInfo;
@@ -193,5 +198,49 @@ mod tests {
         assert_eq!(json, "Context");
         let json = serde_json::to_value(&LineOrigin::Other('=')).unwrap();
         assert_eq!(json["Other"], "=");
+    }
+
+    #[test]
+    fn test_app_error_git_serializes() {
+        let err = AppError::git(anyhow::anyhow!("repo not found"));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "git");
+        assert_eq!(json["message"], "repo not found");
+    }
+
+    #[test]
+    fn test_app_error_github_serializes() {
+        let err = AppError::github(anyhow::anyhow!("GitHub API returned 401: Unauthorized"));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "github");
+        assert_eq!(json["message"], "GitHub API returned 401: Unauthorized");
+    }
+
+    #[test]
+    fn test_app_error_kind_variants_serialize() {
+        for (kind, expected) in [
+            (ErrorKind::Git, "git"),
+            (ErrorKind::GitHub, "github"),
+            (ErrorKind::Internal, "internal"),
+        ] {
+            let json = serde_json::to_value(&kind).unwrap();
+            assert_eq!(json, expected);
+        }
+    }
+
+    #[test]
+    fn test_app_error_display() {
+        let err = AppError::git(anyhow::anyhow!("something went wrong"));
+        assert_eq!(err.to_string(), "something went wrong");
+    }
+
+    #[test]
+    fn test_app_error_preserves_context_chain() {
+        let inner = anyhow::anyhow!("disk I/O error")
+            .context("Failed to open repository at /tmp/test");
+        let err = AppError::git(inner);
+        // anyhow の {:#} フォーマットでコンテキストチェーンが保持される
+        assert!(err.message.contains("Failed to open repository"));
+        assert!(err.message.contains("disk I/O error"));
     }
 }
