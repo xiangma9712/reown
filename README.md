@@ -18,6 +18,25 @@ AIエージェントが大量のPRを生成する時代に、コードベース�
 
 ---
 
+## セットアップ
+
+### 前提条件
+
+- [Rust](https://rustup.rs/)
+- [mise](https://mise.jdx.dev/) — Node.js バージョン管理に使用
+
+### Node.js のインストール
+
+```sh
+# mise をインストール（未インストールの場合）
+curl https://mise.run | sh
+
+# Node.js をインストール（.mise.toml の設定に従い自動でバージョンが選択される）
+mise install
+```
+
+---
+
 ## 使い方
 
 ```sh
