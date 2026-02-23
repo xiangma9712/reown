@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import * as Tabs from "@radix-ui/react-tabs";
 import { WorktreeTab } from "./components/WorktreeTab";
 import { BranchTab } from "./components/BranchTab";
 import { DiffTab } from "./components/DiffTab";
@@ -92,43 +93,48 @@ export function App() {
         </p>
       </header>
 
-      <nav className="mb-6 flex border-b border-border">
-        {TAB_ORDER.map((tab) => (
-          <button
-            key={tab}
-            className={`cursor-pointer border-b-2 border-transparent bg-transparent px-5 py-2.5 text-[0.9rem] text-text-secondary transition-colors duration-150 hover:text-text-primary ${
-              activeTab === tab
-                ? "!border-b-accent font-semibold !text-accent"
-                : ""
-            }`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {t(TAB_KEYS[tab].labelKey)}
-            <span
-              className={`ml-1.5 inline-block rounded-sm border border-border-hover bg-bg-hint px-1 align-middle text-[0.65rem] font-semibold leading-[1.4] text-text-muted ${
-                activeTab === tab
-                  ? "!border-accent !bg-accent/10 !text-accent"
-                  : ""
-              }`}
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as TabName)}
+      >
+        <Tabs.List className="mb-6 flex border-b border-border">
+          {TAB_ORDER.map((tab) => (
+            <Tabs.Trigger
+              key={tab}
+              value={tab}
+              className={`cursor-pointer border-b-2 border-transparent bg-transparent px-5 py-2.5 text-[0.9rem] text-text-secondary transition-colors duration-150 hover:text-text-primary data-[state=active]:border-b-accent data-[state=active]:font-semibold data-[state=active]:text-accent`}
             >
-              {TAB_KEYS[tab].shortcut}
-            </span>
-          </button>
-        ))}
-      </nav>
+              {t(TAB_KEYS[tab].labelKey)}
+              <span
+                className={`ml-1.5 inline-block rounded-sm border border-border-hover bg-bg-hint px-1 align-middle text-[0.65rem] font-semibold leading-[1.4] text-text-muted data-[state=active]:border-accent data-[state=active]:bg-accent/10 data-[state=active]:text-accent`}
+                data-state={activeTab === tab ? "active" : "inactive"}
+              >
+                {TAB_KEYS[tab].shortcut}
+              </span>
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
 
-      {activeTab === "worktree" && <WorktreeTab />}
-      {activeTab === "branch" && <BranchTab showConfirm={showConfirm} />}
-      {activeTab === "diff" && <DiffTab />}
-      {activeTab === "pr" && <PrTab />}
+        <Tabs.Content value="worktree">
+          <WorktreeTab />
+        </Tabs.Content>
+        <Tabs.Content value="branch">
+          <BranchTab showConfirm={showConfirm} />
+        </Tabs.Content>
+        <Tabs.Content value="diff">
+          <DiffTab />
+        </Tabs.Content>
+        <Tabs.Content value="pr">
+          <PrTab />
+        </Tabs.Content>
+      </Tabs.Root>
 
-      {confirmDialog && (
-        <ConfirmDialog
-          message={confirmDialog.message}
-          onConfirm={() => handleConfirm(true)}
-          onCancel={() => handleConfirm(false)}
-        />
-      )}
+      <ConfirmDialog
+        open={confirmDialog !== null}
+        message={confirmDialog?.message ?? ""}
+        onConfirm={() => handleConfirm(true)}
+        onCancel={() => handleConfirm(false)}
+      />
     </div>
   );
 }

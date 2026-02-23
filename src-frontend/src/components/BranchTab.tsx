@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { BranchInfo } from "../types";
+import { BranchActionMenu } from "./BranchActionMenu";
 
 interface Props {
   showConfirm: (message: string) => Promise<boolean>;
@@ -142,19 +143,12 @@ export function BranchTab({ showConfirm }: Props) {
                 )}
               </div>
               {!b.is_head && (
-                <div className="ml-2 flex shrink-0 gap-1.5">
-                  <button
-                    className="cursor-pointer rounded border-none bg-btn-secondary px-2 py-1 text-xs text-text-primary transition-colors hover:bg-btn-secondary-hover"
-                    onClick={() => handleSwitch(b.name)}
-                  >
-                    {t("branch.switch")}
-                  </button>
-                  <button
-                    className="cursor-pointer rounded border-none bg-danger px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-danger-hover"
-                    onClick={() => handleDelete(b.name)}
-                  >
-                    {t("common.delete")}
-                  </button>
+                <div className="ml-2 shrink-0">
+                  <BranchActionMenu
+                    branchName={b.name}
+                    onSwitch={handleSwitch}
+                    onDelete={handleDelete}
+                  />
                 </div>
               )}
             </div>
