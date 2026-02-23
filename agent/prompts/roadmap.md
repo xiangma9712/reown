@@ -42,7 +42,8 @@ reown aims to **replace GitHub PR review** with a better developer experience. F
      - `priority`: assign based on dependency order and pillar importance
      - `passed`: `false`
      - `issue`: the issue number
-3. For large issues (scope > 1 module or > ~200 lines), split into sub-tasks
+3. For tasks with `"needs_split": true`, the agent failed to implement them — they are too large. **Split them into 2-4 smaller sub-tasks** and remove the original. Each sub-task should be completable in a single agent run (~30 turns).
+4. For large issues (scope > 1 module or > ~200 lines), split into sub-tasks
 4. **Re-prioritize**: issue-based tasks must come before unpassed seed tasks. Re-number seed task priorities upward to make room. Lower number = higher priority.
 5. Do NOT remove existing tasks or change `passed` status
 6. Do NOT re-add task IDs or issue numbers that exist in `prd.archive.json`

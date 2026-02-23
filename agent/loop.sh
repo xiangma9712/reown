@@ -90,6 +90,16 @@ cleanup_branch() {
   git branch -D "$branch" 2>/dev/null || true
 }
 
+mark_needs_split() {
+  local task_id="$1"
+  local updated
+  updated=$(jq --arg id "$task_id" '
+    .tasks |= map(if .id == $id then .needs_split = true else . end)
+  ' "$REPO_ROOT/prd.json")
+  echo "$updated" > "$REPO_ROOT/prd.json"
+  log "Marked $task_id as needs_split — roadmap agent will split it next iteration"
+}
+
 # ── Main Loop ─────────────────────────────────────────────────────────────────
 iteration=0
 
@@ -177,7 +187,7 @@ $ARCHIVE_CONTENT
   # ── Step 4: Select next task ───────────────────────────────────────────────
   TASK=$(jq -r '
     .tasks
-    | map(select(.passed == false))
+    | map(select(.passed == false and (.needs_split | not)))
     | sort_by(.priority)
     | first
     // empty
@@ -223,6 +233,7 @@ $ARCHIVE_CONTENT
        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
        2>/dev/null; then
     log "ERROR: Implementation agent failed for $TASK_ID"
+    mark_needs_split "$TASK_ID"
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     continue
@@ -240,6 +251,7 @@ $ARCHIVE_CONTENT
 
     if ! cargo test 2>/dev/null; then
       log "ERROR: Tests still failing for $TASK_ID. Skipping."
+      mark_needs_split "$TASK_ID"
       cleanup_branch "$BRANCH_NAME"
       sleep "$SLEEP_SECONDS"
       continue
@@ -256,6 +268,7 @@ $ARCHIVE_CONTENT
 
     if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
       log "ERROR: Clippy still failing for $TASK_ID. Skipping."
+      mark_needs_split "$TASK_ID"
       cleanup_branch "$BRANCH_NAME"
       sleep "$SLEEP_SECONDS"
       continue
