@@ -42,7 +42,7 @@
       "description": "When Enter is pressed on a PR in the PR list view, fetch the PR diff via GitHub API and display it using the existing diff rendering infrastructure. Reuse ui::diff::render_diff with the fetched FileDiff data.",
       "pillar": "local-gui",
       "priority": 4,
-      "passed": false,
+      "passed": true,
       "issue": null
     },
     {
@@ -98,6 +98,15 @@
       "priority": 17,
       "passed": false,
       "issue": 4
+    },
+    {
+      "id": "phase2-011",
+      "title": "Add planned label and priority comment to synced issues",
+      "description": "Enhance the roadmap agent workflow (agent/loop.sh or a dedicated script) to provide feedback on GitHub issues after syncing them into prd.json. When an issue with the 'agent' label is incorporated into the task list: (1) apply a 'planned' label to the issue via GitHub API (gh issue edit --add-label planned), (2) post a comment on the issue summarizing the assigned priority, task ID, and planned approach. This closes the feedback loop so issue authors know their request was received and how it will be addressed. Solves: issueをシンクするだけではなくて、取り込み済みであればplanned labelをつけて、優先度や対応方針をコメントする.",
+      "pillar": "dev-support",
+      "priority": 18,
+      "passed": false,
+      "issue": 7
     },
     {
       "id": "phase3-001",
