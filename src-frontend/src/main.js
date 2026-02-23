@@ -282,6 +282,7 @@ function setupTabs() {
 // ── Diff表示 ─────────────────────────────────────────────────────
 
 let currentDiffs = [];
+let diffFocusPanel = "file-list"; // "file-list" or "content"
 
 async function loadDiff() {
   const container = document.getElementById("diff-file-list");
@@ -404,8 +405,19 @@ function renderDiffContent(diff) {
   }
 }
 
+function switchDiffFocus(panel) {
+  diffFocusPanel = panel || (diffFocusPanel === "file-list" ? "content" : "file-list");
+  const fileListPanel = document.querySelector(".diff-file-list");
+  const contentPanel = document.querySelector(".diff-view");
+  if (fileListPanel) fileListPanel.classList.toggle("focused", diffFocusPanel === "file-list");
+  if (contentPanel) contentPanel.classList.toggle("focused", diffFocusPanel === "content");
+}
+
 function setupDiff() {
   document.getElementById("diff-load-btn").addEventListener("click", loadDiff);
+  // クリックでパネルフォーカスを切り替え
+  document.querySelector(".diff-file-list").addEventListener("click", () => switchDiffFocus("file-list"));
+  document.querySelector(".diff-view").addEventListener("click", () => switchDiffFocus("content"));
 }
 
 // ── PR一覧 ──────────────────────────────────────────────────────
@@ -586,7 +598,10 @@ function setupKeyboardShortcuts() {
     switch (e.key) {
       case "Tab":
         e.preventDefault();
-        {
+        if (getActiveTab() === "diff") {
+          // Diffタブではパネル間のフォーカス切り替え
+          switchDiffFocus();
+        } else {
           const current = getActiveTab();
           const idx = TAB_ORDER.indexOf(current);
           const next = TAB_ORDER[(idx + 1) % TAB_ORDER.length];
@@ -608,12 +623,20 @@ function setupKeyboardShortcuts() {
       case "j":
       case "ArrowDown":
         e.preventDefault();
-        navigateList("down");
+        if (getActiveTab() === "diff" && diffFocusPanel === "content") {
+          document.getElementById("diff-content").scrollBy(0, 40);
+        } else {
+          navigateList("down");
+        }
         break;
       case "k":
       case "ArrowUp":
         e.preventDefault();
-        navigateList("up");
+        if (getActiveTab() === "diff" && diffFocusPanel === "content") {
+          document.getElementById("diff-content").scrollBy(0, -40);
+        } else {
+          navigateList("up");
+        }
         break;
       case "r":
         e.preventDefault();

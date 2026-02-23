@@ -430,6 +430,11 @@ body {
   min-height: 500px;
 }
 
+.diff-file-list.focused,
+.diff-view.focused {
+  border-color: #4ec9b0;
+}
+
 .diff-file-list .list-container {
   max-height: none;
   flex: 1;
