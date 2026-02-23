@@ -69,11 +69,14 @@ ensure_clean_main() {
   current_branch=$(git branch --show-current)
   if [[ "$current_branch" != "main" ]]; then
     log "WARN: Not on main (on '$current_branch'). Switching to main."
+    git checkout -- . 2>/dev/null || true
+    git clean -fd 2>/dev/null || true
     git checkout main
   fi
   if ! git diff --quiet || ! git diff --cached --quiet; then
-    log "ERROR: Working tree is dirty on main. Aborting."
-    exit 1
+    log "WARN: Working tree is dirty on main. Resetting."
+    git checkout -- . 2>/dev/null || true
+    git clean -fd 2>/dev/null || true
   fi
   git pull --ff-only origin main 2>/dev/null || true
 }
@@ -81,6 +84,8 @@ ensure_clean_main() {
 cleanup_branch() {
   local branch="$1"
   cd "$REPO_ROOT"
+  git checkout -- . 2>/dev/null || true
+  git clean -fd 2>/dev/null || true
   git checkout main 2>/dev/null || true
   git branch -D "$branch" 2>/dev/null || true
 }
