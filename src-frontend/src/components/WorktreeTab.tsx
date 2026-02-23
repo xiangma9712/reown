@@ -74,9 +74,7 @@ export function WorktreeTab() {
               <span className={`wt-name${wt.is_main ? " main" : ""}`}>
                 {wt.name}
               </span>
-              {wt.is_locked && (
-                <span className="wt-badge locked">locked</span>
-              )}
+              {wt.is_locked && <span className="wt-badge locked">locked</span>}
               {!wt.branch && (
                 <span className="wt-badge detached">detached</span>
               )}

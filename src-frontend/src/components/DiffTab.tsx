@@ -94,7 +94,7 @@ export function DiffTab() {
         <section className="diff-view panel">
           <h2>
             {selectedDiff
-              ? selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff"
+              ? (selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff")
               : "Diff"}
           </h2>
           <div className="diff-content">

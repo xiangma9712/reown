@@ -106,9 +106,7 @@ export function BranchTab({ showConfirm }: Props) {
                   {b.is_head ? `* ${b.name}` : b.name}
                 </div>
                 {b.upstream && (
-                  <div className="branch-upstream">
-                    upstream: {b.upstream}
-                  </div>
+                  <div className="branch-upstream">upstream: {b.upstream}</div>
                 )}
               </div>
               {!b.is_head && (
