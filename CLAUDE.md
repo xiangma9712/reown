@@ -1,26 +1,10 @@
-# Project Rules
+# reown
 
-## Commit Message Convention
+Rust TUI Git tool built with ratatui + git2-rs. See @README.md for details.
 
-Use [Conventional Commits](https://www.conventionalcommits.org/) format:
+## Build & Test
 
+```bash
+cargo build
+cargo test
 ```
-<prefix>: <summary>
-```
-
-### Prefixes
-
-- `feat` — new feature
-- `fix` — bug fix
-- `refactor` — code restructuring (no behavior change)
-- `docs` — documentation only
-- `test` — adding or updating tests
-- `chore` — build, config, dependencies, CI
-- `perf` — performance improvement
-- `style` — formatting, linting (no logic change)
-
-### Rules
-
-- Summary is lowercase, imperative mood, no period
-- Keep the first line under 72 characters
-- Add body for non-trivial changes (separated by blank line)
