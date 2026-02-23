@@ -28,12 +28,12 @@ jobs:
         with:
           filters: |
             rust:
-              - 'src/**'
+              - 'lib/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
               - '.github/workflows/ci.yml'
             frontend:
-              - 'src-frontend/**'
+              - 'frontend/**'
               - '.mise.toml'
               - '.github/workflows/ci.yml'
 
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: src-frontend
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 

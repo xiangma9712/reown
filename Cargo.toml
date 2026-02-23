@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "src-tauri"]
+members = [".", "app"]
 resolver = "2"
 
 [package]
@@ -10,7 +10,7 @@ description = "Own your codebase again, even in the age of agent PR storm."
 
 [lib]
 name = "reown"
-path = "src/lib.rs"
+path = "lib/lib.rs"
 
 [dependencies]
 git2 = "0.20.4"

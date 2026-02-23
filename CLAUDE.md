@@ -19,7 +19,7 @@ cargo clippy --all-targets -- -D warnings
 ## Architecture
 
 ```
-src/                        — shared library (reown crate)
+lib/                        — shared library (reown crate)
   lib.rs                    — crate root, re-exports git, github
   git/
     mod.rs                  — re-exports branch, diff, worktree
@@ -31,12 +31,12 @@ src/                        — shared library (reown crate)
     pull_request.rs         — PrInfo, list_pull_requests()
     types.rs                — GitHub API response types
 
-src-tauri/                  — Tauri desktop app (entry point)
+app/                        — Tauri desktop app (entry point)
   src/main.rs               — Tauri commands (IPC bridge to reown lib)
   tauri.conf.json           — Tauri config, bundler settings
   build.rs                  — Tauri build script
 
-src-frontend/               — Web frontend (HTML/CSS/JS)
+frontend/                   — Web frontend (HTML/CSS/JS)
   src/index.html            — App shell
   src/style.css             — Styles
   src/main.js               — Frontend logic, Tauri invoke calls
@@ -47,16 +47,16 @@ src-frontend/               — Web frontend (HTML/CSS/JS)
 - **Error handling**: `anyhow::Result` everywhere, `with_context()` for messages
 - **Repo discovery**: `Repository::discover(path)` — never hardcode repo paths
 - **Tests**: `tempfile::TempDir` + `Repository::init()` for isolated git repos
-- **Tauri commands**: Functions in `src-tauri/src/main.rs` wrap library calls and convert errors to strings
+- **Tauri commands**: Functions in `app/src/main.rs` wrap library calls and convert errors to strings
 - **Serialization**: All data types use `serde::Serialize` for Tauri IPC
 
 ## Adding a New Feature
 
-1. Add types/logic in `src/git/<module>.rs` (or new module)
-2. Re-export from `src/git/mod.rs`
-3. Add `#[tauri::command]` wrapper in `src-tauri/src/main.rs`
+1. Add types/logic in `lib/git/<module>.rs` (or new module)
+2. Re-export from `lib/git/mod.rs`
+3. Add `#[tauri::command]` wrapper in `app/src/main.rs`
 4. Register the command in `tauri::generate_handler![]`
-5. Add frontend UI in `src-frontend/src/`
+5. Add frontend UI in `frontend/src/`
 6. Write tests using tempfile pattern
 
 ## Autonomous Agent

@@ -3,4 +3,4 @@
 progress.txt
 .agent-stop
 node_modules/
-src-frontend/out/
+frontend/out/
