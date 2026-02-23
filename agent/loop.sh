@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # agent/loop.sh — Autonomous agent outer loop
-# Picks tasks from prd.json, implements them via claude -p, creates PRs,
-# waits for CI, merges, and closes linked issues.
+# Picks tasks from GitHub issues (label-based), implements them via claude -p,
+# creates PRs, waits for CI, merges, and closes linked issues.
+#
+# Label workflow:
+#   agent           — issue is in the agent task pool
+#   planned         — triaged by roadmap agent, ready for implementation
+#   doing           — currently being worked on
+#   done            — completed (issue also closed)
+#   needs-split     — too large, needs breakdown
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,6 +36,13 @@ while [[ $# -gt 0 ]]; do
       echo "  --max-budget USD     Max budget per claude call (default: 5)"
       echo "  --label LABEL        GitHub issue label to watch (default: agent)"
       echo "  --sleep SECONDS      Sleep between iterations (default: 30)"
+      echo ""
+      echo "Label workflow:"
+      echo "  agent       Issue is in the agent task pool"
+      echo "  planned     Triaged by roadmap agent, ready for implementation"
+      echo "  doing       Currently being worked on by an agent"
+      echo "  done        Completed (issue also closed)"
+      echo "  needs-split Too large, needs breakdown"
       echo ""
       echo "Graceful stop:"
       echo "  Ctrl-C               Stop after current step completes"
@@ -124,20 +138,41 @@ cleanup_branch() {
   git branch -D "$branch" 2>/dev/null || true
 }
 
+# Mark an issue as needing split via label
 mark_needs_split() {
-  local task_id="$1"
-  local updated
-  updated=$(jq --arg id "$task_id" '
-    .tasks |= map(if .id == $id then .needs_split = true else . end)
-  ' "$REPO_ROOT/prd.json")
-  echo "$updated" > "$REPO_ROOT/prd.json"
-  log "Marked $task_id as needs_split — roadmap agent will split it next iteration"
+  local issue_num="$1"
+  if gh issue edit "$issue_num" --add-label "needs-split" --remove-label "doing" 2>/dev/null; then
+    log "Marked issue #$issue_num as needs-split"
+  else
+    log "WARN: Failed to mark issue #$issue_num as needs-split"
+  fi
+}
+
+# Check if a label exists on the repo, create it if not
+ensure_label_exists() {
+  local label_name="$1"
+  local label_color="${2:-ededed}"
+  local label_desc="${3:-}"
+  if ! gh label list --json name -q ".[].name" 2>/dev/null | grep -qx "$label_name"; then
+    gh label create "$label_name" --color "$label_color" --description "$label_desc" 2>/dev/null || true
+  fi
+}
+
+# ── Ensure required labels exist ─────────────────────────────────────────────
+ensure_labels() {
+  ensure_label_exists "planned"     "0e8a16" "Triaged and ready for implementation"
+  ensure_label_exists "doing"       "fbca04" "Currently being worked on"
+  ensure_label_exists "done"        "5319e7" "Completed"
+  ensure_label_exists "needs-split" "d93f0b" "Too large, needs breakdown"
 }
 
 # ── Main Loop ─────────────────────────────────────────────────────────────────
 iteration=0
 
 log "=== Agent loop started (max_iterations=$MAX_ITERATIONS, label=$AGENT_LABEL) ==="
+
+# Ensure required labels exist on the repo
+ensure_labels
 
 while true; do
   iteration=$((iteration + 1))
@@ -157,7 +192,7 @@ while true; do
   # ── Step 1: Ensure clean main ──────────────────────────────────────────────
   ensure_clean_main
 
-  # ── Step 2: Sync GitHub Issues ─────────────────────────────────────────────
+  # ── Step 2: Fetch GitHub issues ─────────────────────────────────────────────
   ISSUES_FILE="/tmp/claude/agent-issues.json"
   mkdir -p /tmp/claude
   if gh issue list --label "$AGENT_LABEL" --state open --json number,title,body,labels \
@@ -165,134 +200,122 @@ while true; do
     issue_count=$(jq length "$ISSUES_FILE")
     log "Fetched $issue_count open issues with label '$AGENT_LABEL'"
   else
-    log "WARN: Failed to fetch issues (gh not configured?). Continuing with prd.json only."
-    echo "[]" > "$ISSUES_FILE"
+    log "ERROR: Failed to fetch GitHub issues. Cannot proceed without issue source."
+    sleep "$SLEEP_SECONDS"
+    continue
   fi
 
-  # ── Step 3: Roadmap — sync issues into prd.json ───────────────────────────
-  if [[ "$(jq length "$ISSUES_FILE")" -gt 0 ]]; then
-    log "Running roadmap agent to sync issues..."
-    cp "$REPO_ROOT/prd.json" "$REPO_ROOT/prd.json.bak"
+  if [[ "$(jq length "$ISSUES_FILE")" -eq 0 ]]; then
+    log "No open issues with label '$AGENT_LABEL'. Sleeping..."
+    sleep "$SLEEP_SECONDS"
+    continue
+  fi
 
+  # ── Step 3: Triage — label new issues as 'planned' ─────────────────────────
+  # Find issues that have 'agent' label but NOT 'planned', 'doing', 'done', or 'needs-split'
+  NEW_ISSUES=$(jq '[.[] | select(
+    (.labels | map(.name) | index("planned")) == null and
+    (.labels | map(.name) | index("doing")) == null and
+    (.labels | map(.name) | index("done")) == null and
+    (.labels | map(.name) | index("needs-split")) == null
+  )]' "$ISSUES_FILE")
+
+  NEW_ISSUE_COUNT=$(echo "$NEW_ISSUES" | jq length)
+  if [[ "$NEW_ISSUE_COUNT" -gt 0 ]]; then
+    log "Found $NEW_ISSUE_COUNT new issues to triage..."
+
+    # Run roadmap agent to triage new issues
     ROADMAP_PROMPT=$(cat "$SCRIPT_DIR/prompts/roadmap.md")
-    ISSUES_CONTENT=$(cat "$ISSUES_FILE")
-    CURRENT_PRD=$(cat "$REPO_ROOT/prd.json")
     INTENT_CONTENT=$(cat "$REPO_ROOT/docs/INTENT.md" 2>/dev/null || echo "(INTENT.md not found)")
-    ARCHIVE_CONTENT=$(cat "$REPO_ROOT/prd.archive.json" 2>/dev/null || echo "[]")
 
     ROADMAP_INPUT="$ROADMAP_PROMPT
 
 ## docs/INTENT.md (Product Vision)
 $INTENT_CONTENT
 
-## GitHub Issues (JSON)
+## New GitHub Issues to triage (JSON)
 \`\`\`json
-$ISSUES_CONTENT
-\`\`\`
-
-## Current prd.json
-\`\`\`json
-$CURRENT_PRD
-\`\`\`
-
-## Archived (completed) tasks — do NOT re-add these
-\`\`\`json
-$ARCHIVE_CONTENT
+$NEW_ISSUES
 \`\`\`"
 
+    log "Running roadmap agent to triage $NEW_ISSUE_COUNT new issues..."
     ROADMAP_OUTPUT=$(claude -p "$ROADMAP_INPUT" \
       --max-turns "$ROADMAP_MAX_TURNS" \
       --max-budget-usd "$MAX_BUDGET_USD" \
       2>/dev/null) || true
 
     # Extract JSON from output (between ```json and ```)
-    EXTRACTED_JSON=$(echo "$ROADMAP_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
+    TRIAGE_JSON=$(echo "$ROADMAP_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
 
-    if echo "$EXTRACTED_JSON" | jq empty 2>/dev/null; then
-      echo "$EXTRACTED_JSON" > "$REPO_ROOT/prd.json"
-      log "prd.json updated by roadmap agent"
+    if echo "$TRIAGE_JSON" | jq empty 2>/dev/null; then
+      # Apply 'planned' label and post triage comment for each issue
+      echo "$TRIAGE_JSON" | jq -c '.[]' 2>/dev/null | while IFS= read -r entry; do
+        ISSUE_NUM=$(echo "$entry" | jq -r '.issue')
+        T_PILLAR=$(echo "$entry" | jq -r '.pillar // "N/A"')
+        T_APPROACH=$(echo "$entry" | jq -r '.approach // .description // "N/A"')
+        T_PRIORITY=$(echo "$entry" | jq -r '.priority // "N/A"')
 
-      # ── Step 3b: Feedback — label & comment on newly synced issues ──────
-      # Find tasks in new prd.json that have an issue number but didn't exist in the old one
-      NEW_ISSUE_TASKS=$(jq -n \
-        --slurpfile old "$REPO_ROOT/prd.json.bak" \
-        --slurpfile new "$REPO_ROOT/prd.json" '
-        ($old[0].tasks // [] | map(select(.issue != null)) | map(.issue) ) as $old_issues |
-        ($new[0].tasks // [])
-        | map(select(.issue != null and (.issue | IN($old_issues[]) | not)))
-      ')
+        # Apply 'planned' label
+        if gh issue edit "$ISSUE_NUM" --add-label "planned" 2>/dev/null; then
+          log "Applied 'planned' label to issue #$ISSUE_NUM"
+        else
+          log "WARN: Failed to apply 'planned' label to issue #$ISSUE_NUM"
+        fi
 
-      NEW_ISSUE_COUNT=$(echo "$NEW_ISSUE_TASKS" | jq length)
-      if [[ "$NEW_ISSUE_COUNT" -gt 0 ]]; then
-        log "Found $NEW_ISSUE_COUNT newly synced issues — applying 'planned' label and commenting..."
-        echo "$NEW_ISSUE_TASKS" | jq -c '.[]' | while IFS= read -r task_entry; do
-          ISSUE_NUM=$(echo "$task_entry" | jq -r '.issue')
-          T_ID=$(echo "$task_entry" | jq -r '.id')
-          T_TITLE=$(echo "$task_entry" | jq -r '.title')
-          T_DESC=$(echo "$task_entry" | jq -r '.description')
-          T_PRIORITY=$(echo "$task_entry" | jq -r '.priority')
-          T_PILLAR=$(echo "$task_entry" | jq -r '.pillar // "N/A"')
+        # Post triage comment
+        COMMENT_BODY="## Planned
 
-          # Apply 'planned' label
-          if gh issue edit "$ISSUE_NUM" --add-label "planned" 2>/dev/null; then
-            log "Applied 'planned' label to issue #$ISSUE_NUM"
-          else
-            log "WARN: Failed to apply 'planned' label to issue #$ISSUE_NUM"
-          fi
-
-          # Post priority/plan comment
-          COMMENT_BODY="## Planned
-
-This issue has been incorporated into the project roadmap.
+This issue has been triaged and added to the agent work queue.
 
 | Field | Value |
 |-------|-------|
-| **Task ID** | \`$T_ID\` |
 | **Priority** | $T_PRIORITY |
 | **Pillar** | $T_PILLAR |
 
 ### Planned approach
 
-$T_DESC
+$T_APPROACH
 
 ---
 _Automatically posted by agent/loop.sh_"
 
-          if gh issue comment "$ISSUE_NUM" --body "$COMMENT_BODY" 2>/dev/null; then
-            log "Posted plan comment on issue #$ISSUE_NUM (task $T_ID, priority $T_PRIORITY)"
-          else
-            log "WARN: Failed to post comment on issue #$ISSUE_NUM"
-          fi
-        done
-      fi
+        if gh issue comment "$ISSUE_NUM" --body "$COMMENT_BODY" 2>/dev/null; then
+          log "Posted triage comment on issue #$ISSUE_NUM"
+        else
+          log "WARN: Failed to post comment on issue #$ISSUE_NUM"
+        fi
+      done
     else
-      log "WARN: Roadmap agent output invalid JSON. Keeping old prd.json."
-      cp "$REPO_ROOT/prd.json.bak" "$REPO_ROOT/prd.json"
+      log "WARN: Roadmap agent output invalid JSON. Applying 'planned' label directly."
+      # Fallback: just apply 'planned' label without detailed triage
+      echo "$NEW_ISSUES" | jq -r '.[].number' | while IFS= read -r num; do
+        gh issue edit "$num" --add-label "planned" 2>/dev/null || true
+        log "Applied 'planned' label to issue #$num (fallback)"
+      done
     fi
-    rm -f "$REPO_ROOT/prd.json.bak"
   fi
 
-  # ── Step 4: Select next task ───────────────────────────────────────────────
-  TASK=$(jq -r '
-    .tasks
-    | map(select(.passed == false and (.needs_split | not)))
-    | sort_by(.priority)
-    | first
-    // empty
-  ' "$REPO_ROOT/prd.json" 2>/dev/null) || true
+  # ── Step 4: Select next task from GitHub issues ─────────────────────────────
+  # Pick the oldest issue with 'agent' + 'planned' labels, but NOT 'doing', 'done', 'needs-split'
+  TASK_ISSUE_JSON=$(jq 'map(select(
+    (.labels | map(.name) | index("planned")) != null and
+    (.labels | map(.name) | index("doing")) == null and
+    (.labels | map(.name) | index("done")) == null and
+    (.labels | map(.name) | index("needs-split")) == null
+  )) | sort_by(.number) | first // empty' "$ISSUES_FILE")
 
-  if [[ -z "$TASK" || "$TASK" == "null" ]]; then
-    log "No pending tasks. Sleeping..."
+  if [[ -z "$TASK_ISSUE_JSON" || "$TASK_ISSUE_JSON" == "null" ]]; then
+    log "No planned tasks available. Sleeping..."
     sleep "$SLEEP_SECONDS"
     continue
   fi
 
-  TASK_ID=$(echo "$TASK" | jq -r '.id')
-  TASK_TITLE=$(echo "$TASK" | jq -r '.title')
-  TASK_DESC=$(echo "$TASK" | jq -r '.description')
-  TASK_ISSUE=$(echo "$TASK" | jq -r '.issue // empty')
+  TASK_ISSUE=$(echo "$TASK_ISSUE_JSON" | jq -r '.number')
+  TASK_TITLE=$(echo "$TASK_ISSUE_JSON" | jq -r '.title')
+  TASK_DESC=$(echo "$TASK_ISSUE_JSON" | jq -r '.body // ""')
+  TASK_ID="issue-${TASK_ISSUE}"
 
-  log "Selected task: $TASK_ID — $TASK_TITLE"
+  log "Selected task: #$TASK_ISSUE — $TASK_TITLE"
 
   if should_stop; then
     log "Stop requested before implementation. Exiting gracefully."
@@ -300,13 +323,19 @@ _Automatically posted by agent/loop.sh_"
     break
   fi
 
-  # ── Step 5: Create feature branch & implement ──────────────────────────────
+  # ── Step 5: Mark issue as 'doing' ──────────────────────────────────────────
+  if ! gh issue edit "$TASK_ISSUE" --add-label "doing" 2>/dev/null; then
+    log "WARN: Failed to apply 'doing' label to issue #$TASK_ISSUE"
+  fi
+
+  # ── Step 6: Create feature branch & implement ──────────────────────────────
   BRANCH_NAME="agent/$TASK_ID"
   cd "$REPO_ROOT"
 
   # Guard: verify main is up-to-date with origin before branching
   if ! verify_main_is_latest; then
-    log "ERROR: Cannot verify main is latest for $TASK_ID. Skipping iteration."
+    log "ERROR: Cannot verify main is latest for #$TASK_ISSUE. Skipping iteration."
+    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     sleep "$SLEEP_SECONDS"
     continue
   fi
@@ -319,10 +348,11 @@ _Automatically posted by agent/loop.sh_"
 ## Task to Implement
 
 - **ID**: $TASK_ID
+- **Issue**: #$TASK_ISSUE
 - **Title**: $TASK_TITLE
 - **Description**: $TASK_DESC"
 
-  log "Running implementation agent for $TASK_ID..."
+  log "Running implementation agent for #$TASK_ISSUE..."
   CLAUDE_STDERR="/tmp/claude/agent-implement-stderr.log"
   claude -p "$IMPLEMENT_INPUT" \
        --max-turns "$IMPLEMENT_MAX_TURNS" \
@@ -333,11 +363,11 @@ _Automatically posted by agent/loop.sh_"
 
   if [[ $CLAUDE_EXIT -ne 0 ]] || grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
     if grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
-      log "ERROR: Implementation agent hit resource limit for $TASK_ID. Needs split."
+      log "ERROR: Implementation agent hit resource limit for #$TASK_ISSUE. Needs split."
     else
-      log "ERROR: Implementation agent failed for $TASK_ID (exit=$CLAUDE_EXIT)"
+      log "ERROR: Implementation agent failed for #$TASK_ISSUE (exit=$CLAUDE_EXIT)"
     fi
-    mark_needs_split "$TASK_ID"
+    mark_needs_split "$TASK_ISSUE"
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     continue
@@ -354,8 +384,8 @@ _Automatically posted by agent/loop.sh_"
       2>/dev/null || true
 
     if ! cargo test 2>/dev/null; then
-      log "ERROR: Tests still failing for $TASK_ID. Skipping."
-      mark_needs_split "$TASK_ID"
+      log "ERROR: Tests still failing for #$TASK_ISSUE. Skipping."
+      mark_needs_split "$TASK_ISSUE"
       cleanup_branch "$BRANCH_NAME"
       sleep "$SLEEP_SECONDS"
       continue
@@ -371,15 +401,15 @@ _Automatically posted by agent/loop.sh_"
       2>/dev/null || true
 
     if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
-      log "ERROR: Clippy still failing for $TASK_ID. Skipping."
-      mark_needs_split "$TASK_ID"
+      log "ERROR: Clippy still failing for #$TASK_ISSUE. Skipping."
+      mark_needs_split "$TASK_ISSUE"
       cleanup_branch "$BRANCH_NAME"
       sleep "$SLEEP_SECONDS"
       continue
     fi
   fi
 
-  # ── Step 6: Pre-push verification — ensure working tree is clean ──────────
+  # ── Step 7: Pre-push verification — ensure working tree is clean ──────────
   cd "$REPO_ROOT"
   VERIFY_CLEAN_PASSED=false
   for verify_attempt in 1 2; do
@@ -391,7 +421,7 @@ _Automatically posted by agent/loop.sh_"
     if [[ "$verify_attempt" -eq 1 ]]; then
       log "WARN: Working tree not clean before push. Attempting to commit remaining changes..."
       git add -A
-      git commit -m "fix: commit remaining changes for $TASK_ID" 2>/dev/null || true
+      git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
 
       # Re-run tests/clippy after committing leftover changes
       if ! cargo test 2>/dev/null || ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
@@ -406,8 +436,8 @@ _Automatically posted by agent/loop.sh_"
   done
 
   if [[ "$VERIFY_CLEAN_PASSED" != "true" ]]; then
-    log "ERROR: Working tree still not clean for $TASK_ID after fix attempt. Skipping."
-    mark_needs_split "$TASK_ID"
+    log "ERROR: Working tree still not clean for #$TASK_ISSUE after fix attempt. Skipping."
+    mark_needs_split "$TASK_ISSUE"
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     continue
@@ -415,11 +445,11 @@ _Automatically posted by agent/loop.sh_"
 
   log "Pre-push verification passed: working tree is clean."
 
-  # ── Step 7: Push & create PR ───────────────────────────────────────────────
+  # ── Step 8: Push & create PR ───────────────────────────────────────────────
   cd "$REPO_ROOT"
   git push -u origin "$BRANCH_NAME"
 
-  # ── Step 7b: Post-push verification — ensure all commits are pushed ──────
+  # ── Step 8b: Post-push verification — ensure all commits are pushed ──────
   cd "$REPO_ROOT"
   git fetch origin "$BRANCH_NAME" 2>/dev/null || true
   LOCAL_HEAD=$(git rev-parse HEAD)
@@ -430,8 +460,8 @@ _Automatically posted by agent/loop.sh_"
     git fetch origin "$BRANCH_NAME" 2>/dev/null || true
     REMOTE_HEAD=$(git rev-parse "origin/$BRANCH_NAME" 2>/dev/null) || true
     if [[ "$LOCAL_HEAD" != "$REMOTE_HEAD" ]]; then
-      log "ERROR: Still out of sync after re-push for $TASK_ID. Skipping."
-      mark_needs_split "$TASK_ID"
+      log "ERROR: Still out of sync after re-push for #$TASK_ISSUE. Skipping."
+      mark_needs_split "$TASK_ISSUE"
       cleanup_branch "$BRANCH_NAME"
       sleep "$SLEEP_SECONDS"
       continue
@@ -442,17 +472,11 @@ _Automatically posted by agent/loop.sh_"
 
   PR_BODY="## Summary
 
-Implements task **$TASK_ID**: $TASK_TITLE
+Implements issue #$TASK_ISSUE: $TASK_TITLE
 
-$TASK_DESC"
+$TASK_DESC
 
-  if [[ -n "$TASK_ISSUE" ]]; then
-    PR_BODY="$PR_BODY
-
-Closes #$TASK_ISSUE"
-  fi
-
-  PR_BODY="$PR_BODY
+Closes #$TASK_ISSUE
 
 ---
 Generated by agent/loop.sh"
@@ -464,7 +488,8 @@ Generated by agent/loop.sh"
     --head "$BRANCH_NAME" 2>/dev/null) || true
 
   if [[ -z "$PR_URL" ]]; then
-    log "ERROR: Failed to create PR for $TASK_ID"
+    log "ERROR: Failed to create PR for #$TASK_ISSUE"
+    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     continue
@@ -472,12 +497,12 @@ Generated by agent/loop.sh"
 
   log "PR created: $PR_URL"
 
-  # ── Step 7c: Post-PR verification — ensure PR diff contains changes ──────
+  # ── Step 8c: Post-PR verification — ensure PR diff contains changes ──────
   PR_DIFF_STAT=$(gh pr diff "$PR_URL" --name-only 2>/dev/null) || true
   if [[ -z "$PR_DIFF_STAT" ]]; then
-    log "ERROR: PR has no file changes for $TASK_ID. The PR diff is empty."
+    log "ERROR: PR has no file changes for #$TASK_ISSUE. The PR diff is empty."
     gh pr close "$PR_URL" 2>/dev/null || true
-    mark_needs_split "$TASK_ID"
+    mark_needs_split "$TASK_ISSUE"
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     continue
@@ -486,7 +511,7 @@ Generated by agent/loop.sh"
   PR_FILE_COUNT=$(echo "$PR_DIFF_STAT" | wc -l | tr -d ' ')
   log "Post-PR verification passed: PR contains changes in $PR_FILE_COUNT file(s)."
 
-  # ── Step 8: Wait for CI ────────────────────────────────────────────────────
+  # ── Step 9: Wait for CI ────────────────────────────────────────────────────
   CI_PASSED=false
   for attempt in 1 2; do
     log "Waiting for CI checks (attempt $attempt)..."
@@ -508,60 +533,39 @@ Generated by agent/loop.sh"
   done
 
   if [[ "$CI_PASSED" != "true" ]]; then
-    log "ERROR: CI failed twice for $TASK_ID. Leaving PR open for manual review."
+    log "ERROR: CI failed twice for #$TASK_ISSUE. Leaving PR open for manual review."
     gh pr comment "$PR_URL" --body "CI failed after 2 attempts. Needs manual review." 2>/dev/null || true
+    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     continue
   fi
 
-  # ── Step 9: Merge PR ───────────────────────────────────────────────────────
+  # ── Step 10: Merge PR ───────────────────────────────────────────────────────
   log "CI passed. Merging PR..."
   if gh pr merge "$PR_URL" --squash --delete-branch 2>/dev/null; then
     log "PR merged: $PR_URL"
   else
     log "ERROR: Failed to merge PR. Leaving for manual review."
+    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     sleep "$SLEEP_SECONDS"
     continue
   fi
 
-  # ── Step 10: Close linked issue ────────────────────────────────────────────
-  if [[ -n "$TASK_ISSUE" ]]; then
-    gh issue comment "$TASK_ISSUE" \
-      --body "Implemented in $PR_URL by agent/loop.sh" 2>/dev/null || true
-    gh issue close "$TASK_ISSUE" 2>/dev/null || true
-    log "Issue #$TASK_ISSUE closed"
-  fi
+  # ── Step 11: Mark issue as done & close ────────────────────────────────────
+  gh issue edit "$TASK_ISSUE" --add-label "done" --remove-label "doing" --remove-label "planned" 2>/dev/null || true
+  gh issue comment "$TASK_ISSUE" \
+    --body "Implemented in $PR_URL by agent/loop.sh" 2>/dev/null || true
+  gh issue close "$TASK_ISSUE" 2>/dev/null || true
+  log "Issue #$TASK_ISSUE marked as done and closed"
 
-  # ── Step 11: Update prd.json & cleanup ─────────────────────────────────────
+  # ── Step 12: Return to main ─────────────────────────────────────────────────
   cd "$REPO_ROOT"
   git checkout main
   git pull --ff-only origin main 2>/dev/null || true
 
-  # Archive task ID and issue number
-  ARCHIVE="$REPO_ROOT/prd.archive.json"
-  ARCHIVE_ENTRY=$(jq -n --arg id "$TASK_ID" --arg issue "$TASK_ISSUE" \
-    '{id: $id, issue: (if $issue == "" then null else ($issue | tonumber) end)}')
-  if [[ -f "$ARCHIVE" ]]; then
-    jq --argjson entry "$ARCHIVE_ENTRY" '. += [$entry]' "$ARCHIVE" > "$ARCHIVE.tmp" \
-      && mv "$ARCHIVE.tmp" "$ARCHIVE"
-  else
-    echo "[$ARCHIVE_ENTRY]" | jq '.' > "$ARCHIVE"
-  fi
-
-  # Remove completed task from prd.json
-  UPDATED_PRD=$(jq --arg id "$TASK_ID" '
-    .tasks |= map(select(.id != $id))
-  ' "$REPO_ROOT/prd.json")
-  echo "$UPDATED_PRD" > "$REPO_ROOT/prd.json"
-
-  # Commit the prd update
-  git add prd.json prd.archive.json
-  git commit -m "chore: archive completed task $TASK_ID" 2>/dev/null || true
-  git push origin main 2>/dev/null || true
-
-  log "Task $TASK_ID completed successfully."
+  log "Task #$TASK_ISSUE completed successfully."
 
   # ── Sleep ──────────────────────────────────────────────────────────────────
   if [[ "$MAX_ITERATIONS" -gt 0 && "$iteration" -ge "$MAX_ITERATIONS" ]]; then

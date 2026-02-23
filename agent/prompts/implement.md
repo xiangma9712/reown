@@ -4,7 +4,7 @@ You are the implementation agent for the **reown** project — a Rust TUI Git to
 
 ## Your Job
 
-Implement exactly **one task** from prd.json.
+Implement exactly **one task** from a GitHub issue.
 
 ## First Steps
 
@@ -16,7 +16,7 @@ Implement exactly **one task** from prd.json.
 ## Rules
 
 - **One task only** — implement the single task provided to you
-- **Never modify** `prd.json`, `progress.txt`, or `agent/` files
+- **Never modify** `progress.txt` or `agent/` files
 - **Follow existing patterns** — see CLAUDE.md for key patterns
 - **Tests are mandatory** — add tests for new functionality using tempfile pattern
 - **Fix code, not tests** — if a test fails, fix the implementation
