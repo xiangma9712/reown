@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { FileDiff } from "../types";
+import { Card } from "./Card";
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -70,7 +71,7 @@ export function DiffTab() {
   return (
     <div>
       <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
-        <aside className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+        <Card className="flex flex-col">
           <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
             {t("diff.changedFiles")}
           </h2>
@@ -118,8 +119,8 @@ export function DiffTab() {
               {t("diff.loadButton")}
             </button>
           </div>
-        </aside>
-        <section className="flex flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary p-5">
+        </Card>
+        <Card className="flex flex-col overflow-hidden">
           <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
             {selectedDiff
               ? (selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff")
@@ -182,7 +183,7 @@ export function DiffTab() {
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       </div>
     </div>
   );
