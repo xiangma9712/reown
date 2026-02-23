@@ -90,35 +90,52 @@ export function BranchTab({ showConfirm }: Props) {
   }
 
   return (
-    <div className="tab-content active" id="tab-branch">
-      <section className="panel" id="branch-panel">
-        <h2>ブランチ</h2>
-        <div className="list-container">
-          {loading && <p className="loading">読み込み中…</p>}
-          {error && <p className="error">エラー: {error}</p>}
+    <div>
+      <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+        <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+          ブランチ
+        </h2>
+        <div className="scrollbar-custom mb-4 min-h-[120px] max-h-[360px] flex-1 overflow-y-auto">
+          {loading && (
+            <p className="p-2 text-[0.9rem] text-text-secondary">読み込み中…</p>
+          )}
+          {error && (
+            <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+          )}
           {!loading && !error && branches.length === 0 && (
-            <p className="empty">ブランチがありません。</p>
+            <p className="p-2 text-[0.9rem] italic text-text-secondary">
+              ブランチがありません。
+            </p>
           )}
           {branches.map((b) => (
-            <div key={b.name} className="branch-item">
-              <div className="branch-info">
-                <div className={`branch-name${b.is_head ? " head" : ""}`}>
+            <div
+              key={b.name}
+              className="flex items-center justify-between border-b border-border px-3 py-2 font-mono text-[0.85rem] last:border-b-0"
+            >
+              <div className="min-w-0 flex-1">
+                <div
+                  className={
+                    b.is_head ? "font-bold text-accent" : "text-text-primary"
+                  }
+                >
                   {b.is_head ? `* ${b.name}` : b.name}
                 </div>
                 {b.upstream && (
-                  <div className="branch-upstream">upstream: {b.upstream}</div>
+                  <div className="mt-0.5 truncate text-xs text-text-secondary">
+                    upstream: {b.upstream}
+                  </div>
                 )}
               </div>
               {!b.is_head && (
-                <div className="branch-actions">
+                <div className="ml-2 flex shrink-0 gap-1.5">
                   <button
-                    className="btn btn-secondary btn-small"
+                    className="cursor-pointer rounded border-none bg-btn-secondary px-2 py-1 text-xs text-text-primary transition-colors hover:bg-btn-secondary-hover"
                     onClick={() => handleSwitch(b.name)}
                   >
                     切替
                   </button>
                   <button
-                    className="btn btn-danger btn-small"
+                    className="cursor-pointer rounded border-none bg-danger px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-danger-hover"
                     onClick={() => handleDelete(b.name)}
                   >
                     削除
@@ -128,11 +145,18 @@ export function BranchTab({ showConfirm }: Props) {
             </div>
           ))}
         </div>
-        <div className="form-section">
-          <h3>新規ブランチ作成</h3>
+        <div className="border-t border-border pt-4">
+          <h3 className="mb-3 text-[0.9rem] text-text-primary/80">
+            新規ブランチ作成
+          </h3>
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="branch-name">ブランチ名</label>
+            <div className="mb-2.5">
+              <label
+                htmlFor="branch-name"
+                className="mb-0.5 block text-[0.8rem] text-text-secondary"
+              >
+                ブランチ名
+              </label>
               <input
                 type="text"
                 id="branch-name"
@@ -140,18 +164,21 @@ export function BranchTab({ showConfirm }: Props) {
                 required
                 value={branchName}
                 onChange={(e) => setBranchName(e.target.value)}
+                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="cursor-pointer rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               disabled={submitting}
             >
               作成
             </button>
           </form>
           {formMessage && (
-            <div className={`message ${formMessage.type}`}>
+            <div
+              className={`mt-2 min-h-[1.2em] text-[0.8rem] ${formMessage.type === "success" ? "text-accent" : "text-danger"}`}
+            >
               {formMessage.text}
             </div>
           )}

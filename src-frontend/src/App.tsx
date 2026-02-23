@@ -82,23 +82,35 @@ export function App() {
   }, [confirmDialog]);
 
   return (
-    <div id="app">
-      <header className="app-header">
-        <h1>reown</h1>
-        <p className="tagline">
+    <div className="mx-auto max-w-[1200px] p-6">
+      <header className="mb-8 text-center">
+        <h1 className="mb-1 text-3xl text-white">reown</h1>
+        <p className="text-[0.95rem] text-text-secondary">
           エージェントPRの嵐の時代でも、コードベースを自分のものに。
         </p>
       </header>
 
-      <nav className="tab-nav">
+      <nav className="mb-6 flex border-b border-border">
         {TAB_ORDER.map((tab) => (
           <button
             key={tab}
-            className={`tab-btn${activeTab === tab ? " active" : ""}`}
+            className={`cursor-pointer border-b-2 border-transparent bg-transparent px-5 py-2.5 text-[0.9rem] text-text-secondary transition-colors duration-150 hover:text-text-primary ${
+              activeTab === tab
+                ? "!border-b-accent font-semibold !text-accent"
+                : ""
+            }`}
             onClick={() => setActiveTab(tab)}
           >
             {TAB_LABELS[tab].label}
-            <span className="shortcut-hint">{TAB_LABELS[tab].shortcut}</span>
+            <span
+              className={`ml-1.5 inline-block rounded-sm border border-border-hover bg-bg-hint px-1 align-middle text-[0.65rem] font-semibold leading-[1.4] text-text-muted ${
+                activeTab === tab
+                  ? "!border-accent !bg-accent/10 !text-accent"
+                  : ""
+              }`}
+            >
+              {TAB_LABELS[tab].shortcut}
+            </span>
           </button>
         ))}
       </nav>
