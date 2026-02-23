@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(*)",
+      "Write(*)",
+      "NotebookEdit(*)",
+      "WebFetch(*)",
+      "WebSearch(*)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "crates.io",
+        "index.crates.io",
+        "static.crates.io"
+      ]
+    }
+  }
+}
