@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use git2::{Delta, DiffDelta, DiffHunk, DiffLine};
+use git2::Delta;
 
 use super::open_repo;
 
@@ -110,86 +110,64 @@ pub fn diff_commit(repo_path: &str, commit_sha: &str) -> Result<Vec<FileDiff>> {
 // ── internals ────────────────────────────────────────────────────────────────
 
 fn collect_diff(diff: &git2::Diff<'_>) -> Result<Vec<FileDiff>> {
-    use std::cell::RefCell;
+    let mut files = Vec::new();
 
-    // Use RefCell to share mutable state across multiple closures passed to
-    // `foreach`, which requires each closure to independently capture state.
-    // TODO: Consider refactoring to a more straightforward iteration pattern
-    // that builds up the data structure without needing RefCell.
-    let files: RefCell<Vec<FileDiff>> = RefCell::new(Vec::new());
-    let current_chunk: RefCell<Option<DiffChunk>> = RefCell::new(None);
+    for (idx, delta) in diff.deltas().enumerate() {
+        let mut file_diff = FileDiff {
+            old_path: delta
+                .old_file()
+                .path()
+                .map(|p| p.to_string_lossy().into_owned()),
+            new_path: delta
+                .new_file()
+                .path()
+                .map(|p| p.to_string_lossy().into_owned()),
+            status: delta.status().into(),
+            chunks: Vec::new(),
+        };
 
-    let flush_chunk = |files: &RefCell<Vec<FileDiff>>, current_chunk: &RefCell<Option<DiffChunk>>| {
-        if let Some(chunk) = current_chunk.borrow_mut().take() {
-            if let Some(f) = files.borrow_mut().last_mut() {
-                f.chunks.push(chunk);
+        let patch = git2::Patch::from_diff(diff, idx)
+            .context("Failed to create patch from diff")?;
+        let patch = match patch {
+            Some(p) => p,
+            None => {
+                files.push(file_diff);
+                continue;
             }
-        }
-    };
+        };
 
-    diff.foreach(
-        &mut |delta: DiffDelta<'_>, _progress: f32| -> bool {
-            flush_chunk(&files, &current_chunk);
-            files.borrow_mut().push(FileDiff {
-                old_path: delta
-                    .old_file()
-                    .path()
-                    .map(|p| p.to_string_lossy().into_owned()),
-                new_path: delta
-                    .new_file()
-                    .path()
-                    .map(|p| p.to_string_lossy().into_owned()),
-                status: delta.status().into(),
-                chunks: Vec::new(),
-            });
-            true
-        },
-        None, // binary callback
-        Some(&mut |_delta: DiffDelta<'_>, hunk: DiffHunk<'_>| -> bool {
-            flush_chunk(&files, &current_chunk);
+        for hunk_idx in 0..patch.num_hunks() {
+            let (hunk, line_count) = patch.hunk(hunk_idx)?;
             let header = std::str::from_utf8(hunk.header())
                 .unwrap_or("")
                 .trim_end()
                 .to_string();
-            *current_chunk.borrow_mut() = Some(DiffChunk {
+
+            let mut chunk = DiffChunk {
                 header,
                 lines: Vec::new(),
-            });
-            true
-        }),
-        Some(&mut |_delta: DiffDelta<'_>, _hunk: Option<DiffHunk<'_>>, line: DiffLine<'_>| -> bool {
-            let content = std::str::from_utf8(line.content())
-                .unwrap_or("")
-                .to_string();
-            let info = DiffLineInfo {
-                origin: LineOrigin::from(line.origin()),
-                old_lineno: line.old_lineno(),
-                new_lineno: line.new_lineno(),
-                content,
             };
-            let mut chunk_ref = current_chunk.borrow_mut();
-            if let Some(ref mut chunk) = *chunk_ref {
-                chunk.lines.push(info);
-            } else {
-                // Unexpected: line callback fired without an active chunk.
-                // Fall back to appending to the last chunk of the last file.
-                eprintln!("warning: diff line received without active chunk context");
-                drop(chunk_ref);
-                if let Some(f) = files.borrow_mut().last_mut() {
-                    if let Some(c) = f.chunks.last_mut() {
-                        c.lines.push(info);
-                    }
-                }
+
+            for line_idx in 0..line_count {
+                let line = patch.line_in_hunk(hunk_idx, line_idx)?;
+                let content = std::str::from_utf8(line.content())
+                    .unwrap_or("")
+                    .to_string();
+                chunk.lines.push(DiffLineInfo {
+                    origin: LineOrigin::from(line.origin()),
+                    old_lineno: line.old_lineno(),
+                    new_lineno: line.new_lineno(),
+                    content,
+                });
             }
-            true
-        }),
-    )
-    .context("Failed to iterate diff")?;
 
-    // flush final chunk
-    flush_chunk(&files, &current_chunk);
+            file_diff.chunks.push(chunk);
+        }
 
-    Ok(files.into_inner())
+        files.push(file_diff);
+    }
+
+    Ok(files)
 }
 
 #[cfg(test)]
