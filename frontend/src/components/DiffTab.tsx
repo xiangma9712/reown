@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { FileDiff } from "../types";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
 
@@ -20,18 +21,20 @@ function statusLabel(status: string): string {
   }
 }
 
-function statusClass(status: string): string {
+function statusVariant(
+  status: string,
+): "success" | "danger" | "warning" | "info" | "default" {
   switch (status) {
     case "Added":
-      return "bg-status-added-bg text-accent";
+      return "success";
     case "Deleted":
-      return "bg-status-deleted-bg text-danger";
+      return "danger";
     case "Modified":
-      return "bg-status-modified-bg text-warning";
+      return "warning";
     case "Renamed":
-      return "bg-status-renamed-bg text-info";
+      return "info";
     default:
-      return "bg-btn-secondary text-text-secondary";
+      return "default";
   }
 }
 
@@ -97,11 +100,9 @@ export function DiffTab() {
                 }`}
                 onClick={() => setSelectedIndex(index)}
               >
-                <span
-                  className={`shrink-0 rounded-sm px-1.5 py-0.5 text-[0.7rem] font-semibold ${statusClass(diff.status)}`}
-                >
+                <Badge variant={statusVariant(diff.status)}>
                   {statusLabel(diff.status)}
-                </span>
+                </Badge>
                 <span
                   className="truncate text-text-primary"
                   title={diff.new_path ?? diff.old_path ?? ""}

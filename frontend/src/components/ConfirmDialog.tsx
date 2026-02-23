@@ -7,9 +7,18 @@ interface Props {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  confirmVariant?: "destructive" | "primary";
 }
 
-export function ConfirmDialog({ open, message, onConfirm, onCancel }: Props) {
+export function ConfirmDialog({
+  open,
+  message,
+  onConfirm,
+  onCancel,
+  confirmLabel,
+  confirmVariant = "destructive",
+}: Props) {
   const { t } = useTranslation();
 
   return (
@@ -29,8 +38,8 @@ export function ConfirmDialog({ open, message, onConfirm, onCancel }: Props) {
                 {t("common.cancel")}
               </Button>
             </Dialog.Close>
-            <Button variant="destructive" onClick={onConfirm}>
-              {t("common.delete")}
+            <Button variant={confirmVariant} onClick={onConfirm}>
+              {confirmLabel ?? t("common.delete")}
             </Button>
           </div>
         </Dialog.Content>
