@@ -65,36 +65,66 @@ impl From<GhPullRequest> for PrInfo {
     }
 }
 
+/// Maximum number of pages to fetch to prevent infinite loops.
+const MAX_PAGES: u32 = 10;
+
+/// Parse the `Link` header to check if a `rel="next"` link exists.
+fn has_next_page(link_header: &str) -> bool {
+    link_header
+        .split(',')
+        .any(|part| part.contains("rel=\"next\""))
+}
+
 /// Fetch pull requests from a GitHub repository.
 ///
 /// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
-/// and merged PRs. The token should be a GitHub personal access token or similar.
+/// and merged PRs. Automatically paginates through all pages (up to `MAX_PAGES`).
+/// The token should be a GitHub personal access token or similar.
 pub async fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<Vec<PrInfo>> {
-    let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100");
-
     let client = reqwest::Client::new();
-    let response = client
-        .get(&url)
-        .header("Accept", "application/vnd.github+json")
-        .header("Authorization", format!("Bearer {token}"))
-        .header("User-Agent", "reown")
-        .header("X-GitHub-Api-Version", "2022-11-28")
-        .send()
-        .await
-        .with_context(|| format!("Failed to fetch PRs from {owner}/{repo}"))?;
+    let mut all_prs = Vec::new();
 
-    if !response.status().is_success() {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("GitHub API returned {status}: {body}");
+    for page in 1..=MAX_PAGES {
+        let url = format!(
+            "https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}"
+        );
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/vnd.github+json")
+            .header("Authorization", format!("Bearer {token}"))
+            .header("User-Agent", "reown")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .send()
+            .await
+            .with_context(|| format!("Failed to fetch PRs from {owner}/{repo} (page {page})"))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("GitHub API returned {status}: {body}");
+        }
+
+        let has_next = response
+            .headers()
+            .get("link")
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(has_next_page);
+
+        let prs: Vec<GhPullRequest> = response
+            .json()
+            .await
+            .context("Failed to parse GitHub PR response")?;
+
+        let is_empty = prs.is_empty();
+        all_prs.extend(prs.into_iter().map(PrInfo::from));
+
+        if is_empty || !has_next {
+            break;
+        }
     }
 
-    let prs: Vec<GhPullRequest> = response
-        .json()
-        .await
-        .context("Failed to parse GitHub PR response")?;
-
-    Ok(prs.into_iter().map(PrInfo::from).collect())
+    Ok(all_prs)
 }
 
 #[cfg(test)]
@@ -255,6 +285,33 @@ mod tests {
         let prs: Vec<PrInfo> = gh_prs.into_iter().map(PrInfo::from).collect();
 
         assert_eq!(prs[0].state, "open");
+    }
+
+    /// Test that has_next_page detects rel="next" in Link header.
+    #[test]
+    fn test_has_next_page_with_next_link() {
+        let link = r#"<https://api.github.com/repos/owner/repo/pulls?page=2>; rel="next", <https://api.github.com/repos/owner/repo/pulls?page=5>; rel="last""#;
+        assert!(has_next_page(link));
+    }
+
+    /// Test that has_next_page returns false when no next link exists.
+    #[test]
+    fn test_has_next_page_without_next_link() {
+        let link = r#"<https://api.github.com/repos/owner/repo/pulls?page=1>; rel="prev", <https://api.github.com/repos/owner/repo/pulls?page=5>; rel="last""#;
+        assert!(!has_next_page(link));
+    }
+
+    /// Test that has_next_page returns false for empty string.
+    #[test]
+    fn test_has_next_page_empty() {
+        assert!(!has_next_page(""));
+    }
+
+    /// Test that has_next_page works with only a next link.
+    #[test]
+    fn test_has_next_page_only_next() {
+        let link = r#"<https://api.github.com/repos/owner/repo/pulls?page=2>; rel="next""#;
+        assert!(has_next_page(link));
     }
 
     /// Test mixed list of open, closed, and merged PRs.
