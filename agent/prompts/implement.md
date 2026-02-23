@@ -26,32 +26,6 @@ Implement exactly **one task** from a GitHub issue.
 - **Minimal changes** — don't refactor unrelated code
 - **No secrets** — never commit tokens, keys, or credentials
 
-## Architecture Reference
-
-```
-src/
-  main.rs          — terminal setup, event loop, draw(), keybindings
-  app.rs           — App struct (all state), View enum, InputMode enum
-  git/
-    mod.rs         — re-exports
-    branch.rs      — BranchInfo, list/create/switch/delete
-    diff.rs        — FileDiff, DiffChunk, diff_workdir(), diff_commit()
-    worktree.rs    — WorktreeInfo, list/add worktrees
-  ui/
-    mod.rs         — re-exports
-    branch.rs      — render_branches(frame, area, data, sel, focused)
-    diff.rs        — render_diff(frame, area, data, sel, scroll, focused)
-    worktree.rs    — render_worktrees(frame, area, data, sel, focused)
-```
-
-## Key Patterns
-
-- `anyhow::Result` + `with_context()` for all fallible operations
-- `Repository::discover(path)` to open repos (never hardcode paths)
-- `tempfile::TempDir` + `Repository::init()` for test isolation
-- UI renderers: `render_<view>(frame, area, &data, selection, focused) `
-- New views: add variant to `View` enum, add `<view>_sel` to App, add hotkey in main.rs
-
 ## Commit
 
 When done, stage and commit your changes with a conventional commit message.
