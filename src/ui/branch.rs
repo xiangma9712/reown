@@ -1,5 +1,5 @@
-use crate::git::branch::BranchInfo;
-use crate::i18n;
+use reown::git::branch::BranchInfo;
+use reown::i18n;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},

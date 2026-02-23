@@ -1,10 +1,10 @@
-use crate::git::{
+use reown::git::{
     branch::{self, BranchInfo},
     diff::{self, FileDiff},
     worktree::{self, WorktreeInfo},
 };
-use crate::github::PrInfo;
-use crate::i18n;
+use reown::github::PrInfo;
+use reown::i18n;
 use anyhow::Result;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

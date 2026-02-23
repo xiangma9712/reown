@@ -1,5 +1,5 @@
-use crate::github::PrInfo;
-use crate::i18n;
+use reown::github::PrInfo;
+use reown::i18n;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
