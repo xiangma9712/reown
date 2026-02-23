@@ -69,10 +69,10 @@ impl From<GhPullRequest> for PrInfo {
 ///
 /// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
 /// and merged PRs. The token should be a GitHub personal access token or similar.
-pub fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<Vec<PrInfo>> {
+pub async fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<Vec<PrInfo>> {
     let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100");
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
     let response = client
         .get(&url)
         .header("Accept", "application/vnd.github+json")
@@ -80,16 +80,18 @@ pub fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<Vec<Pr
         .header("User-Agent", "reown")
         .header("X-GitHub-Api-Version", "2022-11-28")
         .send()
+        .await
         .with_context(|| format!("Failed to fetch PRs from {owner}/{repo}"))?;
 
     if !response.status().is_success() {
         let status = response.status();
-        let body = response.text().unwrap_or_default();
+        let body = response.text().await.unwrap_or_default();
         anyhow::bail!("GitHub API returned {status}: {body}");
     }
 
     let prs: Vec<GhPullRequest> = response
         .json()
+        .await
         .context("Failed to parse GitHub PR response")?;
 
     Ok(prs.into_iter().map(PrInfo::from).collect())

@@ -54,12 +54,13 @@ fn diff_commit(
 // ── GitHub commands ─────────────────────────────────────────────────────────
 
 #[tauri::command]
-fn list_pull_requests(
+async fn list_pull_requests(
     owner: String,
     repo: String,
     token: String,
 ) -> Result<Vec<reown::github::PrInfo>, String> {
     reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+        .await
         .map_err(|e| format!("{e:#}"))
 }
 
