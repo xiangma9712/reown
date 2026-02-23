@@ -24,7 +24,7 @@
       "description": "In src/github/pull_request.rs, implement list_pull_requests(owner, repo, token) -> Result<Vec<PrInfo>> using reqwest to call GET /repos/{owner}/{repo}/pulls. PrInfo struct: number, title, author, state, head_branch, updated_at, additions, deletions, changed_files. Include unit tests with mock responses.",
       "pillar": "local-gui",
       "priority": 2,
-      "passed": false,
+      "passed": true,
       "issue": null
     },
     {
