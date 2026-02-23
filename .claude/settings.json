@@ -1,8 +1,11 @@
 {
   "permissions": {
     "allow": [
+      "Read(*)",
       "Edit(*)",
       "Write(*)",
+      "Glob(*)",
+      "Grep(*)",
       "NotebookEdit(*)",
       "WebFetch(*)",
       "WebSearch(*)"
@@ -12,6 +15,9 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
+    "writePaths": [
+      "/tmp"
+    ],
     "network": {
       "allowedDomains": [
         "github.com",
