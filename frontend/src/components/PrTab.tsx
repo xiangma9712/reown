@@ -2,6 +2,8 @@ import { useState, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { PrInfo } from "../types";
+import { Button } from "./Button";
+import { Input } from "./Input";
 
 function stateClass(state: string): string {
   switch (state) {
@@ -59,63 +61,43 @@ export function PrTab() {
         <div>
           <div className="mb-2 flex items-end gap-3">
             <div className="mb-0 flex-1">
-              <label
-                htmlFor="pr-owner"
-                className="mb-0.5 block text-[0.8rem] text-text-secondary"
-              >
-                {t("pr.owner")}
-              </label>
-              <input
-                type="text"
+              <Input
                 id="pr-owner"
+                label={t("pr.owner")}
                 placeholder="owner"
                 required
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
-                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
             <div className="mb-0 flex-1">
-              <label
-                htmlFor="pr-repo"
-                className="mb-0.5 block text-[0.8rem] text-text-secondary"
-              >
-                {t("pr.repo")}
-              </label>
-              <input
-                type="text"
+              <Input
                 id="pr-repo"
+                label={t("pr.repo")}
                 placeholder="repo"
                 required
                 value={repo}
                 onChange={(e) => setRepo(e.target.value)}
-                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
             <div className="mb-0 flex-1">
-              <label
-                htmlFor="pr-token"
-                className="mb-0.5 block text-[0.8rem] text-text-secondary"
-              >
-                {t("pr.token")}
-              </label>
-              <input
+              <Input
                 type="password"
                 id="pr-token"
+                label={t("pr.token")}
                 placeholder="ghp_..."
                 required
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full rounded border border-border-hover bg-bg-primary px-2.5 py-1.5 font-mono text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
               />
             </div>
-            <button
-              className="shrink-0 cursor-pointer self-end rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+            <Button
+              className="shrink-0 self-end"
               onClick={() => handleLoad()}
               disabled={loading}
             >
               {t("pr.fetch")}
-            </button>
+            </Button>
           </div>
           {formError && (
             <div className="mt-2 min-h-[1.2em] text-[0.8rem] text-danger">
