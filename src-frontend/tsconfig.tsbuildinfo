@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/invoke.ts","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/branchtab.tsx","./src/components/confirmdialog.tsx","./src/components/difftab.tsx","./src/components/prtab.tsx","./src/components/worktreetab.tsx"],"version":"5.9.3"}
