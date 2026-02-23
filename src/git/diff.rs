@@ -173,34 +173,9 @@ fn collect_diff(diff: &git2::Diff<'_>) -> Result<Vec<FileDiff>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use git2::{Repository, Signature};
+    use crate::git::test_utils::init_repo_with_commit;
+    use git2::Signature;
     use std::fs;
-    use tempfile::TempDir;
-
-    fn init_repo_with_commit() -> (TempDir, Repository) {
-        let dir = TempDir::new().unwrap();
-        let repo = Repository::init(dir.path()).unwrap();
-
-        let mut cfg = repo.config().unwrap();
-        cfg.set_str("user.name", "Test").unwrap();
-        cfg.set_str("user.email", "test@test.com").unwrap();
-        drop(cfg);
-
-        // Write and commit a file.
-        fs::write(dir.path().join("hello.txt"), "hello\n").unwrap();
-        let sig = Signature::now("Test", "test@test.com").unwrap();
-        let mut index = repo.index().unwrap();
-        index.add_path(std::path::Path::new("hello.txt")).unwrap();
-        index.write().unwrap();
-        let tree_id = index.write_tree().unwrap();
-        {
-            let tree = repo.find_tree(tree_id).unwrap();
-            repo.commit(Some("HEAD"), &sig, &sig, "init", &tree, &[])
-                .unwrap();
-        }
-
-        (dir, repo)
-    }
 
     #[test]
     fn test_diff_workdir_clean() {
