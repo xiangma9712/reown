@@ -138,6 +138,18 @@ cleanup_branch() {
   git branch -D "$branch" 2>/dev/null || true
 }
 
+# Check if any Rust-related files changed on the current branch vs main
+has_rust_changes() {
+  cd "$REPO_ROOT"
+  local changed_files
+  changed_files=$(git diff --name-only main...HEAD 2>/dev/null || git diff --name-only main 2>/dev/null || echo "")
+  if [[ -z "$changed_files" ]]; then
+    # If we can't determine changes, assume Rust changed (safe default)
+    return 0
+  fi
+  echo "$changed_files" | grep -qE '\.(rs|toml|lock)$|^build\.rs$'
+}
+
 # Mark an issue as needing split via label
 mark_needs_split() {
   local issue_num="$1"
@@ -375,38 +387,44 @@ _Automatically posted by agent/loop.sh_"
 
   # ── Local verification ─────────────────────────────────────────────────────
   cd "$REPO_ROOT"
-  if ! cargo test 2>/dev/null; then
-    log "WARN: Tests failed after implementation. Attempting fix..."
-    claude -p "cargo test is failing. Read the test output, find the root cause, and fix the implementation (not the tests). Then run cargo test again to verify." \
-      --max-turns "$FIX_MAX_TURNS" \
-      --max-budget-usd "$MAX_BUDGET_USD" \
-      --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-      2>/dev/null || true
+  if has_rust_changes; then
+    log "Rust files changed — running cargo test and clippy..."
 
     if ! cargo test 2>/dev/null; then
-      log "ERROR: Tests still failing for #$TASK_ISSUE. Skipping."
-      mark_needs_split "$TASK_ISSUE"
-      cleanup_branch "$BRANCH_NAME"
-      sleep "$SLEEP_SECONDS"
-      continue
-    fi
-  fi
+      log "WARN: Tests failed after implementation. Attempting fix..."
+      claude -p "cargo test is failing. Read the test output, find the root cause, and fix the implementation (not the tests). Then run cargo test again to verify." \
+        --max-turns "$FIX_MAX_TURNS" \
+        --max-budget-usd "$MAX_BUDGET_USD" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+        2>/dev/null || true
 
-  if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
-    log "WARN: Clippy failed. Attempting fix..."
-    claude -p "cargo clippy --all-targets -- -D warnings is failing. Fix all clippy warnings in the code you changed." \
-      --max-turns "$FIX_MAX_TURNS" \
-      --max-budget-usd "$MAX_BUDGET_USD" \
-      --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-      2>/dev/null || true
+      if ! cargo test 2>/dev/null; then
+        log "ERROR: Tests still failing for #$TASK_ISSUE. Skipping."
+        mark_needs_split "$TASK_ISSUE"
+        cleanup_branch "$BRANCH_NAME"
+        sleep "$SLEEP_SECONDS"
+        continue
+      fi
+    fi
 
     if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
-      log "ERROR: Clippy still failing for #$TASK_ISSUE. Skipping."
-      mark_needs_split "$TASK_ISSUE"
-      cleanup_branch "$BRANCH_NAME"
-      sleep "$SLEEP_SECONDS"
-      continue
+      log "WARN: Clippy failed. Attempting fix..."
+      claude -p "cargo clippy --all-targets -- -D warnings is failing. Fix all clippy warnings in the code you changed." \
+        --max-turns "$FIX_MAX_TURNS" \
+        --max-budget-usd "$MAX_BUDGET_USD" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+        2>/dev/null || true
+
+      if ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
+        log "ERROR: Clippy still failing for #$TASK_ISSUE. Skipping."
+        mark_needs_split "$TASK_ISSUE"
+        cleanup_branch "$BRANCH_NAME"
+        sleep "$SLEEP_SECONDS"
+        continue
+      fi
     fi
+  else
+    log "No Rust files changed — skipping cargo test and clippy."
   fi
 
   # ── Step 7: Pre-push verification — ensure working tree is clean ──────────
@@ -423,14 +441,16 @@ _Automatically posted by agent/loop.sh_"
       git add -A
       git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
 
-      # Re-run tests/clippy after committing leftover changes
-      if ! cargo test 2>/dev/null || ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
-        log "WARN: Tests/clippy failed after committing leftover changes. Invoking fix agent..."
-        claude -p "There were uncommitted changes that have been staged and committed. Now cargo test or clippy is failing. Fix the issues, commit, and ensure the tree is clean." \
-          --max-turns "$FIX_MAX_TURNS" \
-          --max-budget-usd "$MAX_BUDGET_USD" \
-          --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-          2>/dev/null || true
+      # Re-run tests/clippy after committing leftover changes (only if Rust files changed)
+      if has_rust_changes; then
+        if ! cargo test 2>/dev/null || ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
+          log "WARN: Tests/clippy failed after committing leftover changes. Invoking fix agent..."
+          claude -p "There were uncommitted changes that have been staged and committed. Now cargo test or clippy is failing. Fix the issues, commit, and ensure the tree is clean." \
+            --max-turns "$FIX_MAX_TURNS" \
+            --max-budget-usd "$MAX_BUDGET_USD" \
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+            2>/dev/null || true
+        fi
       fi
     fi
   done

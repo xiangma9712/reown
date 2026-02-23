@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# .githooks/pre-push — Run cargo checks only when Rust files changed
+#
+# Install: git config core.hooksPath .githooks
+set -euo pipefail
+
+# Determine which commits are being pushed
+# stdin format: <local ref> <local sha> <remote ref> <remote sha>
+RUST_CHANGED=false
+
+while read -r _ local_sha _ remote_sha; do
+  if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
+    # New branch — compare against main
+    range="main..${local_sha}"
+  else
+    range="${remote_sha}..${local_sha}"
+  fi
+
+  changed_files=$(git diff --name-only "$range" 2>/dev/null || echo "")
+  if echo "$changed_files" | grep -qE '\.(rs|toml|lock)$|^build\.rs$'; then
+    RUST_CHANGED=true
+    break
+  fi
+done
+
+if [[ "$RUST_CHANGED" == "true" ]]; then
+  echo "Rust files changed — running cargo checks..."
+  cargo test --quiet || { echo "cargo test failed"; exit 1; }
+  cargo clippy --all-targets -- -D warnings 2>&1 || { echo "cargo clippy failed"; exit 1; }
+  echo "All Rust checks passed."
+else
+  echo "No Rust files changed — skipping cargo checks."
+fi

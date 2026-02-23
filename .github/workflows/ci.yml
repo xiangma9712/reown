@@ -11,7 +11,28 @@ env:
   RUSTFLAGS: "-D warnings"
 
 jobs:
+  # Detect which files changed to decide which checks to run
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'src/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'build.rs'
+
+  # Rust checks — only when Rust-related files changed
   check:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,3 +60,12 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
+
+  # Always-passing status for branch protection when Rust checks are skipped
+  check-skipped:
+    needs: changes
+    if: needs.changes.outputs.rust != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: No Rust changes — skipping checks
+        run: echo "No Rust source files changed. Skipping cargo build/test/clippy."
