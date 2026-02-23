@@ -267,24 +267,33 @@ $NEW_ISSUES
         T_APPROACH=$(echo "$entry" | jq -r '.approach // .description // "N/A"')
         T_PRIORITY=$(echo "$entry" | jq -r '.priority // "N/A"')
 
-        # Apply 'planned' label
-        if gh issue edit "$ISSUE_NUM" --add-label "planned" 2>/dev/null; then
-          log "Applied 'planned' label to issue #$ISSUE_NUM"
+        T_NEEDS_SPLIT=$(echo "$entry" | jq -r '.needs_split // false')
+
+        # Apply label based on triage result
+        if [[ "$T_NEEDS_SPLIT" == "true" ]]; then
+          TRIAGE_LABEL="needs-split"
+          TRIAGE_STATUS="Needs Split"
         else
-          log "WARN: Failed to apply 'planned' label to issue #$ISSUE_NUM"
+          TRIAGE_LABEL="planned"
+          TRIAGE_STATUS="Planned"
+        fi
+
+        if gh issue edit "$ISSUE_NUM" --add-label "$TRIAGE_LABEL" 2>/dev/null; then
+          log "Applied '$TRIAGE_LABEL' label to issue #$ISSUE_NUM"
+        else
+          log "WARN: Failed to apply '$TRIAGE_LABEL' label to issue #$ISSUE_NUM"
         fi
 
         # Post triage comment
-        COMMENT_BODY="## Planned
-
-This issue has been triaged and added to the agent work queue.
+        COMMENT_BODY="## $TRIAGE_STATUS
 
 | Field | Value |
 |-------|-------|
 | **Priority** | $T_PRIORITY |
 | **Pillar** | $T_PILLAR |
+| **Status** | $TRIAGE_STATUS |
 
-### Planned approach
+### Approach
 
 $T_APPROACH
 
