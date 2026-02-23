@@ -131,8 +131,8 @@
       "title": "CI checkの待機時間延長とリトライ改善",
       "description": "Issue #21: agent/loop.shのCI check確認ロジックを改善する。(1) 最初のCI check確認までの待機時間を延長する（CIがまだ開始していない段階でチェックして毎回初回failになるのを防ぐ）。(2) デフォルトのリトライ回数を3回に増やす。(3) CI failedでリトライする際、既存のPRをcloseしてremote branchを削除してからmain loopに戻る（branch名の競合を防ぐ）。Solves: checkが早すぎる問題、CI failed時のbranch競合問題、3 attemptsまでOKにする (INTENT: dev-support ワークフロー改善).",
       "pillar": "dev-support",
-      "priority": 14,
-      "passed": false,
+      "priority": 1,
+      "passed": true,
       "issue": 21
     },
     {
