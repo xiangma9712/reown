@@ -41,13 +41,13 @@ mise install
 
 ```sh
 # 開発モード（ホットリロード付き）
-cd src-tauri && cargo tauri dev
+cd app && cargo tauri dev
 
 # リリースビルド（.appバンドル生成）
-cd src-tauri && cargo tauri build
+cd app && cargo tauri build
 
 # ビルドされた.appを起動
-open src-tauri/target/release/bundle/macos/reown.app
+open app/target/release/bundle/macos/reown.app
 ```
 
 ---
