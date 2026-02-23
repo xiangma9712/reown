@@ -1,5 +1,5 @@
-use crate::git::diff::{FileDiff, FileStatus, LineOrigin};
-use crate::i18n;
+use reown::git::diff::{FileDiff, FileStatus, LineOrigin};
+use reown::i18n;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},

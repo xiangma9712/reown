@@ -1,10 +1,8 @@
 mod app;
-mod git;
-mod github;
-mod i18n;
 mod ui;
 
 use app::{App, InputMode, View};
+use reown::i18n;
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},

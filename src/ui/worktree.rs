@@ -1,5 +1,5 @@
-use crate::git::worktree::WorktreeInfo;
-use crate::i18n;
+use reown::git::worktree::WorktreeInfo;
+use reown::i18n;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
