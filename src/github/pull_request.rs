@@ -24,6 +24,7 @@ struct GhPullRequest {
     user: GhUser,
     head: GhHead,
     updated_at: String,
+    merged_at: Option<String>,
     #[serde(default)]
     additions: u64,
     #[serde(default)]
@@ -45,11 +46,16 @@ struct GhHead {
 
 impl From<GhPullRequest> for PrInfo {
     fn from(pr: GhPullRequest) -> Self {
+        let state = if pr.state == "closed" && pr.merged_at.is_some() {
+            "merged".to_string()
+        } else {
+            pr.state
+        };
         Self {
             number: pr.number,
             title: pr.title,
             author: pr.user.login,
-            state: pr.state,
+            state,
             head_branch: pr.head.ref_name,
             updated_at: pr.updated_at,
             additions: pr.additions,
@@ -59,12 +65,12 @@ impl From<GhPullRequest> for PrInfo {
     }
 }
 
-/// Fetch open pull requests from a GitHub repository.
+/// Fetch pull requests from a GitHub repository.
 ///
-/// Calls `GET /repos/{owner}/{repo}/pulls` with the given token for authentication.
-/// The token should be a GitHub personal access token or similar.
+/// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
+/// and merged PRs. The token should be a GitHub personal access token or similar.
 pub fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<Vec<PrInfo>> {
-    let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls?state=open&per_page=100");
+    let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100");
 
     let client = reqwest::blocking::Client::new();
     let response = client
@@ -176,7 +182,7 @@ mod tests {
         assert!(prs.is_empty());
     }
 
-    /// Test that a closed PR state is preserved correctly.
+    /// Test that a closed PR (without merged_at) state is preserved correctly.
     #[test]
     fn test_parse_closed_pr() {
         let json = r#"[
@@ -187,6 +193,7 @@ mod tests {
                 "user": { "login": "charlie" },
                 "head": { "ref": "old-branch" },
                 "updated_at": "2024-12-01T12:00:00Z",
+                "merged_at": null,
                 "additions": 50,
                 "deletions": 50,
                 "changed_files": 10
@@ -199,5 +206,93 @@ mod tests {
         assert_eq!(prs[0].state, "closed");
         assert_eq!(prs[0].author, "charlie");
         assert_eq!(prs[0].head_branch, "old-branch");
+    }
+
+    /// Test that a merged PR (closed + merged_at) is mapped to state "merged".
+    #[test]
+    fn test_parse_merged_pr() {
+        let json = r#"[
+            {
+                "number": 50,
+                "title": "Merged feature",
+                "state": "closed",
+                "user": { "login": "dave" },
+                "head": { "ref": "merged-branch" },
+                "updated_at": "2025-01-20T14:00:00Z",
+                "merged_at": "2025-01-20T13:55:00Z",
+                "additions": 30,
+                "deletions": 5,
+                "changed_files": 3
+            }
+        ]"#;
+
+        let gh_prs: Vec<GhPullRequest> = serde_json::from_str(json).unwrap();
+        let prs: Vec<PrInfo> = gh_prs.into_iter().map(PrInfo::from).collect();
+
+        assert_eq!(prs[0].number, 50);
+        assert_eq!(prs[0].state, "merged");
+        assert_eq!(prs[0].author, "dave");
+        assert_eq!(prs[0].head_branch, "merged-branch");
+    }
+
+    /// Test that merged_at field is optional and defaults to None when absent.
+    #[test]
+    fn test_parse_pr_without_merged_at_field() {
+        let json = r#"[
+            {
+                "number": 60,
+                "title": "No merged_at field",
+                "state": "open",
+                "user": { "login": "eve" },
+                "head": { "ref": "some-branch" },
+                "updated_at": "2025-02-01T00:00:00Z"
+            }
+        ]"#;
+
+        let gh_prs: Vec<GhPullRequest> = serde_json::from_str(json).unwrap();
+        let prs: Vec<PrInfo> = gh_prs.into_iter().map(PrInfo::from).collect();
+
+        assert_eq!(prs[0].state, "open");
+    }
+
+    /// Test mixed list of open, closed, and merged PRs.
+    #[test]
+    fn test_parse_mixed_pr_states() {
+        let json = r#"[
+            {
+                "number": 1,
+                "title": "Open PR",
+                "state": "open",
+                "user": { "login": "a" },
+                "head": { "ref": "open-branch" },
+                "updated_at": "2025-01-01T00:00:00Z",
+                "merged_at": null
+            },
+            {
+                "number": 2,
+                "title": "Closed PR",
+                "state": "closed",
+                "user": { "login": "b" },
+                "head": { "ref": "closed-branch" },
+                "updated_at": "2025-01-02T00:00:00Z",
+                "merged_at": null
+            },
+            {
+                "number": 3,
+                "title": "Merged PR",
+                "state": "closed",
+                "user": { "login": "c" },
+                "head": { "ref": "merged-branch" },
+                "updated_at": "2025-01-03T00:00:00Z",
+                "merged_at": "2025-01-03T00:00:00Z"
+            }
+        ]"#;
+
+        let gh_prs: Vec<GhPullRequest> = serde_json::from_str(json).unwrap();
+        let prs: Vec<PrInfo> = gh_prs.into_iter().map(PrInfo::from).collect();
+
+        assert_eq!(prs[0].state, "open");
+        assert_eq!(prs[1].state, "closed");
+        assert_eq!(prs[2].state, "merged");
     }
 }
