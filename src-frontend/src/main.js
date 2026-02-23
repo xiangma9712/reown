@@ -18,27 +18,40 @@ async function loadWorktrees() {
       return;
     }
     container.innerHTML = "";
-    for (const wt of worktrees) {
+    for (const [index, wt] of worktrees.entries()) {
       const div = document.createElement("div");
       div.className = "wt-item";
+      div.setAttribute("data-index", index);
 
       let nameHtml = `<span class="wt-name${wt.is_main ? " main" : ""}">${escapeHtml(wt.name)}</span>`;
       if (wt.is_locked) {
         nameHtml += '<span class="wt-badge locked">locked</span>';
       }
 
+      const isDetached = !wt.branch;
       const branch = wt.branch ? escapeHtml(wt.branch) : "(detached)";
       const path = escapeHtml(wt.path);
 
       div.innerHTML = `
         ${nameHtml}
+        ${isDetached ? '<span class="wt-badge detached">detached</span>' : ""}
         <div class="wt-detail">ブランチ: ${branch}</div>
         <div class="wt-detail">パス: ${path}</div>
       `;
+      div.addEventListener("click", () => selectWorktreeItem(index));
       container.appendChild(div);
     }
   } catch (err) {
     container.innerHTML = `<p class="error">エラー: ${escapeHtml(String(err))}</p>`;
+  }
+}
+
+function selectWorktreeItem(index) {
+  const items = document.querySelectorAll("#worktree-list .wt-item");
+  items.forEach((item) => item.classList.remove("selected"));
+  if (items[index]) {
+    items[index].classList.add("selected");
+    items[index].scrollIntoView({ block: "nearest" });
   }
 }
 
@@ -607,10 +620,17 @@ function setupKeyboardShortcuts() {
         refreshCurrentView();
         break;
       case "c":
-        // Branchタブでは新規ブランチ作成フォームにフォーカス
-        if (getActiveTab() === "branch") {
-          e.preventDefault();
-          document.getElementById("branch-name").focus();
+        {
+          const activeTab = getActiveTab();
+          if (activeTab === "worktree") {
+            // Worktreeタブではワークツリー作成フォームにフォーカス
+            e.preventDefault();
+            document.getElementById("wt-path").focus();
+          } else if (activeTab === "branch") {
+            // Branchタブでは新規ブランチ作成フォームにフォーカス
+            e.preventDefault();
+            document.getElementById("branch-name").focus();
+          }
         }
         break;
       case "x":
