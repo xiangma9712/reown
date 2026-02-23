@@ -1,4 +1,5 @@
 import { useState, useEffect, FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { BranchInfo } from "../types";
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function BranchTab({ showConfirm }: Props) {
+  const { t } = useTranslation();
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,13 +46,16 @@ export function BranchTab({ showConfirm }: Props) {
     try {
       await invoke("create_branch", { name: branchName.trim() });
       setFormMessage({
-        text: `ブランチ '${branchName.trim()}' を作成しました。`,
+        text: t("branch.created", { name: branchName.trim() }),
         type: "success",
       });
       setBranchName("");
       await loadBranches();
     } catch (err) {
-      setFormMessage({ text: `エラー: ${err}`, type: "error" });
+      setFormMessage({
+        text: t("common.error", { message: err }),
+        type: "error",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -61,18 +66,21 @@ export function BranchTab({ showConfirm }: Props) {
     try {
       await invoke("switch_branch", { name });
       setFormMessage({
-        text: `ブランチ '${name}' に切り替えました。`,
+        text: t("branch.switched", { name }),
         type: "success",
       });
       await loadBranches();
     } catch (err) {
-      setFormMessage({ text: `エラー: ${err}`, type: "error" });
+      setFormMessage({
+        text: t("common.error", { message: err }),
+        type: "error",
+      });
     }
   }
 
   async function handleDelete(name: string) {
     const confirmed = await showConfirm(
-      `ブランチ '${name}' を削除しますか？この操作は取り消せません。`
+      t("branch.confirmDelete", { name })
     );
     if (!confirmed) return;
 
@@ -80,12 +88,15 @@ export function BranchTab({ showConfirm }: Props) {
     try {
       await invoke("delete_branch", { name });
       setFormMessage({
-        text: `ブランチ '${name}' を削除しました。`,
+        text: t("branch.deleted", { name }),
         type: "success",
       });
       await loadBranches();
     } catch (err) {
-      setFormMessage({ text: `エラー: ${err}`, type: "error" });
+      setFormMessage({
+        text: t("common.error", { message: err }),
+        type: "error",
+      });
     }
   }
 
@@ -93,18 +104,22 @@ export function BranchTab({ showConfirm }: Props) {
     <div>
       <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
-          ブランチ
+          {t("branch.title")}
         </h2>
         <div className="scrollbar-custom mb-4 min-h-[120px] max-h-[360px] flex-1 overflow-y-auto">
           {loading && (
-            <p className="p-2 text-[0.9rem] text-text-secondary">読み込み中…</p>
+            <p className="p-2 text-[0.9rem] text-text-secondary">
+              {t("common.loading")}
+            </p>
           )}
           {error && (
-            <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+            <p className="p-2 text-[0.9rem] text-danger">
+              {t("common.error", { message: error })}
+            </p>
           )}
           {!loading && !error && branches.length === 0 && (
             <p className="p-2 text-[0.9rem] italic text-text-secondary">
-              ブランチがありません。
+              {t("branch.empty")}
             </p>
           )}
           {branches.map((b) => (
@@ -122,7 +137,7 @@ export function BranchTab({ showConfirm }: Props) {
                 </div>
                 {b.upstream && (
                   <div className="mt-0.5 truncate text-xs text-text-secondary">
-                    upstream: {b.upstream}
+                    {t("branch.upstream", { name: b.upstream })}
                   </div>
                 )}
               </div>
@@ -132,13 +147,13 @@ export function BranchTab({ showConfirm }: Props) {
                     className="cursor-pointer rounded border-none bg-btn-secondary px-2 py-1 text-xs text-text-primary transition-colors hover:bg-btn-secondary-hover"
                     onClick={() => handleSwitch(b.name)}
                   >
-                    切替
+                    {t("branch.switch")}
                   </button>
                   <button
                     className="cursor-pointer rounded border-none bg-danger px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-danger-hover"
                     onClick={() => handleDelete(b.name)}
                   >
-                    削除
+                    {t("common.delete")}
                   </button>
                 </div>
               )}
@@ -147,7 +162,7 @@ export function BranchTab({ showConfirm }: Props) {
         </div>
         <div className="border-t border-border pt-4">
           <h3 className="mb-3 text-[0.9rem] text-text-primary/80">
-            新規ブランチ作成
+            {t("branch.createNew")}
           </h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-2.5">
@@ -155,7 +170,7 @@ export function BranchTab({ showConfirm }: Props) {
                 htmlFor="branch-name"
                 className="mb-0.5 block text-[0.8rem] text-text-secondary"
               >
-                ブランチ名
+                {t("branch.branchName")}
               </label>
               <input
                 type="text"
@@ -172,7 +187,7 @@ export function BranchTab({ showConfirm }: Props) {
               className="cursor-pointer rounded border-none bg-accent px-3 py-1.5 text-[0.8rem] font-semibold text-bg-primary transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               disabled={submitting}
             >
-              作成
+              {t("common.create")}
             </button>
           </form>
           {formMessage && (

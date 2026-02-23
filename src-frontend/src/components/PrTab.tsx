@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { PrInfo } from "../types";
 
@@ -16,6 +17,7 @@ function stateClass(state: string): string {
 }
 
 export function PrTab() {
+  const { t } = useTranslation();
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
   const [token, setToken] = useState("");
@@ -27,7 +29,7 @@ export function PrTab() {
   async function handleLoad(e?: FormEvent) {
     e?.preventDefault();
     if (!owner.trim() || !repo.trim() || !token.trim()) {
-      setFormError("全てのフィールドを入力してください。");
+      setFormError(t("pr.fillAllFields"));
       return;
     }
 
@@ -52,7 +54,7 @@ export function PrTab() {
     <div>
       <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
-          Pull Requests
+          {t("pr.title")}
         </h2>
         <div>
           <div className="mb-2 flex items-end gap-3">
@@ -61,7 +63,7 @@ export function PrTab() {
                 htmlFor="pr-owner"
                 className="mb-0.5 block text-[0.8rem] text-text-secondary"
               >
-                Owner
+                {t("pr.owner")}
               </label>
               <input
                 type="text"
@@ -78,7 +80,7 @@ export function PrTab() {
                 htmlFor="pr-repo"
                 className="mb-0.5 block text-[0.8rem] text-text-secondary"
               >
-                Repo
+                {t("pr.repo")}
               </label>
               <input
                 type="text"
@@ -95,7 +97,7 @@ export function PrTab() {
                 htmlFor="pr-token"
                 className="mb-0.5 block text-[0.8rem] text-text-secondary"
               >
-                Token
+                {t("pr.token")}
               </label>
               <input
                 type="password"
@@ -112,7 +114,7 @@ export function PrTab() {
               onClick={() => handleLoad()}
               disabled={loading}
             >
-              取得
+              {t("pr.fetch")}
             </button>
           </div>
           {formError && (
@@ -123,14 +125,18 @@ export function PrTab() {
         </div>
         <div className="scrollbar-custom overflow-y-auto">
           {loading && (
-            <p className="p-2 text-[0.9rem] text-text-secondary">読み込み中…</p>
+            <p className="p-2 text-[0.9rem] text-text-secondary">
+              {t("common.loading")}
+            </p>
           )}
           {error && (
-            <p className="p-2 text-[0.9rem] text-danger">エラー: {error}</p>
+            <p className="p-2 text-[0.9rem] text-danger">
+              {t("common.error", { message: error })}
+            </p>
           )}
           {!loading && !error && prs.length === 0 && (
             <p className="p-2 text-[0.9rem] italic text-text-secondary">
-              PR情報を取得するには上のフォームに入力してください。
+              {t("pr.empty")}
             </p>
           )}
           {prs.map((pr) => (
@@ -156,7 +162,9 @@ export function PrTab() {
                 <span>{pr.head_branch}</span>
                 <span className="font-mono text-accent">+{pr.additions}</span>
                 <span className="font-mono text-danger">-{pr.deletions}</span>
-                <span className="font-mono">{pr.changed_files} files</span>
+                <span className="font-mono">
+                  {t("pr.files", { count: pr.changed_files })}
+                </span>
               </div>
             </div>
           ))}

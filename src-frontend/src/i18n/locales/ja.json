@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "reown",
+    "tagline": "エージェントPRの嵐の時代でも、コードベースを自分のものに。"
+  },
+  "tabs": {
+    "worktrees": "Worktrees",
+    "branches": "Branches",
+    "diff": "Diff",
+    "prs": "PRs"
+  },
+  "common": {
+    "loading": "読み込み中…",
+    "error": "エラー: {{message}}",
+    "create": "作成",
+    "delete": "削除",
+    "cancel": "キャンセル"
+  },
+  "worktree": {
+    "title": "ワークツリー",
+    "empty": "ワークツリーがありません。",
+    "created": "ワークツリーを作成しました。",
+    "createNew": "新規ワークツリー作成",
+    "path": "パス",
+    "branchName": "ブランチ名",
+    "branchLabel": "ブランチ: {{name}}",
+    "pathLabel": "パス: {{path}}",
+    "locked": "locked",
+    "detached": "detached"
+  },
+  "branch": {
+    "title": "ブランチ",
+    "empty": "ブランチがありません。",
+    "created": "ブランチ '{{name}}' を作成しました。",
+    "switched": "ブランチ '{{name}}' に切り替えました。",
+    "deleted": "ブランチ '{{name}}' を削除しました。",
+    "confirmDelete": "ブランチ '{{name}}' を削除しますか？この操作は取り消せません。",
+    "createNew": "新規ブランチ作成",
+    "branchName": "ブランチ名",
+    "switch": "切替",
+    "upstream": "upstream: {{name}}"
+  },
+  "diff": {
+    "changedFiles": "変更ファイル",
+    "loadPrompt": "Diffを読み込んでください。",
+    "loadButton": "ワークディレクトリのDiffを読み込む",
+    "selectFile": "左のファイル一覧からファイルを選択してください。",
+    "noDiffContent": "差分内容がありません（バイナリファイルの可能性）。"
+  },
+  "pr": {
+    "title": "Pull Requests",
+    "owner": "Owner",
+    "repo": "Repo",
+    "token": "Token",
+    "fetch": "取得",
+    "fillAllFields": "全てのフィールドを入力してください。",
+    "empty": "PR情報を取得するには上のフォームに入力してください。",
+    "files": "{{count}} files"
+  }
+}
