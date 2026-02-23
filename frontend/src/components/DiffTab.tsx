@@ -119,8 +119,8 @@ export function DiffTab() {
               {t("diff.loadButton")}
             </button>
           </div>
-        </aside>
-        <section className="flex flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary p-5">
+        </Card>
+        <Card className="flex flex-col overflow-hidden">
           <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
             {selectedDiff
               ? (selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff")
@@ -183,7 +183,7 @@ export function DiffTab() {
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       </div>
     </div>
   );
