@@ -87,7 +87,7 @@ rm -f "$RATE_LIMIT_FLAG"
 ensure_labels
 
 # ── Step execution order ─────────────────────────────────────────────────────
-STEP_ORDER=(step_setup step_triage step_select step_implement step_verify step_reqverify step_push step_ci step_complete)
+STEP_ORDER=(step_setup step_triage step_select step_implement step_verify step_reqverify step_review step_push step_ci step_complete)
 
 # ── Main Loop ────────────────────────────────────────────────────────────────
 iteration=0
