@@ -113,6 +113,8 @@ fn collect_diff(diff: &git2::Diff<'_>) -> Result<Vec<FileDiff>> {
 
     // Use RefCell to share mutable state across multiple closures passed to
     // `foreach`, which requires each closure to independently capture state.
+    // TODO: Consider refactoring to a more straightforward iteration pattern
+    // that builds up the data structure without needing RefCell.
     let files: RefCell<Vec<FileDiff>> = RefCell::new(Vec::new());
     let current_chunk: RefCell<Option<DiffChunk>> = RefCell::new(None);
 
@@ -168,6 +170,9 @@ fn collect_diff(diff: &git2::Diff<'_>) -> Result<Vec<FileDiff>> {
             if let Some(ref mut chunk) = *chunk_ref {
                 chunk.lines.push(info);
             } else {
+                // Unexpected: line callback fired without an active chunk.
+                // Fall back to appending to the last chunk of the last file.
+                eprintln!("warning: diff line received without active chunk context");
                 drop(chunk_ref);
                 if let Some(f) = files.borrow_mut().last_mut() {
                     if let Some(c) = f.chunks.last_mut() {

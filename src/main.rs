@@ -55,20 +55,28 @@ fn run_app(
     loop {
         terminal.draw(|frame| draw(frame, &app))?;
 
-        if !event::poll(Duration::from_millis(200))? {
+        // Block until an event occurs to avoid unnecessary CPU usage from idle redraws.
+        if !event::poll(Duration::from_secs(1))? {
             continue;
         }
 
         if let Event::Key(key) = event::read()? {
-            // Ctrl-C always quits
-            if key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('c') {
+            // Ctrl-C always quits (use contains to handle multiple simultaneous modifiers)
+            if key.modifiers.contains(KeyModifiers::CONTROL)
+                && (key.code == KeyCode::Char('c') || key.code == KeyCode::Char('C'))
+            {
                 break;
             }
 
             match app.input_mode {
                 InputMode::NewBranch | InputMode::NewWorktree => {
                     match key.code {
-                        KeyCode::Char(c) => app.input_buf.push(c),
+                        KeyCode::Char(c)
+                            if key.modifiers.is_empty()
+                                || key.modifiers == KeyModifiers::SHIFT =>
+                        {
+                            app.input_buf.push(c)
+                        }
                         KeyCode::Backspace => {
                             app.input_buf.pop();
                         }

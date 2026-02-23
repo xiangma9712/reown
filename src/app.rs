@@ -41,21 +41,48 @@ pub struct App {
     pub diff_file_sel: usize,
     pub diff_scroll: u16,
 
-    pub should_quit: bool,
 }
 
 impl App {
     pub fn new(repo_path: &str) -> Result<Self> {
-        let worktrees = worktree::list_worktrees(repo_path).unwrap_or_default();
-        let branches = branch::list_branches(repo_path).unwrap_or_default();
-        let file_diffs = diff::diff_workdir(repo_path).unwrap_or_default();
+        let mut errors = Vec::new();
+
+        let worktrees = match worktree::list_worktrees(repo_path) {
+            Ok(ws) => ws,
+            Err(e) => {
+                errors.push(format!("Failed to list worktrees: {e}"));
+                Vec::new()
+            }
+        };
+
+        let branches = match branch::list_branches(repo_path) {
+            Ok(bs) => bs,
+            Err(e) => {
+                errors.push(format!("Failed to list branches: {e}"));
+                Vec::new()
+            }
+        };
+
+        let file_diffs = match diff::diff_workdir(repo_path) {
+            Ok(ds) => ds,
+            Err(e) => {
+                errors.push(format!("Failed to compute workdir diff: {e}"));
+                Vec::new()
+            }
+        };
+
+        let status_msg = if errors.is_empty() {
+            None
+        } else {
+            Some(errors.join(" | "))
+        };
 
         Ok(Self {
             repo_path: repo_path.to_string(),
             view: View::Worktrees,
             input_mode: InputMode::Normal,
             input_buf: String::new(),
-            status_msg: None,
+            status_msg,
             worktrees,
             worktree_sel: 0,
             branches,
@@ -63,14 +90,41 @@ impl App {
             file_diffs,
             diff_file_sel: 0,
             diff_scroll: 0,
-            should_quit: false,
         })
     }
 
     pub fn refresh(&mut self) {
-        self.worktrees = worktree::list_worktrees(&self.repo_path).unwrap_or_default();
-        self.branches = branch::list_branches(&self.repo_path).unwrap_or_default();
-        self.file_diffs = diff::diff_workdir(&self.repo_path).unwrap_or_default();
+        self.status_msg = None;
+        let mut errors = Vec::new();
+
+        match worktree::list_worktrees(&self.repo_path) {
+            Ok(ws) => self.worktrees = ws,
+            Err(e) => {
+                self.worktrees = Vec::new();
+                errors.push(format!("Failed to refresh worktrees: {e}"));
+            }
+        }
+
+        match branch::list_branches(&self.repo_path) {
+            Ok(bs) => self.branches = bs,
+            Err(e) => {
+                self.branches = Vec::new();
+                errors.push(format!("Failed to refresh branches: {e}"));
+            }
+        }
+
+        match diff::diff_workdir(&self.repo_path) {
+            Ok(ds) => self.file_diffs = ds,
+            Err(e) => {
+                self.file_diffs = Vec::new();
+                errors.push(format!("Failed to refresh diff: {e}"));
+            }
+        }
+
+        if !errors.is_empty() {
+            self.status_msg = Some(errors.join(" | "));
+        }
+
         self.diff_scroll = 0;
         self.clamp_selections();
     }
@@ -200,6 +254,8 @@ impl App {
     }
 
     /// Add a worktree. `input_buf` format: `<path>|<branch>`.
+    /// Note: pipe `|` is used as delimiter. Paths should be relative to avoid
+    /// ambiguity since `|` can technically appear in Unix paths.
     pub fn confirm_add_worktree(&mut self) {
         let raw = self.input_buf.trim().to_string();
         let parts: Vec<&str> = raw.splitn(2, '|').collect();

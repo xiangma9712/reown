@@ -30,16 +30,20 @@ pub fn render_worktrees(
                 .as_deref()
                 .unwrap_or("(detached HEAD)");
             let path_str = wt.path.to_string_lossy();
+            let display_name = if wt.name.len() > 24 {
+                format!("{}…", &wt.name[..23])
+            } else {
+                format!("{:<24}", wt.name)
+            };
+            let display_branch = if branch_label.len() > 28 {
+                format!("{}…", &branch_label[..27])
+            } else {
+                format!("{:<28}", branch_label)
+            };
             let line = Line::from(vec![
                 Span::raw(lock_icon),
-                Span::styled(
-                    format!("{:<24}", wt.name),
-                    Style::default().fg(Color::Yellow),
-                ),
-                Span::styled(
-                    format!("{:<28}", branch_label),
-                    Style::default().fg(Color::Green),
-                ),
+                Span::styled(display_name, Style::default().fg(Color::Yellow)),
+                Span::styled(display_branch, Style::default().fg(Color::Green)),
                 Span::raw(path_str.to_string()),
             ]);
             ListItem::new(line)

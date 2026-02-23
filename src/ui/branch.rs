@@ -30,12 +30,14 @@ pub fn render_branches(
                 .as_deref()
                 .map(|u| format!("  ↑ {u}"))
                 .unwrap_or_default();
+            let display_name = if b.name.len() > 32 {
+                format!("{}…", &b.name[..31])
+            } else {
+                format!("{:<32}", b.name)
+            };
             let line = Line::from(vec![
                 Span::styled(head_marker, Style::default().fg(Color::Green)),
-                Span::styled(
-                    format!("{:<32}", b.name),
-                    Style::default().fg(Color::Yellow),
-                ),
+                Span::styled(display_name, Style::default().fg(Color::Yellow)),
                 Span::styled(upstream_label, Style::default().fg(Color::DarkGray)),
             ]);
             ListItem::new(line)
@@ -48,7 +50,7 @@ pub fn render_branches(
     let list = List::new(items)
         .block(
             Block::default()
-                .title(" Branches [b]  (c)reate  (d)elete  (↵)switch ")
+                .title(" Branches [b]  (c)reate  (x)delete  (↵)switch ")
                 .borders(Borders::ALL)
                 .border_style(border_style),
         )

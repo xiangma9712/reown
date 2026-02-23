@@ -126,8 +126,14 @@ pub fn render_diff(
     let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
     let visible = chunks[1].height.saturating_sub(2); // subtract borders
     let content_len = total_lines.saturating_sub(visible) as usize;
+
+    // If the content fits within the visible area, no scrollbar is needed.
+    if content_len == 0 {
+        return;
+    }
+    let position = (scroll_offset as usize).min(content_len);
     let mut scrollbar_state = ScrollbarState::new(content_len)
-        .position(scroll_offset as usize);
+        .position(position);
     let scrollbar_area = Rect {
         x: chunks[1].x + chunks[1].width - 1,
         y: chunks[1].y + 1,
