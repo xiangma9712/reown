@@ -9,7 +9,8 @@ step_triage() {
     (.labels | map(.name) | index("planned")) == null and
     (.labels | map(.name) | index("doing")) == null and
     (.labels | map(.name) | index("done")) == null and
-    (.labels | map(.name) | index("needs-split")) == null
+    (.labels | map(.name) | index("needs-split")) == null and
+    (.labels | map(.name) | index("pend")) == null
   )]' "$ISSUES_FILE")
 
   local NEW_ISSUE_COUNT

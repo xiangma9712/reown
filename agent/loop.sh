@@ -9,6 +9,7 @@
 #   doing           — currently being worked on
 #   done            — completed (issue also closed)
 #   needs-split     — too large, needs breakdown
+#   pend            — blocked (test/clippy/CI failure etc.), needs human review
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -47,6 +48,7 @@ while [[ $# -gt 0 ]]; do
       echo "  doing       Currently being worked on by an agent"
       echo "  done        Completed (issue also closed)"
       echo "  needs-split Too large, needs breakdown"
+      echo "  pend        Blocked, needs human review or retry"
       echo ""
       echo "Graceful stop:"
       echo "  Ctrl-C               Stop after current step completes"

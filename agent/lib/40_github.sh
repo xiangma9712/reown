@@ -15,6 +15,7 @@ ensure_labels() {
   ensure_label_exists "doing"       "fbca04" "Currently being worked on"
   ensure_label_exists "done"        "5319e7" "Completed"
   ensure_label_exists "needs-split" "d93f0b" "Too large, needs breakdown"
+  ensure_label_exists "pend"        "c5def5" "Blocked, needs human review or retry"
 }
 
 # Mark an issue as needing split via label
@@ -24,6 +25,27 @@ mark_needs_split() {
     log "Marked issue #$issue_num as needs-split"
   else
     log "WARN: Failed to mark issue #$issue_num as needs-split"
+  fi
+}
+
+# Mark an issue as pending (blocked, not a scope issue) via label
+mark_pend() {
+  local issue_num="$1"
+  local reason="${2:-}"
+  if gh issue edit "$issue_num" --add-label "pend" --remove-label "doing" 2>/dev/null; then
+    log "Marked issue #$issue_num as pend"
+  else
+    log "WARN: Failed to mark issue #$issue_num as pend"
+  fi
+  if [[ -n "$reason" ]]; then
+    gh issue comment "$issue_num" --body "## Pend
+
+このissueは一時的にブロックされています。
+
+**理由**: $reason
+
+---
+_Automatically posted by agent/loop.sh_" 2>/dev/null || true
   fi
 }
 
