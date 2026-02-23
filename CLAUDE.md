@@ -20,8 +20,7 @@ cargo clippy --all-targets -- -D warnings
 
 ```
 src/                        — shared library (reown crate)
-  lib.rs                    — crate root, re-exports git, github, i18n
-  i18n.rs                   — UI text constants (Japanese)
+  lib.rs                    — crate root, re-exports git, github
   git/
     mod.rs                  — re-exports branch, diff, worktree
     branch.rs               — BranchInfo, list/create/switch/delete branches
