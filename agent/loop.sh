@@ -211,6 +211,60 @@ $ARCHIVE_CONTENT
     if echo "$EXTRACTED_JSON" | jq empty 2>/dev/null; then
       echo "$EXTRACTED_JSON" > "$REPO_ROOT/prd.json"
       log "prd.json updated by roadmap agent"
+
+      # ── Step 3b: Feedback — label & comment on newly synced issues ──────
+      # Find tasks in new prd.json that have an issue number but didn't exist in the old one
+      NEW_ISSUE_TASKS=$(jq -n \
+        --slurpfile old "$REPO_ROOT/prd.json.bak" \
+        --slurpfile new "$REPO_ROOT/prd.json" '
+        ($old[0].tasks // [] | map(select(.issue != null)) | map(.issue) ) as $old_issues |
+        ($new[0].tasks // [])
+        | map(select(.issue != null and (.issue | IN($old_issues[]) | not)))
+      ')
+
+      NEW_ISSUE_COUNT=$(echo "$NEW_ISSUE_TASKS" | jq length)
+      if [[ "$NEW_ISSUE_COUNT" -gt 0 ]]; then
+        log "Found $NEW_ISSUE_COUNT newly synced issues — applying 'planned' label and commenting..."
+        echo "$NEW_ISSUE_TASKS" | jq -c '.[]' | while IFS= read -r task_entry; do
+          ISSUE_NUM=$(echo "$task_entry" | jq -r '.issue')
+          T_ID=$(echo "$task_entry" | jq -r '.id')
+          T_TITLE=$(echo "$task_entry" | jq -r '.title')
+          T_DESC=$(echo "$task_entry" | jq -r '.description')
+          T_PRIORITY=$(echo "$task_entry" | jq -r '.priority')
+          T_PILLAR=$(echo "$task_entry" | jq -r '.pillar // "N/A"')
+
+          # Apply 'planned' label
+          if gh issue edit "$ISSUE_NUM" --add-label "planned" 2>/dev/null; then
+            log "Applied 'planned' label to issue #$ISSUE_NUM"
+          else
+            log "WARN: Failed to apply 'planned' label to issue #$ISSUE_NUM"
+          fi
+
+          # Post priority/plan comment
+          COMMENT_BODY="## Planned
+
+This issue has been incorporated into the project roadmap.
+
+| Field | Value |
+|-------|-------|
+| **Task ID** | \`$T_ID\` |
+| **Priority** | $T_PRIORITY |
+| **Pillar** | $T_PILLAR |
+
+### Planned approach
+
+$T_DESC
+
+---
+_Automatically posted by agent/loop.sh_"
+
+          if gh issue comment "$ISSUE_NUM" --body "$COMMENT_BODY" 2>/dev/null; then
+            log "Posted plan comment on issue #$ISSUE_NUM (task $T_ID, priority $T_PRIORITY)"
+          else
+            log "WARN: Failed to post comment on issue #$ISSUE_NUM"
+          fi
+        done
+      fi
     else
       log "WARN: Roadmap agent output invalid JSON. Keeping old prd.json."
       cp "$REPO_ROOT/prd.json.bak" "$REPO_ROOT/prd.json"
