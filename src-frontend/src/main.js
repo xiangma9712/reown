@@ -493,25 +493,34 @@ function isInputFocused() {
   return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
 }
 
-function navigateList(direction) {
-  const tab = getActiveTab();
-  let items;
-  if (tab === "worktree") {
-    items = document.querySelectorAll("#worktree-list .wt-item");
-  } else if (tab === "branch") {
-    items = document.querySelectorAll("#branch-list .branch-item");
-  } else if (tab === "diff") {
-    items = document.querySelectorAll("#diff-file-list .diff-file-item");
-  } else if (tab === "pr") {
-    items = document.querySelectorAll("#pr-list .pr-item");
-  }
-
-  if (!items || items.length === 0) return;
-
+function getSelectedIndex(items) {
   let currentIndex = -1;
   items.forEach((item, i) => {
     if (item.classList.contains("selected")) currentIndex = i;
   });
+  return currentIndex;
+}
+
+function getListItems(tab) {
+  if (tab === "worktree") {
+    return document.querySelectorAll("#worktree-list .wt-item");
+  } else if (tab === "branch") {
+    return document.querySelectorAll("#branch-list .branch-item");
+  } else if (tab === "diff") {
+    return document.querySelectorAll("#diff-file-list .diff-file-item");
+  } else if (tab === "pr") {
+    return document.querySelectorAll("#pr-list .pr-item");
+  }
+  return null;
+}
+
+function navigateList(direction) {
+  const tab = getActiveTab();
+  const items = getListItems(tab);
+
+  if (!items || items.length === 0) return;
+
+  const currentIndex = getSelectedIndex(items);
 
   let nextIndex;
   if (direction === "down") {
@@ -528,6 +537,16 @@ function navigateList(direction) {
   if (tab === "diff") {
     selectDiffFile(nextIndex);
   }
+}
+
+function getSelectedBranchName() {
+  const items = document.querySelectorAll("#branch-list .branch-item");
+  const index = getSelectedIndex(items);
+  if (index < 0) return null;
+  const nameEl = items[index].querySelector(".branch-name");
+  if (!nameEl) return null;
+  // HEADブランチは "* name" 形式なので先頭の "* " を除去
+  return nameEl.textContent.replace(/^\*\s*/, "");
 }
 
 async function refreshCurrentView() {
@@ -586,6 +605,29 @@ function setupKeyboardShortcuts() {
       case "r":
         e.preventDefault();
         refreshCurrentView();
+        break;
+      case "c":
+        // Branchタブでは新規ブランチ作成フォームにフォーカス
+        if (getActiveTab() === "branch") {
+          e.preventDefault();
+          document.getElementById("branch-name").focus();
+        }
+        break;
+      case "x":
+        // Branchタブでは選択中のブランチを削除
+        if (getActiveTab() === "branch") {
+          e.preventDefault();
+          const deleteName = getSelectedBranchName();
+          if (deleteName) handleDeleteBranch(deleteName);
+        }
+        break;
+      case "Enter":
+        // Branchタブでは選択中のブランチに切り替え
+        if (getActiveTab() === "branch") {
+          e.preventDefault();
+          const switchName = getSelectedBranchName();
+          if (switchName) handleSwitchBranch(switchName);
+        }
         break;
     }
   });
