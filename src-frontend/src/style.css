@@ -9,47 +9,335 @@ body {
     Ubuntu, Cantarell, sans-serif;
   background-color: #1a1a2e;
   color: #e0e0e0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
 }
 
 #app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+
+.app-header {
   text-align: center;
-  padding: 2rem;
-}
-
-h1 {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
-}
-
-p {
-  font-size: 1.1rem;
-  color: #a0a0b0;
   margin-bottom: 2rem;
 }
 
-#branches {
-  text-align: left;
-  max-width: 400px;
-  margin: 0 auto;
+.app-header h1 {
+  font-size: 2rem;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
 }
 
-#branches ul {
-  list-style: none;
+.tagline {
+  font-size: 0.95rem;
+  color: #a0a0b0;
 }
 
-#branches li {
-  padding: 0.4rem 0.8rem;
+/* ── Panels layout ──────────────────────────────────────────────── */
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.panel {
+  background-color: #16213e;
+  border: 1px solid #2a2a3e;
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel h2 {
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+/* ── List container ─────────────────────────────────────────────── */
+
+.list-container {
+  flex: 1;
+  min-height: 120px;
+  max-height: 360px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.list-container .loading {
+  color: #a0a0b0;
+  font-size: 0.9rem;
+  padding: 0.5rem;
+}
+
+.list-container .error {
+  color: #e06c75;
+  font-size: 0.9rem;
+  padding: 0.5rem;
+}
+
+.list-container .empty {
+  color: #a0a0b0;
+  font-size: 0.9rem;
+  padding: 0.5rem;
+  font-style: italic;
+}
+
+/* ── Worktree list items ────────────────────────────────────────── */
+
+.wt-item {
+  padding: 0.6rem 0.75rem;
   border-bottom: 1px solid #2a2a3e;
   font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
-#branches li.head {
+.wt-item:last-child {
+  border-bottom: none;
+}
+
+.wt-name {
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+.wt-name.main {
+  color: #4ec9b0;
+}
+
+.wt-detail {
+  color: #a0a0b0;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+}
+
+.wt-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+}
+
+.wt-badge.locked {
+  background-color: #e06c75;
+  color: #ffffff;
+}
+
+/* ── Branch list items ──────────────────────────────────────────── */
+
+.branch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #2a2a3e;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.85rem;
+}
+
+.branch-item:last-child {
+  border-bottom: none;
+}
+
+.branch-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.branch-name {
+  color: #e0e0e0;
+}
+
+.branch-name.head {
   color: #4ec9b0;
   font-weight: bold;
+}
+
+.branch-upstream {
+  color: #a0a0b0;
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────── */
+
+.btn {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #4ec9b0;
+  color: #1a1a2e;
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #3db89f;
+}
+
+.btn-secondary {
+  background-color: #3a3a5e;
+  color: #e0e0e0;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #4a4a6e;
+}
+
+.btn-danger {
+  background-color: #e06c75;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c85a63;
+}
+
+.btn-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* ── Forms ───────────────────────────────────────────────────────── */
+
+.form-section {
+  border-top: 1px solid #2a2a3e;
+  padding-top: 1rem;
+}
+
+.form-section h3 {
+  font-size: 0.9rem;
+  color: #c0c0d0;
+  margin-bottom: 0.75rem;
+}
+
+.form-group {
+  margin-bottom: 0.6rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: #a0a0b0;
+  margin-bottom: 0.2rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  background-color: #1a1a2e;
+  border: 1px solid #3a3a5e;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.85rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4ec9b0;
+}
+
+.form-group input::placeholder {
+  color: #5a5a7e;
+}
+
+/* ── Messages ───────────────────────────────────────────────────── */
+
+.message {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  min-height: 1.2em;
+}
+
+.message.success {
+  color: #4ec9b0;
+}
+
+.message.error {
+  color: #e06c75;
+}
+
+/* ── Confirm dialog ─────────────────────────────────────────────── */
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.dialog-overlay[hidden] {
+  display: none;
+}
+
+.dialog {
+  background-color: #16213e;
+  border: 1px solid #2a2a3e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 90%;
+}
+
+.dialog p {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+
+.list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list-container::-webkit-scrollbar-thumb {
+  background-color: #3a3a5e;
+  border-radius: 3px;
 }
