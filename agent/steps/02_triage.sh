@@ -71,6 +71,21 @@ $NEW_ISSUES
           log "WARN: Failed to apply '$TRIAGE_LABEL' label to issue #$ISSUE_NUM"
         fi
 
+        # Apply priority label (priority-high, priority-middle, priority-low)
+        local PRIORITY_LABEL=""
+        case "$T_PRIORITY" in
+          high)   PRIORITY_LABEL="priority-high" ;;
+          middle) PRIORITY_LABEL="priority-middle" ;;
+          low)    PRIORITY_LABEL="priority-low" ;;
+        esac
+        if [[ -n "$PRIORITY_LABEL" ]]; then
+          if gh issue edit "$ISSUE_NUM" --add-label "$PRIORITY_LABEL" 2>/dev/null; then
+            log "Applied '$PRIORITY_LABEL' label to issue #$ISSUE_NUM"
+          else
+            log "WARN: Failed to apply '$PRIORITY_LABEL' label to issue #$ISSUE_NUM"
+          fi
+        fi
+
         # Post triage comment
         local COMMENT_BODY
         COMMENT_BODY="## $TRIAGE_STATUS

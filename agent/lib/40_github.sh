@@ -11,11 +11,14 @@ ensure_label_exists() {
 }
 
 ensure_labels() {
-  ensure_label_exists "planned"     "0e8a16" "Triaged and ready for implementation"
-  ensure_label_exists "doing"       "fbca04" "Currently being worked on"
-  ensure_label_exists "done"        "5319e7" "Completed"
-  ensure_label_exists "needs-split" "d93f0b" "Too large, needs breakdown"
-  ensure_label_exists "pend"        "c5def5" "Blocked, needs human review or retry"
+  ensure_label_exists "planned"         "0e8a16" "Triaged and ready for implementation"
+  ensure_label_exists "doing"           "fbca04" "Currently being worked on"
+  ensure_label_exists "done"            "5319e7" "Completed"
+  ensure_label_exists "needs-split"     "d93f0b" "Too large, needs breakdown"
+  ensure_label_exists "pend"            "c5def5" "Blocked, needs human review or retry"
+  ensure_label_exists "priority-high"   "b60205" "High priority"
+  ensure_label_exists "priority-middle" "fbca04" "Middle priority"
+  ensure_label_exists "priority-low"    "0e8a16" "Low priority"
 }
 
 # Mark an issue as needing split via label

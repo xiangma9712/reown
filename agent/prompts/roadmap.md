@@ -33,11 +33,10 @@ For each new GitHub Issue:
 
 1. Read the issue title and body carefully
 2. Determine which INTENT pillar it maps to
-3. Assign a priority (lower number = higher priority):
-   - Bugs and blockers: 1-3
-   - Core feature requests: 4-6
-   - Improvements and enhancements: 7-9
-   - Nice-to-haves: 10+
+3. Assign a priority label:
+   - **high** — Bugs, blockers, critical path features
+   - **middle** — Core feature requests, important improvements
+   - **low** — Nice-to-haves, minor enhancements
 4. Write a brief implementation approach (2-3 sentences)
 5. If the issue is too large (scope > 1 module or > ~200 lines), note that it should be split
 
