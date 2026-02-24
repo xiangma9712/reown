@@ -84,6 +84,18 @@ async fn get_pull_request_files(
 }
 
 #[tauri::command]
+async fn list_pr_commits(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+) -> Result<Vec<reown::github::CommitInfo>, AppError> {
+    reown::github::pull_request::list_pr_commits(&owner, &repo, pr_number, &token)
+        .await
+        .map_err(AppError::github)
+}
+
+#[tauri::command]
 async fn submit_pr_review(
     owner: String,
     repo: String,
@@ -440,6 +452,7 @@ fn main() {
             diff_commit,
             list_pull_requests,
             get_pull_request_files,
+            list_pr_commits,
             submit_pr_review,
             analyze_pr_risk,
             analyze_pr_risk_with_llm,
