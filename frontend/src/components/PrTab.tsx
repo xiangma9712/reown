@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, FileDiff, LlmConfig, AnalysisResult, HybridAnalysisResult } from "../types";
+import type { PrInfo, FileDiff, CategorizedFileDiff, ChangeCategory, LlmConfig, AnalysisResult, HybridAnalysisResult } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -65,6 +65,45 @@ function getOriginString(
   return "Other";
 }
 
+const categoryIcons: Record<ChangeCategory, string> = {
+  Logic: "\u{1F4BB}",
+  Refactor: "\u{1F504}",
+  Test: "\u{1F9EA}",
+  Config: "\u{2699}\uFE0F",
+  Documentation: "\u{1F4DD}",
+  CI: "\u{1F6E0}\uFE0F",
+  Dependency: "\u{1F4E6}",
+  Other: "\u{1F4C4}",
+};
+
+const categoryLabelKeys: Record<ChangeCategory, string> = {
+  Logic: "pr.categoryLogic",
+  Refactor: "pr.categoryRefactor",
+  Test: "pr.categoryTest",
+  Config: "pr.categoryConfig",
+  Documentation: "pr.categoryDocumentation",
+  CI: "pr.categoryCI",
+  Dependency: "pr.categoryDependency",
+  Other: "pr.categoryOther",
+};
+
+// カテゴリの表示順序
+const categoryOrder: ChangeCategory[] = [
+  "Logic", "Refactor", "Test", "Config", "Documentation", "CI", "Dependency", "Other",
+];
+
+function groupByCategory(diffs: CategorizedFileDiff[]): { category: ChangeCategory; files: { diff: CategorizedFileDiff; originalIndex: number }[] }[] {
+  const groups = new Map<ChangeCategory, { diff: CategorizedFileDiff; originalIndex: number }[]>();
+  diffs.forEach((diff, index) => {
+    const list = groups.get(diff.category) ?? [];
+    list.push({ diff, originalIndex: index });
+    groups.set(diff.category, list);
+  });
+  return categoryOrder
+    .filter((cat) => groups.has(cat))
+    .map((cat) => ({ category: cat, files: groups.get(cat)! }));
+}
+
 interface PrTabProps {
   prs: PrInfo[];
   setPrs: (prs: PrInfo[]) => void;
@@ -83,11 +122,14 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
   const [stateFilter, setStateFilter] = useState<PrStateFilter>("open");
 
   const [selectedPr, setSelectedPr] = useState<PrInfo | null>(null);
-  const [diffs, setDiffs] = useState<FileDiff[]>([]);
+  const [diffs, setDiffs] = useState<CategorizedFileDiff[]>([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState(-1);
   const [diffLoading, setDiffLoading] = useState(false);
   const [diffError, setDiffError] = useState<string | null>(null);
   const llmConfigRef = useRef<LlmConfig>({ llm_endpoint: "", llm_model: "", llm_api_key_stored: false });
+
+  // Category accordion state (expanded categories)
+  const [expandedCategories, setExpandedCategories] = useState<Set<ChangeCategory>>(new Set(["Logic"]));
 
   // Analysis state
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -152,6 +194,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     setDiffLoading(true);
     setDiffs([]);
     setSelectedFileIndex(-1);
+    setExpandedCategories(new Set(["Logic"]));
     setAnalysisError(null);
     // Load cached analysis if available
     const cached = analysisCache.current.get(pr.number);
@@ -239,10 +282,24 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     }
   }
 
+  function toggleCategory(category: ChangeCategory) {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  }
+
   const filteredPrs =
     stateFilter === "all"
       ? prs
       : prs.filter((pr) => pr.state === stateFilter);
+
+  const groupedDiffs = groupByCategory(diffs);
 
   const selectedDiff =
     selectedFileIndex >= 0 ? diffs[selectedFileIndex] : null;
@@ -298,27 +355,46 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
                   {t("pr.noDiffFiles")}
                 </p>
               )}
-              {diffs.map((diff, index) => (
-                <div
-                  key={diff.new_path ?? diff.old_path ?? index}
-                  className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                    selectedFileIndex === index
-                      ? "border-l-2 border-l-accent bg-bg-hover"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedFileIndex(index)}
-                >
-                  <Badge variant={statusVariant(diff.status)}>
-                    {statusLabel(diff.status)}
-                  </Badge>
-                  <span
-                    className="truncate text-text-primary"
-                    title={diff.new_path ?? diff.old_path ?? ""}
-                  >
-                    {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                  </span>
-                </div>
-              ))}
+              {groupedDiffs.map((group) => {
+                const isExpanded = expandedCategories.has(group.category);
+                return (
+                  <div key={group.category}>
+                    <button
+                      className="flex w-full cursor-pointer items-center gap-2 border-b border-border bg-bg-primary px-3 py-2 text-left text-[0.8rem] font-semibold text-text-heading transition-colors hover:bg-bg-hover"
+                      onClick={() => toggleCategory(group.category)}
+                    >
+                      <span className="text-[0.7rem]">{isExpanded ? "\u25BC" : "\u25B6"}</span>
+                      <span>{categoryIcons[group.category]}</span>
+                      <span>{t(categoryLabelKeys[group.category])}</span>
+                      <span className="ml-auto text-[0.75rem] font-normal text-text-secondary">
+                        {group.files.length}
+                      </span>
+                    </button>
+                    {isExpanded &&
+                      group.files.map(({ diff, originalIndex }) => (
+                        <div
+                          key={diff.new_path ?? diff.old_path ?? originalIndex}
+                          className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 pl-7 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                            selectedFileIndex === originalIndex
+                              ? "border-l-2 border-l-accent bg-bg-hover"
+                              : ""
+                          }`}
+                          onClick={() => setSelectedFileIndex(originalIndex)}
+                        >
+                          <Badge variant={statusVariant(diff.status)}>
+                            {statusLabel(diff.status)}
+                          </Badge>
+                          <span
+                            className="truncate text-text-primary"
+                            title={diff.new_path ?? diff.old_path ?? ""}
+                          >
+                            {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                );
+              })}
             </div>
           </Card>
           <Card className="flex flex-col overflow-hidden">

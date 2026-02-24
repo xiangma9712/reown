@@ -1,5 +1,24 @@
 use crate::git::diff::{FileDiff, LineOrigin};
 
+/// FileDiff にカテゴリ情報を付加した構造体
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CategorizedFileDiff {
+    #[serde(flatten)]
+    pub diff: FileDiff,
+    pub category: ChangeCategory,
+}
+
+/// FileDiff のリストにカテゴリ分類を適用する
+pub fn categorize_diffs(diffs: Vec<FileDiff>) -> Vec<CategorizedFileDiff> {
+    diffs
+        .into_iter()
+        .map(|diff| {
+            let category = classify_file_change(&diff);
+            CategorizedFileDiff { diff, category }
+        })
+        .collect()
+}
+
 /// 変更種別の分類
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub enum ChangeCategory {
