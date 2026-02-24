@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, FileDiff, CategorizedFileDiff, ChangeCategory, LlmConfig, AnalysisResult, HybridAnalysisResult } from "../types";
+import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AnalysisResult, HybridAnalysisResult } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
