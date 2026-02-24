@@ -4,7 +4,7 @@ use crate::github::PrInfo;
 use super::classify::{ChangeCategory, classify_file_change, count_changes, effective_path};
 
 /// リスクレベル
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum RiskLevel {
     Low,
     Medium,
