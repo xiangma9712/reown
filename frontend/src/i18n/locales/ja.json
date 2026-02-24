@@ -94,6 +94,17 @@
     "warningApiLayer": "この変更はAPI層に影響します",
     "warningInfraLayer": "この変更はインフラ・デプロイに影響します",
     "severityWarning": "警告",
-    "severityCritical": "重大"
+    "severityCritical": "重大",
+    "aiSummary": "AI要約",
+    "generateSummary": "AI要約を生成",
+    "generatingSummary": "要約を生成中…",
+    "overallSummary": "全体要約",
+    "changeReason": "変更理由（推定）",
+    "fileSummaries": "ファイル単位サマリー",
+    "consistencyOk": "PRタイトル・本文と変更内容は一致しています",
+    "consistencyWarning": "PRタイトル・本文と実際の変更内容に乖離があります",
+    "consistencyWarnings": "整合性の警告",
+    "cancelGeneration": "キャンセル",
+    "summaryError": "AI要約の生成に失敗しました"
   }
 }

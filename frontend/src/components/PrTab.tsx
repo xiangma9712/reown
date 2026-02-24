@@ -9,6 +9,7 @@ import { Input } from "./Input";
 import { Loading } from "./Loading";
 import { RiskBadge } from "./RiskBadge";
 import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
+import { AiSummaryPanel } from "./AiSummaryPanel";
 
 function stateVariant(
   state: string,
@@ -266,7 +267,13 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
             {analysisLoading ? t("pr.analyzing") : t("pr.analyze")}
           </Button>
         </div>
-        <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
+        <AiSummaryPanel
+          owner={owner.trim()}
+          repo={repo.trim()}
+          prNumber={selectedPr.number}
+          token={token.trim()}
+        />
+        <div className="mt-4 grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
           <Card className="flex flex-col">
             <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
               {t("diff.changedFiles")}

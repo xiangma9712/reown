@@ -94,6 +94,17 @@
     "warningApiLayer": "This change affects the API layer",
     "warningInfraLayer": "This change affects infrastructure/deployment",
     "severityWarning": "Warning",
-    "severityCritical": "Critical"
+    "severityCritical": "Critical",
+    "aiSummary": "AI Summary",
+    "generateSummary": "Generate AI Summary",
+    "generatingSummary": "Generating summary…",
+    "overallSummary": "Overall Summary",
+    "changeReason": "Estimated Change Reason",
+    "fileSummaries": "File Summaries",
+    "consistencyOk": "PR title/body is consistent with the actual changes",
+    "consistencyWarning": "PR title/body may not match the actual changes",
+    "consistencyWarnings": "Consistency Warnings",
+    "cancelGeneration": "Cancel",
+    "summaryError": "Failed to generate AI summary"
   }
 }
