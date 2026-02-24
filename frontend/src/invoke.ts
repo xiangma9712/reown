@@ -1,5 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import type { WorktreeInfo, BranchInfo, FileDiff, CategorizedFileDiff, PrInfo, RepositoryEntry, AppConfig, LlmConfig, RepoInfo, PrSummary, ConsistencyResult, AnalysisResult, HybridAnalysisResult, ReviewEvent } from "./types";
+import type { WorktreeInfo, BranchInfo, FileDiff, CategorizedFileDiff, PrInfo, RepositoryEntry, AppConfig, LlmConfig, AutomationConfig, RepoInfo, PrSummary, ConsistencyResult, AnalysisResult, HybridAnalysisResult, ReviewEvent } from "./types";
 
 type Commands = {
   list_worktrees: { args: { repoPath: string }; ret: WorktreeInfo[] };
@@ -73,6 +73,11 @@ type Commands = {
     args: { owner: string; repo: string; prNumber: number; token: string };
     ret: HybridAnalysisResult;
   };
+  save_automation_config: {
+    args: { automationConfig: AutomationConfig };
+    ret: void;
+  };
+  load_automation_config: { args?: Record<string, unknown>; ret: AutomationConfig };
 };
 
 export async function invoke<C extends keyof Commands>(

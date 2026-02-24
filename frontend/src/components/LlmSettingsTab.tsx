@@ -132,7 +132,7 @@ export function LlmSettingsTab() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="space-y-6">
       <h2 className="text-lg font-bold text-text-heading">
         {t("llmSettings.title")}
       </h2>

@@ -360,6 +360,36 @@ fn delete_llm_api_key() -> Result<(), AppError> {
     reown::config::delete_llm_api_key().map_err(AppError::storage)
 }
 
+// ── Automation Config commands ───────────────────────────────────────────────
+
+#[tauri::command]
+fn save_automation_config(
+    app_handle: tauri::AppHandle,
+    automation_config: reown::config::AutomationConfig,
+) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let mut config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    config.automation = automation_config;
+    reown::config::save_config(&config_path, &config).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn load_automation_config(
+    app_handle: tauri::AppHandle,
+) -> Result<reown::config::AutomationConfig, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    Ok(config.automation)
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
@@ -392,6 +422,8 @@ fn main() {
             save_llm_api_key,
             delete_llm_api_key,
             test_llm_connection,
+            save_automation_config,
+            load_automation_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
