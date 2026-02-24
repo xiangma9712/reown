@@ -20,7 +20,7 @@ export function Dropdown({ trigger, items, align = "end" }: DropdownProps) {
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="z-50 min-w-[140px] rounded-lg border border-border bg-bg-secondary p-1 shadow-lg"
+          className="z-50 min-w-[140px] rounded-lg border border-border bg-bg-primary p-1 shadow-lg"
           sideOffset={4}
           align={align}
         >

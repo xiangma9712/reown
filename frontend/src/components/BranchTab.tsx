@@ -137,7 +137,7 @@ export function BranchTab({ showConfirm, prs }: Props) {
   return (
     <div>
       <Card className="flex flex-col">
-        <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+        <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
           {t("branch.title")}
         </h2>
         <div className="scrollbar-custom mb-4 min-h-[120px] max-h-[360px] flex-1 overflow-y-auto">
