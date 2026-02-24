@@ -1,2 +1,14 @@
 [tools]
 node = "22"
+rust = "latest"
+
+[env]
+_.path = ["~/.cargo/bin"]
+
+[tasks.agent-loop]
+description = "Run the autonomous agent loop"
+run = "bash agent/loop.sh {{arg(name='args', var=true, required=false)}}"
+
+[tasks.agent-stop]
+description = "Gracefully stop the agent loop"
+run = "touch .agent-stop && echo 'Stop requested. Agent will exit after current step.'"
