@@ -37,8 +37,11 @@ export interface PrInfo {
   author: string;
   state: string;
   head_branch: string;
+  base_branch: string;
   updated_at: string;
   additions: number;
   deletions: number;
   changed_files: number;
+  body: string;
+  html_url: string;
 }

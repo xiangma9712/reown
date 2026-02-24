@@ -36,10 +36,13 @@ mod tests {
             author: "alice".to_string(),
             state: "open".to_string(),
             head_branch: "feature".to_string(),
+            base_branch: "main".to_string(),
             updated_at: "2025-01-15T10:30:00Z".to_string(),
             additions,
             deletions,
             changed_files,
+            body: String::new(),
+            html_url: format!("https://github.com/owner/repo/pull/{number}"),
         }
     }
 
@@ -110,10 +113,13 @@ mod tests {
             author: "alice".to_string(),
             state: state.to_string(),
             head_branch: "feature".to_string(),
+            base_branch: "main".to_string(),
             updated_at: "2025-01-15T10:30:00Z".to_string(),
             additions: 10,
             deletions: 5,
             changed_files: 2,
+            body: String::new(),
+            html_url: format!("https://github.com/owner/repo/pull/{number}"),
         }
     }
 
