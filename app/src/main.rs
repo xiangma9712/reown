@@ -121,6 +121,33 @@ fn remove_repository(
     reown::repository::remove_repository(&storage_path, &path).map_err(AppError::storage)
 }
 
+// ── Config commands ─────────────────────────────────────────────────────────
+
+#[tauri::command]
+fn save_app_config(
+    app_handle: tauri::AppHandle,
+    config: reown::config::AppConfig,
+) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    reown::config::save_config(&config_path, &config).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn load_app_config(
+    app_handle: tauri::AppHandle,
+) -> Result<reown::config::AppConfig, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    reown::config::load_config(&config_path).map_err(AppError::storage)
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
@@ -140,6 +167,8 @@ fn main() {
             add_repository,
             list_repositories,
             remove_repository,
+            save_app_config,
+            load_app_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -260,7 +289,7 @@ mod tests {
         assert_eq!(json, "Deletion");
         let json = serde_json::to_value(&LineOrigin::Context).unwrap();
         assert_eq!(json, "Context");
-        let json = serde_json::to_value(&LineOrigin::Other('=')).unwrap();
+        let json = serde_json::to_value(LineOrigin::Other('=')).unwrap();
         assert_eq!(json["Other"], "=");
     }
 

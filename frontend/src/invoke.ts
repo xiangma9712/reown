@@ -1,5 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo, RepositoryEntry } from "./types";
+import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo, RepositoryEntry, AppConfig } from "./types";
 
 type Commands = {
   list_worktrees: { args: { repoPath: string }; ret: WorktreeInfo[] };
@@ -30,6 +30,11 @@ type Commands = {
     args: { path: string };
     ret: void;
   };
+  save_app_config: {
+    args: { config: AppConfig };
+    ret: void;
+  };
+  load_app_config: { args?: Record<string, unknown>; ret: AppConfig };
 };
 
 export async function invoke<C extends keyof Commands>(
