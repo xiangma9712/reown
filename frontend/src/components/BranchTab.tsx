@@ -1,24 +1,48 @@
-import { useState, useEffect, useCallback, FormEvent } from "react";
+import { useState, useEffect, useCallback, useMemo, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import { useRepository } from "../RepositoryContext";
-import type { BranchInfo } from "../types";
+import type { BranchInfo, PrInfo } from "../types";
+import { Badge } from "./Badge";
 import { BranchActionMenu } from "./BranchActionMenu";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { Input } from "./Input";
 
+function prStateVariant(
+  state: string,
+): "success" | "danger" | "purple" | "default" {
+  switch (state) {
+    case "open":
+      return "success";
+    case "closed":
+      return "danger";
+    case "merged":
+      return "purple";
+    default:
+      return "default";
+  }
+}
 
 interface Props {
   showConfirm: (message: string) => Promise<boolean>;
+  prs: PrInfo[];
 }
 
-export function BranchTab({ showConfirm }: Props) {
+export function BranchTab({ showConfirm, prs }: Props) {
   const { t } = useTranslation();
   const { repoPath } = useRepository();
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const prByBranch = useMemo(() => {
+    const map = new Map<string, PrInfo>();
+    for (const pr of prs) {
+      map.set(pr.head_branch, pr);
+    }
+    return map;
+  }, [prs]);
 
   const [branchName, setBranchName] = useState("");
   const [formMessage, setFormMessage] = useState<{
@@ -132,36 +156,54 @@ export function BranchTab({ showConfirm }: Props) {
               {t("branch.empty")}
             </p>
           )}
-          {branches.map((b) => (
-            <div
-              key={b.name}
-              className="flex items-center justify-between border-b border-border px-3 py-2 font-mono text-[0.85rem] last:border-b-0"
-            >
-              <div className="min-w-0 flex-1">
-                <div
-                  className={
-                    b.is_head ? "font-bold text-accent" : "text-text-primary"
-                  }
-                >
-                  {b.is_head ? `* ${b.name}` : b.name}
+          {branches.map((b) => {
+            const pr = prByBranch.get(b.name);
+            return (
+              <div
+                key={b.name}
+                className="flex items-center justify-between border-b border-border px-3 py-2 font-mono text-[0.85rem] last:border-b-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={
+                        b.is_head ? "font-bold text-accent" : "text-text-primary"
+                      }
+                    >
+                      {b.is_head ? `* ${b.name}` : b.name}
+                    </span>
+                    {pr && (
+                      <a
+                        href={pr.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 no-underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Badge variant={prStateVariant(pr.state)}>
+                          #{pr.number} {pr.state}
+                        </Badge>
+                      </a>
+                    )}
+                  </div>
+                  {b.upstream && (
+                    <div className="mt-0.5 truncate text-xs text-text-secondary">
+                      {t("branch.upstream", { name: b.upstream })}
+                    </div>
+                  )}
                 </div>
-                {b.upstream && (
-                  <div className="mt-0.5 truncate text-xs text-text-secondary">
-                    {t("branch.upstream", { name: b.upstream })}
+                {!b.is_head && (
+                  <div className="ml-2 shrink-0">
+                    <BranchActionMenu
+                      branchName={b.name}
+                      onSwitch={handleSwitch}
+                      onDelete={handleDelete}
+                    />
                   </div>
                 )}
               </div>
-              {!b.is_head && (
-                <div className="ml-2 shrink-0">
-                  <BranchActionMenu
-                    branchName={b.name}
-                    onSwitch={handleSwitch}
-                    onDelete={handleDelete}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="border-t border-border pt-4">
           <h3 className="mb-3 text-[0.9rem] text-text-primary/80">

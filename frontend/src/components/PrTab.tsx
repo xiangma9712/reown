@@ -62,12 +62,16 @@ function getOriginString(
   return "Other";
 }
 
-export function PrTab() {
+interface PrTabProps {
+  prs: PrInfo[];
+  setPrs: (prs: PrInfo[]) => void;
+}
+
+export function PrTab({ prs, setPrs }: PrTabProps) {
   const { t } = useTranslation();
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
   const [token, setToken] = useState("");
-  const [prs, setPrs] = useState<PrInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);

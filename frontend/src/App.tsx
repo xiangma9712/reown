@@ -9,7 +9,7 @@ import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
 import { invoke } from "./invoke";
-import type { RepositoryEntry, RepoInfo } from "./types";
+import type { RepositoryEntry, RepoInfo, PrInfo } from "./types";
 import "./style.css";
 
 const NAV_ITEMS = [
@@ -27,6 +27,7 @@ export function App() {
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
+  const [prs, setPrs] = useState<PrInfo[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
     resolve: (value: boolean) => void;
@@ -160,9 +161,9 @@ export function App() {
         onSelectTab={(id) => setActiveTab(id as TabName)}
       >
         {activeTab === "worktree" && <WorktreeTab />}
-        {activeTab === "branch" && <BranchTab showConfirm={showConfirm} />}
+        {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} />}
         {activeTab === "diff" && <DiffTab />}
-        {activeTab === "pr" && <PrTab />}
+        {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} />}
 
         <ConfirmDialog
           open={confirmDialog !== null}
