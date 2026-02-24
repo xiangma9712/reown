@@ -3,6 +3,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::git::diff::{DiffChunk, DiffLineInfo, FileDiff, FileStatus, LineOrigin};
 
+/// Merge method for auto-merge.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MergeMethod {
+    Merge,
+    Squash,
+    Rebase,
+}
+
 /// Review event type for PR review submission.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -505,6 +514,168 @@ pub async fn submit_review(
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
         anyhow::bail!("GitHub API returned {status}: {body}");
+    }
+
+    Ok(())
+}
+
+/// GraphQL response for fetching a PR's node ID.
+#[derive(Debug, Deserialize)]
+struct GhGraphQlResponse<T> {
+    data: Option<T>,
+    errors: Option<Vec<GhGraphQlError>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhGraphQlError {
+    message: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhPrNodeIdData {
+    repository: GhRepositoryNode,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhRepositoryNode {
+    #[serde(rename = "pullRequest")]
+    pull_request: GhPrNode,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhPrNode {
+    id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhEnableAutoMergeData {
+    #[serde(rename = "enablePullRequestAutoMerge")]
+    enable_pull_request_auto_merge: Option<GhAutoMergePayload>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhAutoMergePayload {
+    #[serde(rename = "pullRequest")]
+    pull_request: Option<GhAutoMergePrInfo>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhAutoMergePrInfo {
+    #[serde(rename = "autoMergeRequest")]
+    auto_merge_request: Option<GhAutoMergeRequest>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhAutoMergeRequest {
+    #[serde(rename = "enabledAt")]
+    enabled_at: Option<String>,
+}
+
+/// Build the GraphQL request body for fetching a PR's node ID.
+fn build_pr_node_id_query(owner: &str, repo: &str, pr_number: u64) -> serde_json::Value {
+    serde_json::json!({
+        "query": format!(
+            r#"query {{ repository(owner: "{owner}", name: "{repo}") {{ pullRequest(number: {pr_number}) {{ id }} }} }}"#
+        )
+    })
+}
+
+/// Build the GraphQL request body for the enablePullRequestAutoMerge mutation.
+fn build_enable_auto_merge_mutation(
+    pull_request_id: &str,
+    merge_method: &MergeMethod,
+) -> serde_json::Value {
+    let method = match merge_method {
+        MergeMethod::Merge => "MERGE",
+        MergeMethod::Squash => "SQUASH",
+        MergeMethod::Rebase => "REBASE",
+    };
+    serde_json::json!({
+        "query": format!(
+            r#"mutation {{ enablePullRequestAutoMerge(input: {{ pullRequestId: "{pull_request_id}", mergeMethod: {method} }}) {{ pullRequest {{ autoMergeRequest {{ enabledAt }} }} }} }}"#
+        )
+    })
+}
+
+const GITHUB_GRAPHQL_URL: &str = "https://api.github.com/graphql";
+
+/// Enable auto-merge for a pull request.
+///
+/// Uses GitHub's GraphQL API to:
+/// 1. Fetch the PR's node ID
+/// 2. Call the `enablePullRequestAutoMerge` mutation with the specified merge method
+pub async fn enable_auto_merge(
+    token: &str,
+    owner: &str,
+    repo: &str,
+    pr_number: u64,
+    merge_method: MergeMethod,
+) -> Result<()> {
+    let client = reqwest::Client::new();
+
+    // Step 1: Fetch the PR's node ID
+    let node_id_body = build_pr_node_id_query(owner, repo, pr_number);
+
+    let response = client
+        .post(GITHUB_GRAPHQL_URL)
+        .header("Authorization", format!("Bearer {token}"))
+        .header("User-Agent", "reown")
+        .json(&node_id_body)
+        .send()
+        .await
+        .with_context(|| {
+            format!("Failed to fetch node ID for PR #{pr_number} in {owner}/{repo}")
+        })?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        anyhow::bail!("GitHub GraphQL API returned {status}: {body}");
+    }
+
+    let node_id_response: GhGraphQlResponse<GhPrNodeIdData> = response
+        .json()
+        .await
+        .context("Failed to parse GraphQL response for PR node ID")?;
+
+    if let Some(errors) = node_id_response.errors {
+        let messages: Vec<String> = errors.into_iter().map(|e| e.message).collect();
+        anyhow::bail!("GraphQL errors: {}", messages.join(", "));
+    }
+
+    let pull_request_id = node_id_response
+        .data
+        .map(|d| d.repository.pull_request.id)
+        .ok_or_else(|| anyhow::anyhow!("No data in GraphQL response for PR #{pr_number}"))?;
+
+    // Step 2: Call enablePullRequestAutoMerge mutation
+    let mutation_body = build_enable_auto_merge_mutation(&pull_request_id, &merge_method);
+
+    let response = client
+        .post(GITHUB_GRAPHQL_URL)
+        .header("Authorization", format!("Bearer {token}"))
+        .header("User-Agent", "reown")
+        .json(&mutation_body)
+        .send()
+        .await
+        .with_context(|| {
+            format!("Failed to enable auto-merge for PR #{pr_number} in {owner}/{repo}")
+        })?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        anyhow::bail!("GitHub GraphQL API returned {status}: {body}");
+    }
+
+    let mutation_response: GhGraphQlResponse<GhEnableAutoMergeData> = response
+        .json()
+        .await
+        .context("Failed to parse GraphQL response for enablePullRequestAutoMerge")?;
+
+    if let Some(errors) = mutation_response.errors {
+        let messages: Vec<String> = errors.into_iter().map(|e| e.message).collect();
+        anyhow::bail!("GraphQL errors: {}", messages.join(", "));
     }
 
     Ok(())
@@ -1058,6 +1229,142 @@ mod tests {
         let gh_commits: Vec<GhCommit> = serde_json::from_str(json).unwrap();
         let commits: Vec<CommitInfo> = gh_commits.into_iter().map(CommitInfo::from).collect();
         assert!(commits.is_empty());
+    }
+
+    /// Test MergeMethod serializes to SCREAMING_SNAKE_CASE.
+    #[test]
+    fn test_merge_method_serialize() {
+        assert_eq!(serde_json::to_value(&MergeMethod::Merge).unwrap(), "MERGE");
+        assert_eq!(
+            serde_json::to_value(&MergeMethod::Squash).unwrap(),
+            "SQUASH"
+        );
+        assert_eq!(
+            serde_json::to_value(&MergeMethod::Rebase).unwrap(),
+            "REBASE"
+        );
+    }
+
+    /// Test MergeMethod deserializes from SCREAMING_SNAKE_CASE.
+    #[test]
+    fn test_merge_method_deserialize() {
+        let merge: MergeMethod = serde_json::from_str("\"MERGE\"").unwrap();
+        assert_eq!(merge, MergeMethod::Merge);
+
+        let squash: MergeMethod = serde_json::from_str("\"SQUASH\"").unwrap();
+        assert_eq!(squash, MergeMethod::Squash);
+
+        let rebase: MergeMethod = serde_json::from_str("\"REBASE\"").unwrap();
+        assert_eq!(rebase, MergeMethod::Rebase);
+    }
+
+    /// Test that the GraphQL query for fetching PR node ID is constructed correctly.
+    #[test]
+    fn test_build_pr_node_id_query() {
+        let query = build_pr_node_id_query("owner", "repo", 42);
+        let query_str = query["query"].as_str().unwrap();
+
+        assert!(query_str.contains("repository(owner: \"owner\", name: \"repo\")"));
+        assert!(query_str.contains("pullRequest(number: 42)"));
+        assert!(query_str.contains("id"));
+    }
+
+    /// Test that the GraphQL mutation for enabling auto-merge is constructed correctly.
+    #[test]
+    fn test_build_enable_auto_merge_mutation_merge() {
+        let mutation =
+            build_enable_auto_merge_mutation("PR_node_id_123", &MergeMethod::Merge);
+        let query_str = mutation["query"].as_str().unwrap();
+
+        assert!(query_str.contains("enablePullRequestAutoMerge"));
+        assert!(query_str.contains("pullRequestId: \"PR_node_id_123\""));
+        assert!(query_str.contains("mergeMethod: MERGE"));
+        assert!(query_str.contains("autoMergeRequest"));
+        assert!(query_str.contains("enabledAt"));
+    }
+
+    /// Test that the mutation uses SQUASH merge method.
+    #[test]
+    fn test_build_enable_auto_merge_mutation_squash() {
+        let mutation =
+            build_enable_auto_merge_mutation("PR_node_id_456", &MergeMethod::Squash);
+        let query_str = mutation["query"].as_str().unwrap();
+
+        assert!(query_str.contains("mergeMethod: SQUASH"));
+        assert!(query_str.contains("pullRequestId: \"PR_node_id_456\""));
+    }
+
+    /// Test that the mutation uses REBASE merge method.
+    #[test]
+    fn test_build_enable_auto_merge_mutation_rebase() {
+        let mutation =
+            build_enable_auto_merge_mutation("PR_node_id_789", &MergeMethod::Rebase);
+        let query_str = mutation["query"].as_str().unwrap();
+
+        assert!(query_str.contains("mergeMethod: REBASE"));
+    }
+
+    /// Test GraphQL response deserialization for PR node ID.
+    #[test]
+    fn test_parse_graphql_pr_node_id_response() {
+        let json = r#"{
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "id": "PR_kwDOTest123"
+                    }
+                }
+            }
+        }"#;
+
+        let response: GhGraphQlResponse<GhPrNodeIdData> =
+            serde_json::from_str(json).unwrap();
+        assert!(response.errors.is_none());
+        let data = response.data.unwrap();
+        assert_eq!(data.repository.pull_request.id, "PR_kwDOTest123");
+    }
+
+    /// Test GraphQL error response deserialization.
+    #[test]
+    fn test_parse_graphql_error_response() {
+        let json = r#"{
+            "data": null,
+            "errors": [
+                { "message": "Could not resolve to a Repository" }
+            ]
+        }"#;
+
+        let response: GhGraphQlResponse<GhPrNodeIdData> =
+            serde_json::from_str(json).unwrap();
+        assert!(response.data.is_none());
+        let errors = response.errors.unwrap();
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].message, "Could not resolve to a Repository");
+    }
+
+    /// Test GraphQL enable auto-merge response deserialization.
+    #[test]
+    fn test_parse_enable_auto_merge_response() {
+        let json = r#"{
+            "data": {
+                "enablePullRequestAutoMerge": {
+                    "pullRequest": {
+                        "autoMergeRequest": {
+                            "enabledAt": "2025-01-15T10:30:00Z"
+                        }
+                    }
+                }
+            }
+        }"#;
+
+        let response: GhGraphQlResponse<GhEnableAutoMergeData> =
+            serde_json::from_str(json).unwrap();
+        assert!(response.errors.is_none());
+        let data = response.data.unwrap();
+        let payload = data.enable_pull_request_auto_merge.unwrap();
+        let pr = payload.pull_request.unwrap();
+        let auto_merge = pr.auto_merge_request.unwrap();
+        assert_eq!(auto_merge.enabled_at.unwrap(), "2025-01-15T10:30:00Z");
     }
 
     /// Test CommitInfo serializes correctly for Tauri IPC.

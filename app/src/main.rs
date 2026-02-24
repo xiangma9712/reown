@@ -111,6 +111,21 @@ async fn submit_pr_review(
     .map_err(AppError::github)
 }
 
+#[tauri::command]
+async fn enable_pr_auto_merge(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    merge_method: reown::github::MergeMethod,
+    token: String,
+) -> Result<(), AppError> {
+    reown::github::pull_request::enable_auto_merge(
+        &token, &owner, &repo, pr_number, merge_method,
+    )
+    .await
+    .map_err(AppError::github)
+}
+
 // ── Git info commands ──────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -454,6 +469,7 @@ fn main() {
             get_pull_request_files,
             list_pr_commits,
             submit_pr_review,
+            enable_pr_auto_merge,
             analyze_pr_risk,
             analyze_pr_risk_with_llm,
             summarize_pull_request,
