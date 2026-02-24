@@ -24,7 +24,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-block shrink-0 rounded-sm px-1.5 py-0.5 text-[0.7rem] font-semibold ${variantClasses[variant]} ${className}`}
+      className={`inline-block shrink-0 rounded-sm px-1.5 py-0.5 text-xs font-semibold ${variantClasses[variant]} ${className}`}
     >
       {children}
     </span>

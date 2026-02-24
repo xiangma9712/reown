@@ -27,7 +27,7 @@ export function Dropdown({ trigger, items, align = "end" }: DropdownProps) {
           {items.map((item, i) => (
             <DropdownMenu.Item
               key={i}
-              className={`cursor-pointer rounded px-3 py-1.5 text-[0.8rem] outline-none transition-colors hover:bg-bg-hover focus:bg-bg-hover ${
+              className={`cursor-pointer rounded px-3 py-1.5 text-sm outline-none transition-colors hover:bg-bg-hover focus:bg-bg-hover ${
                 item.variant === "danger"
                   ? "font-semibold text-danger"
                   : "text-text-primary"
