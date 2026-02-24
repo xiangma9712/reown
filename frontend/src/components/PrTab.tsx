@@ -127,9 +127,14 @@ export function PrTab() {
               className="border-b border-border px-3 py-3 last:border-b-0"
             >
               <div className="mb-1 flex items-center gap-2">
-                <span className="font-mono text-[0.8rem] font-semibold text-info">
+                <a
+                  href={pr.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[0.8rem] font-semibold text-info hover:underline"
+                >
                   #{pr.number}
-                </span>
+                </a>
                 <span className="text-[0.9rem] font-medium text-text-primary">
                   {pr.title}
                 </span>
@@ -137,7 +142,9 @@ export function PrTab() {
               </div>
               <div className="mt-0.5 flex gap-4 text-xs text-text-secondary">
                 <span>@{pr.author}</span>
-                <span>{pr.head_branch}</span>
+                <span>
+                  {pr.head_branch} → {pr.base_branch}
+                </span>
                 <span className="font-mono text-accent">+{pr.additions}</span>
                 <span className="font-mono text-danger">-{pr.deletions}</span>
                 <span className="font-mono">

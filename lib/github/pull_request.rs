@@ -9,10 +9,13 @@ pub struct PrInfo {
     pub author: String,
     pub state: String,
     pub head_branch: String,
+    pub base_branch: String,
     pub updated_at: String,
     pub additions: u64,
     pub deletions: u64,
     pub changed_files: u64,
+    pub body: String,
+    pub html_url: String,
 }
 
 /// Raw GitHub API response for a pull request.
@@ -23,6 +26,7 @@ struct GhPullRequest {
     state: String,
     user: GhUser,
     head: GhHead,
+    base: GhBase,
     updated_at: String,
     merged_at: Option<String>,
     #[serde(default)]
@@ -31,6 +35,9 @@ struct GhPullRequest {
     deletions: u64,
     #[serde(default)]
     changed_files: u64,
+    #[serde(default)]
+    body: Option<String>,
+    html_url: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,6 +47,12 @@ struct GhUser {
 
 #[derive(Debug, Deserialize)]
 struct GhHead {
+    #[serde(rename = "ref")]
+    ref_name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhBase {
     #[serde(rename = "ref")]
     ref_name: String,
 }
@@ -57,10 +70,13 @@ impl From<GhPullRequest> for PrInfo {
             author: pr.user.login,
             state,
             head_branch: pr.head.ref_name,
+            base_branch: pr.base.ref_name,
             updated_at: pr.updated_at,
             additions: pr.additions,
             deletions: pr.deletions,
             changed_files: pr.changed_files,
+            body: pr.body.unwrap_or_default(),
+            html_url: pr.html_url,
         }
     }
 }
@@ -141,10 +157,13 @@ mod tests {
                 "state": "open",
                 "user": { "login": "alice" },
                 "head": { "ref": "feature-x" },
+                "base": { "ref": "main" },
                 "updated_at": "2025-01-15T10:30:00Z",
                 "additions": 100,
                 "deletions": 20,
-                "changed_files": 5
+                "changed_files": 5,
+                "body": "This PR adds feature X",
+                "html_url": "https://github.com/owner/repo/pull/42"
             },
             {
                 "number": 43,
@@ -152,10 +171,13 @@ mod tests {
                 "state": "open",
                 "user": { "login": "bob" },
                 "head": { "ref": "fix-bug-y" },
+                "base": { "ref": "develop" },
                 "updated_at": "2025-01-16T08:00:00Z",
                 "additions": 10,
                 "deletions": 3,
-                "changed_files": 2
+                "changed_files": 2,
+                "body": null,
+                "html_url": "https://github.com/owner/repo/pull/43"
             }
         ]"#;
 
@@ -169,16 +191,22 @@ mod tests {
         assert_eq!(prs[0].author, "alice");
         assert_eq!(prs[0].state, "open");
         assert_eq!(prs[0].head_branch, "feature-x");
+        assert_eq!(prs[0].base_branch, "main");
         assert_eq!(prs[0].updated_at, "2025-01-15T10:30:00Z");
         assert_eq!(prs[0].additions, 100);
         assert_eq!(prs[0].deletions, 20);
         assert_eq!(prs[0].changed_files, 5);
+        assert_eq!(prs[0].body, "This PR adds feature X");
+        assert_eq!(prs[0].html_url, "https://github.com/owner/repo/pull/42");
 
         assert_eq!(prs[1].number, 43);
         assert_eq!(prs[1].title, "Fix bug Y");
         assert_eq!(prs[1].author, "bob");
         assert_eq!(prs[1].state, "open");
         assert_eq!(prs[1].head_branch, "fix-bug-y");
+        assert_eq!(prs[1].base_branch, "develop");
+        assert_eq!(prs[1].body, "");
+        assert_eq!(prs[1].html_url, "https://github.com/owner/repo/pull/43");
     }
 
     /// Test that missing optional numeric fields default to 0.
@@ -191,7 +219,9 @@ mod tests {
                 "state": "open",
                 "user": { "login": "dev" },
                 "head": { "ref": "main" },
-                "updated_at": "2025-02-01T00:00:00Z"
+                "base": { "ref": "main" },
+                "updated_at": "2025-02-01T00:00:00Z",
+                "html_url": "https://github.com/owner/repo/pull/1"
             }
         ]"#;
 
@@ -203,6 +233,7 @@ mod tests {
         assert_eq!(prs[0].additions, 0);
         assert_eq!(prs[0].deletions, 0);
         assert_eq!(prs[0].changed_files, 0);
+        assert_eq!(prs[0].body, "");
     }
 
     /// Test parsing an empty response.
@@ -224,11 +255,13 @@ mod tests {
                 "state": "closed",
                 "user": { "login": "charlie" },
                 "head": { "ref": "old-branch" },
+                "base": { "ref": "main" },
                 "updated_at": "2024-12-01T12:00:00Z",
                 "merged_at": null,
                 "additions": 50,
                 "deletions": 50,
-                "changed_files": 10
+                "changed_files": 10,
+                "html_url": "https://github.com/owner/repo/pull/99"
             }
         ]"#;
 
@@ -250,11 +283,14 @@ mod tests {
                 "state": "closed",
                 "user": { "login": "dave" },
                 "head": { "ref": "merged-branch" },
+                "base": { "ref": "main" },
                 "updated_at": "2025-01-20T14:00:00Z",
                 "merged_at": "2025-01-20T13:55:00Z",
                 "additions": 30,
                 "deletions": 5,
-                "changed_files": 3
+                "changed_files": 3,
+                "body": "Merged feature description",
+                "html_url": "https://github.com/owner/repo/pull/50"
             }
         ]"#;
 
@@ -277,7 +313,9 @@ mod tests {
                 "state": "open",
                 "user": { "login": "eve" },
                 "head": { "ref": "some-branch" },
-                "updated_at": "2025-02-01T00:00:00Z"
+                "base": { "ref": "main" },
+                "updated_at": "2025-02-01T00:00:00Z",
+                "html_url": "https://github.com/owner/repo/pull/60"
             }
         ]"#;
 
@@ -324,8 +362,10 @@ mod tests {
                 "state": "open",
                 "user": { "login": "a" },
                 "head": { "ref": "open-branch" },
+                "base": { "ref": "main" },
                 "updated_at": "2025-01-01T00:00:00Z",
-                "merged_at": null
+                "merged_at": null,
+                "html_url": "https://github.com/owner/repo/pull/1"
             },
             {
                 "number": 2,
@@ -333,8 +373,10 @@ mod tests {
                 "state": "closed",
                 "user": { "login": "b" },
                 "head": { "ref": "closed-branch" },
+                "base": { "ref": "main" },
                 "updated_at": "2025-01-02T00:00:00Z",
-                "merged_at": null
+                "merged_at": null,
+                "html_url": "https://github.com/owner/repo/pull/2"
             },
             {
                 "number": 3,
@@ -342,8 +384,10 @@ mod tests {
                 "state": "closed",
                 "user": { "login": "c" },
                 "head": { "ref": "merged-branch" },
+                "base": { "ref": "develop" },
                 "updated_at": "2025-01-03T00:00:00Z",
-                "merged_at": "2025-01-03T00:00:00Z"
+                "merged_at": "2025-01-03T00:00:00Z",
+                "html_url": "https://github.com/owner/repo/pull/3"
             }
         ]"#;
 
