@@ -1,0 +1,24 @@
+name: Issue Guard
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  check-author:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issue if not from allowed author
+        if: github.event.issue.user.login != 'xiangma9712'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "$REPO" \
+            --body "このリポジトリでは、許可されたユーザーのみがIssueを作成できます。このIssueは自動的にクローズされます。"
+          gh issue close "$ISSUE_NUMBER" --repo "$REPO"

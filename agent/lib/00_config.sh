@@ -18,3 +18,4 @@ VALIDATE_DIFF_MAX_TURNS="${VALIDATE_DIFF_MAX_TURNS:-10}"
 PROPOSE_MAX_TURNS="${PROPOSE_MAX_TURNS:-10}"
 LOG_MAX_BYTES="${LOG_MAX_BYTES:-524288}"       # 512KB per file
 LOG_MAX_FILES="${LOG_MAX_FILES:-3}"             # keep progress.txt + 3 archives
+ALLOWED_ISSUE_AUTHOR="${ALLOWED_ISSUE_AUTHOR:-xiangma9712}"  # only process issues from this author
