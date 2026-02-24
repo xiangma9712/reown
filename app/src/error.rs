@@ -19,9 +19,8 @@ pub enum ErrorKind {
     /// リポジトリが見つからない、またはGit操作の失敗
     Git,
     /// GitHub APIのネットワークエラーやHTTPエラー
+    #[serde(rename = "github")]
     GitHub,
-    /// その他の内部エラー
-    Internal,
 }
 
 impl std::fmt::Display for AppError {
