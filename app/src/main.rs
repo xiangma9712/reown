@@ -215,6 +215,46 @@ fn load_app_config(
     reown::config::load_config(&config_path).map_err(AppError::storage)
 }
 
+// ── LLM Config commands ────────────────────────────────────────────────────
+
+#[tauri::command]
+fn save_llm_config(
+    app_handle: tauri::AppHandle,
+    llm_config: reown::config::LlmConfig,
+) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let mut config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    config.llm = llm_config;
+    reown::config::save_config(&config_path, &config).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn load_llm_config(
+    app_handle: tauri::AppHandle,
+) -> Result<reown::config::LlmConfig, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    Ok(config.llm)
+}
+
+#[tauri::command]
+fn save_llm_api_key(api_key: String) -> Result<(), AppError> {
+    reown::config::save_llm_api_key(&api_key).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn delete_llm_api_key() -> Result<(), AppError> {
+    reown::config::delete_llm_api_key().map_err(AppError::storage)
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
@@ -240,6 +280,10 @@ fn main() {
             remove_repository,
             save_app_config,
             load_app_config,
+            save_llm_config,
+            load_llm_config,
+            save_llm_api_key,
+            delete_llm_api_key,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

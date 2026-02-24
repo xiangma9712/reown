@@ -59,10 +59,17 @@ export interface RepoInfo {
   github_repo: string | null;
 }
 
+export interface LlmConfig {
+  llm_endpoint: string;
+  llm_model: string;
+  llm_api_key_stored: boolean;
+}
+
 export interface AppConfig {
   github_token: string;
   default_owner: string;
   default_repo: string;
+  llm: LlmConfig;
 }
 
 export interface FileSummary {

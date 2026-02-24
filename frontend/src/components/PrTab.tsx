@@ -1,7 +1,7 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, FileDiff } from "../types";
+import type { PrInfo, FileDiff, LlmConfig } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -77,12 +77,14 @@ export function PrTab() {
   const [selectedFileIndex, setSelectedFileIndex] = useState(-1);
   const [diffLoading, setDiffLoading] = useState(false);
   const [diffError, setDiffError] = useState<string | null>(null);
+  const llmConfigRef = useRef<LlmConfig>({ llm_endpoint: "", llm_model: "", llm_api_key_stored: false });
 
   useEffect(() => {
     invoke("load_app_config").then((config) => {
       if (config.github_token) setToken(config.github_token);
       if (config.default_owner) setOwner(config.default_owner);
       if (config.default_repo) setRepo(config.default_repo);
+      llmConfigRef.current = config.llm;
     }).catch(() => {
       // 設定ファイルが読み込めない場合は無視する
     });
@@ -114,6 +116,7 @@ export function PrTab() {
           github_token: token.trim(),
           default_owner: owner.trim(),
           default_repo: repo.trim(),
+          llm: llmConfigRef.current,
         },
       }).catch(() => {
         // 設定の保存に失敗しても PR 取得結果は表示する

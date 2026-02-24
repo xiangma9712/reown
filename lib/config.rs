@@ -2,6 +2,38 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
+/// LLM設定
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LlmConfig {
+    /// LLM APIのエンドポイント
+    #[serde(default = "default_llm_endpoint")]
+    pub llm_endpoint: String,
+    /// LLMモデル名
+    #[serde(default = "default_llm_model")]
+    pub llm_model: String,
+    /// APIキーがkeychainに保存されているかのフラグ
+    #[serde(default)]
+    pub llm_api_key_stored: bool,
+}
+
+fn default_llm_endpoint() -> String {
+    "https://api.anthropic.com".to_string()
+}
+
+fn default_llm_model() -> String {
+    "claude-sonnet-4-5-20250929".to_string()
+}
+
+impl Default for LlmConfig {
+    fn default() -> Self {
+        Self {
+            llm_endpoint: default_llm_endpoint(),
+            llm_model: default_llm_model(),
+            llm_api_key_stored: false,
+        }
+    }
+}
+
 /// アプリ設定（GitHub トークン等を永続化する）
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AppConfig {
@@ -11,6 +43,9 @@ pub struct AppConfig {
     pub default_owner: String,
     /// デフォルトの GitHub リポジトリ名
     pub default_repo: String,
+    /// LLM設定
+    #[serde(default)]
+    pub llm: LlmConfig,
 }
 
 /// 設定を JSON ファイルから読み込む。ファイルが存在しない場合はデフォルト値を返す。
@@ -49,6 +84,38 @@ pub fn default_config_path(app_data_dir: &Path) -> PathBuf {
     app_data_dir.join("config.json")
 }
 
+const KEYRING_SERVICE: &str = "com.reown.app";
+const KEYRING_LLM_API_KEY: &str = "llm_api_key";
+
+/// LLM APIキーをOS keychainに保存する
+pub fn save_llm_api_key(api_key: &str) -> Result<()> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_LLM_API_KEY)
+        .context("keychainエントリの作成に失敗")?;
+    entry
+        .set_password(api_key)
+        .context("keychainへのAPIキー保存に失敗")?;
+    Ok(())
+}
+
+/// LLM APIキーをOS keychainから読み込む
+pub fn load_llm_api_key() -> Result<String> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_LLM_API_KEY)
+        .context("keychainエントリの作成に失敗")?;
+    entry
+        .get_password()
+        .context("keychainからのAPIキー読み込みに失敗")
+}
+
+/// LLM APIキーをOS keychainから削除する
+pub fn delete_llm_api_key() -> Result<()> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_LLM_API_KEY)
+        .context("keychainエントリの作成に失敗")?;
+    entry
+        .delete_credential()
+        .context("keychainからのAPIキー削除に失敗")?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -74,6 +141,7 @@ mod tests {
             github_token: "ghp_test123".to_string(),
             default_owner: "my-org".to_string(),
             default_repo: "my-repo".to_string(),
+            ..Default::default()
         };
 
         save_config(&config_path, &config).unwrap();
@@ -90,6 +158,7 @@ mod tests {
             github_token: "ghp_abc".to_string(),
             default_owner: "owner".to_string(),
             default_repo: "repo".to_string(),
+            ..Default::default()
         };
 
         save_config(&config_path, &config).unwrap();
@@ -110,6 +179,7 @@ mod tests {
             github_token: "ghp_token".to_string(),
             default_owner: "owner".to_string(),
             default_repo: "repo".to_string(),
+            ..Default::default()
         };
         let json = serde_json::to_value(&config).unwrap();
         assert_eq!(json["github_token"], "ghp_token");
@@ -133,5 +203,68 @@ mod tests {
         let result = load_config(&config_path);
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("JSON パースに失敗"));
+    }
+
+    #[test]
+    fn test_llm_config_default() {
+        let config = LlmConfig::default();
+        assert_eq!(config.llm_endpoint, "https://api.anthropic.com");
+        assert_eq!(config.llm_model, "claude-sonnet-4-5-20250929");
+        assert!(!config.llm_api_key_stored);
+    }
+
+    #[test]
+    fn test_app_config_default_has_llm() {
+        let config = AppConfig::default();
+        assert_eq!(config.llm, LlmConfig::default());
+    }
+
+    #[test]
+    fn test_backward_compat_load_without_llm_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // 旧形式のJSON（llmフィールドなし）
+        let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r"}"#;
+        std::fs::write(&config_path, old_json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert_eq!(config.github_token, "tok");
+        assert_eq!(config.llm, LlmConfig::default());
+    }
+
+    #[test]
+    fn test_save_and_load_config_with_llm() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+
+        let config = AppConfig {
+            github_token: "ghp_test".to_string(),
+            default_owner: "org".to_string(),
+            default_repo: "repo".to_string(),
+            llm: LlmConfig {
+                llm_endpoint: "http://localhost:11434".to_string(),
+                llm_model: "llama3".to_string(),
+                llm_api_key_stored: true,
+            },
+        };
+
+        save_config(&config_path, &config).unwrap();
+        let loaded = load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+        assert_eq!(loaded.llm.llm_endpoint, "http://localhost:11434");
+        assert_eq!(loaded.llm.llm_model, "llama3");
+        assert!(loaded.llm.llm_api_key_stored);
+    }
+
+    #[test]
+    fn test_llm_config_serializes() {
+        let config = LlmConfig {
+            llm_endpoint: "https://api.example.com".to_string(),
+            llm_model: "test-model".to_string(),
+            llm_api_key_stored: true,
+        };
+        let json = serde_json::to_value(&config).unwrap();
+        assert_eq!(json["llm_endpoint"], "https://api.example.com");
+        assert_eq!(json["llm_model"], "test-model");
+        assert_eq!(json["llm_api_key_stored"], true);
     }
 }
