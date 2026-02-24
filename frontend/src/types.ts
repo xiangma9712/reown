@@ -50,3 +50,9 @@ export interface RepositoryEntry {
   name: string;
   path: string;
 }
+
+export interface AppConfig {
+  github_token: string;
+  default_owner: string;
+  default_repo: string;
+}
