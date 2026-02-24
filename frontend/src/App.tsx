@@ -181,6 +181,7 @@ export function App() {
         {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} onNavigateToPr={navigateToPr} />}
         {activeTab === "diff" && <DiffTab />}
         {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} selectedPrNumber={selectedPrNumber} onPrSelected={() => setSelectedPrNumber(null)} />}
+        {activeTab === "todo" && <TodoTab />}
         {activeTab === "settings" && (
           <div className="mx-auto max-w-xl space-y-8">
             <LlmSettingsTab />

@@ -104,24 +104,43 @@ fn scan_file(relative_path: &Path, absolute_path: &Path, items: &mut Vec<TodoIte
 /// 行からTODO/FIXMEを検出してTodoItemを返す
 fn parse_todo_line(line: &str, file_path: &str, line_number: usize) -> Option<TodoItem> {
     // TODO: や FIXME: のパターンを検出
-    // 大文字小文字を区別する（TODO, FIXME は慣習的に大文字）
+    // 大文字小文字を区別しない（todo, fixme なども検出する）
+    // 単語境界をチェックし、変数名や文字列中の偽陽性を防ぐ
     let upper = line.to_uppercase();
 
     for (keyword, kind) in [("TODO", TodoKind::Todo), ("FIXME", TodoKind::Fixme)] {
-        if let Some(pos) = upper.find(keyword) {
-            // キーワード後の内容を抽出
-            let after_keyword = &line[pos + keyword.len()..];
-            let content = after_keyword
-                .trim_start_matches([':', ' ', '(', ')'])
-                .trim()
-                .to_string();
+        let mut search_from = 0;
+        while let Some(rel_pos) = upper[search_from..].find(keyword) {
+            let pos = search_from + rel_pos;
 
-            return Some(TodoItem {
-                file_path: file_path.to_string(),
-                line_number,
-                kind,
-                content,
-            });
+            // 前の文字が英数字またはアンダースコアならスキップ（単語の一部）
+            let before_ok = pos == 0
+                || !line.as_bytes()[pos - 1].is_ascii_alphanumeric()
+                    && line.as_bytes()[pos - 1] != b'_';
+
+            // 後の文字が英数字またはアンダースコアならスキップ（単語の一部）
+            let end = pos + keyword.len();
+            let after_ok = end >= line.len()
+                || !line.as_bytes()[end].is_ascii_alphanumeric()
+                    && line.as_bytes()[end] != b'_';
+
+            if before_ok && after_ok {
+                // キーワード後の内容を抽出
+                let after_keyword = &line[end..];
+                let content = after_keyword
+                    .trim_start_matches([':', ' ', '(', ')'])
+                    .trim()
+                    .to_string();
+
+                return Some(TodoItem {
+                    file_path: file_path.to_string(),
+                    line_number,
+                    kind,
+                    content,
+                });
+            }
+
+            search_from = pos + keyword.len();
         }
     }
 
@@ -174,6 +193,21 @@ mod tests {
         let item = parse_todo_line("// TODO fix without colon", "test.rs", 1).unwrap();
         assert_eq!(item.kind, TodoKind::Todo);
         assert_eq!(item.content, "fix without colon");
+    }
+
+    #[test]
+    fn test_parse_todo_line_ignores_variable_names() {
+        // 変数名に含まれるTODO/FIXMEは検出しない
+        assert!(parse_todo_line("let is_todo_done = true;", "test.rs", 1).is_none());
+        assert!(parse_todo_line("let fixme_later = false;", "test.rs", 1).is_none());
+        assert!(parse_todo_line("fn handle_todo_item()", "test.rs", 1).is_none());
+    }
+
+    #[test]
+    fn test_parse_todo_line_ignores_partial_words() {
+        // 単語の一部としてのTODO/FIXMEは検出しない
+        assert!(parse_todo_line("let mytodo = 1;", "test.rs", 1).is_none());
+        assert!(parse_todo_line("TODOS.push(item);", "test.rs", 1).is_none());
     }
 
     #[test]

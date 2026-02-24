@@ -16,6 +16,7 @@
     "branches": "Branches",
     "diff": "Diff",
     "prs": "PRs",
+    "todo": "TODO",
     "settings": "Settings"
   },
   "common": {
