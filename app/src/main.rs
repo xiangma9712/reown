@@ -156,6 +156,35 @@ async fn analyze_pr_risk(
     Ok(reown::analysis::analyze_pr_risk(&pr, &diffs))
 }
 
+#[tauri::command]
+async fn analyze_pr_risk_with_llm(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+    app_handle: tauri::AppHandle,
+) -> Result<reown::analysis::HybridAnalysisResult, AppError> {
+    let llm_client = build_llm_client(&app_handle)?;
+
+    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+        .await
+        .map_err(AppError::github)?;
+
+    let pr = prs
+        .into_iter()
+        .find(|p| p.number == pr_number)
+        .ok_or_else(|| AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found")))?;
+
+    let diffs =
+        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
+            .await
+            .map_err(AppError::github)?;
+
+    reown::analysis::analyze_pr_with_llm(&pr, &diffs, &llm_client)
+        .await
+        .map_err(AppError::llm)
+}
+
 // ── LLM helpers ─────────────────────────────────────────────────────────────
 
 /// 保存済みの設定からLlmClientを構築する
@@ -295,6 +324,7 @@ fn main() {
             list_pull_requests,
             get_pull_request_files,
             analyze_pr_risk,
+            analyze_pr_risk_with_llm,
             summarize_pull_request,
             check_pr_consistency,
             get_repo_info,

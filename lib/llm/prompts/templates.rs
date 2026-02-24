@@ -82,6 +82,33 @@ impl PromptBuilder {
             .collect()
     }
 
+    /// 影響範囲分析・破壊的変更検出用プロンプトを構築する
+    ///
+    /// 差分が大きい場合はチャンク分割して複数のプロンプトを返す。
+    pub fn build_impact_analysis_prompt(
+        &self,
+        diffs: &[FileDiff],
+        metadata: &PrMetadata,
+        lang: Language,
+    ) -> Vec<String> {
+        let diff_text = format_diffs(diffs);
+        let chunks = self.split_into_chunks(&diff_text);
+
+        chunks
+            .into_iter()
+            .enumerate()
+            .map(|(i, chunk)| {
+                impact_analysis_template(
+                    metadata,
+                    &chunk,
+                    lang,
+                    i + 1,
+                    self.chunk_count(&diff_text),
+                )
+            })
+            .collect()
+    }
+
     /// ファイル単位のサマリー生成用プロンプトを構築する
     pub fn build_file_summary_prompt(&self, diff: &FileDiff, lang: Language) -> String {
         let diff_text = format_single_diff(diff);
@@ -246,6 +273,81 @@ fn consistency_template(
 - Flag any undocumented changes (changes not mentioned in the title or description)
 - Rate the consistency: High, Medium, or Low
 - Provide specific examples of any inconsistencies found"#,
+        title = metadata.title,
+        body = if metadata.body.is_empty() {
+            "(no description)"
+        } else {
+            &metadata.body
+        },
+        diff = diff_chunk,
+    )
+}
+
+fn impact_analysis_template(
+    metadata: &PrMetadata,
+    diff_chunk: &str,
+    lang: Language,
+    chunk_index: usize,
+    total_chunks: usize,
+) -> String {
+    let lang_instruction = match lang {
+        Language::Japanese => "回答は日本語で記述してください。",
+        Language::English => "Please respond in English.",
+    };
+
+    let chunk_info = if total_chunks > 1 {
+        format!("\n\nNote: This is chunk {chunk_index} of {total_chunks}. Analyze only this chunk's changes.")
+    } else {
+        String::new()
+    };
+
+    format!(
+        r#"You are an expert code reviewer analyzing the impact and risk of code changes.
+
+{lang_instruction}
+
+## PR Information
+- Title: {title}
+- Description: {body}
+
+## Diff
+```
+{diff}
+```
+{chunk_info}
+
+## Instructions
+
+Analyze the changes and respond with the following sections:
+
+### 要約
+Provide a brief summary of what these changes do.
+
+### 影響モジュール
+List modules/components affected by these changes. Use format:
+- module_name: description of impact
+
+### 破壊的変更
+List any breaking changes. Use format:
+- `file/path.rs` description of breaking change (重大 if critical)
+If none, write: - なし
+
+### リスク
+List risk factors and concerns. Use format:
+- description of risk
+If none, write: - なし
+
+### リスクレベル: [Low/Medium/High]
+Provide the overall risk level.
+
+Consider these factors:
+- Public API changes (function signatures, struct fields, trait implementations)
+- Database schema changes
+- Configuration format changes
+- Dependency version changes
+- Security-sensitive code modifications
+- Error handling changes that could affect callers
+- Behavioral changes in existing functions"#,
         title = metadata.title,
         body = if metadata.body.is_empty() {
             "(no description)"
@@ -611,5 +713,48 @@ mod tests {
 
         assert_eq!(chunks.len(), 1);
         assert_eq!(chunks[0], full_text);
+    }
+
+    #[test]
+    fn test_impact_analysis_prompt_contains_metadata() {
+        let builder = PromptBuilder::default();
+        let diffs = vec![make_file_diff("src/main.rs", 3, 1)];
+        let metadata = make_metadata();
+        let prompts = builder.build_impact_analysis_prompt(&diffs, &metadata, Language::Japanese);
+
+        assert_eq!(prompts.len(), 1);
+        assert!(prompts[0].contains("feat: add new feature"));
+        assert!(prompts[0].contains("This PR adds a new feature"));
+        assert!(prompts[0].contains("日本語"));
+        assert!(prompts[0].contains("影響モジュール"));
+        assert!(prompts[0].contains("破壊的変更"));
+        assert!(prompts[0].contains("リスクレベル"));
+    }
+
+    #[test]
+    fn test_impact_analysis_prompt_english() {
+        let builder = PromptBuilder::default();
+        let diffs = vec![make_file_diff("src/main.rs", 2, 0)];
+        let metadata = make_metadata();
+        let prompts = builder.build_impact_analysis_prompt(&diffs, &metadata, Language::English);
+
+        assert_eq!(prompts.len(), 1);
+        assert!(prompts[0].contains("Please respond in English"));
+        assert!(prompts[0].contains("breaking change"));
+    }
+
+    #[test]
+    fn test_impact_analysis_prompt_chunking() {
+        let builder = PromptBuilder::with_max_chars(200);
+        let diffs: Vec<FileDiff> = (0..10)
+            .map(|i| make_file_diff(&format!("src/module{i}.rs"), 20, 10))
+            .collect();
+        let metadata = make_metadata();
+        let prompts = builder.build_impact_analysis_prompt(&diffs, &metadata, Language::Japanese);
+
+        assert!(prompts.len() > 1);
+        for prompt in &prompts {
+            assert!(prompt.contains("chunk"));
+        }
     }
 }
