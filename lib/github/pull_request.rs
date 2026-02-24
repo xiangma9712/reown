@@ -98,6 +98,53 @@ impl From<GhPullRequest> for PrInfo {
     }
 }
 
+/// Information about a commit in a pull request.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CommitInfo {
+    pub sha: String,
+    pub message: String,
+    pub author: String,
+    pub date: String,
+    pub commit_url: String,
+}
+
+/// Raw GitHub API response for a commit in a pull request.
+#[derive(Debug, Deserialize)]
+struct GhCommit {
+    sha: String,
+    commit: GhCommitDetail,
+    author: Option<GhUser>,
+    html_url: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhCommitDetail {
+    message: String,
+    author: GhCommitAuthor,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhCommitAuthor {
+    name: String,
+    date: String,
+}
+
+impl From<GhCommit> for CommitInfo {
+    fn from(c: GhCommit) -> Self {
+        let author = c
+            .author
+            .map(|u| u.login)
+            .unwrap_or(c.commit.author.name);
+        Self {
+            sha: c.sha,
+            message: c.commit.message,
+            author,
+            date: c.commit.author.date,
+            commit_url: c.html_url,
+        }
+    }
+}
+
 /// Maximum number of pages to fetch to prevent infinite loops.
 const MAX_PAGES: u32 = 10;
 
@@ -161,6 +208,64 @@ pub async fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<
     }
 
     Ok(all_prs)
+}
+
+/// Fetch the list of commits for a pull request from GitHub API.
+///
+/// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/commits` and converts
+/// the response into `Vec<CommitInfo>`. Paginates up to `MAX_PAGES` pages.
+pub async fn list_pr_commits(
+    owner: &str,
+    repo: &str,
+    pr_number: u64,
+    token: &str,
+) -> Result<Vec<CommitInfo>> {
+    let client = reqwest::Client::new();
+    let mut all_commits = Vec::new();
+
+    for page in 1..=MAX_PAGES {
+        let url = format!(
+            "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
+        );
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/vnd.github+json")
+            .header("Authorization", format!("Bearer {token}"))
+            .header("User-Agent", "reown")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .send()
+            .await
+            .with_context(|| {
+                format!("Failed to fetch PR #{pr_number} commits from {owner}/{repo} (page {page})")
+            })?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("GitHub API returned {status}: {body}");
+        }
+
+        let has_next = response
+            .headers()
+            .get("link")
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(has_next_page);
+
+        let commits: Vec<GhCommit> = response
+            .json()
+            .await
+            .context("Failed to parse GitHub PR commits response")?;
+
+        let is_empty = commits.is_empty();
+        all_commits.extend(commits.into_iter().map(CommitInfo::from));
+
+        if is_empty || !has_next {
+            break;
+        }
+    }
+
+    Ok(all_commits)
 }
 
 /// Raw GitHub API response for a single file in a pull request.
@@ -865,5 +970,114 @@ mod tests {
         let json = serde_json::to_value(&request).unwrap();
         assert_eq!(json["event"], "APPROVE");
         assert_eq!(json["body"], "");
+    }
+
+    /// Test that a valid GitHub commits API response deserializes correctly into CommitInfo.
+    #[test]
+    fn test_parse_commit_response() {
+        let json = r#"[
+            {
+                "sha": "abc123def456",
+                "commit": {
+                    "message": "feat: add new feature",
+                    "author": {
+                        "name": "Alice",
+                        "date": "2025-01-15T10:30:00Z"
+                    }
+                },
+                "author": { "login": "alice" },
+                "html_url": "https://github.com/owner/repo/commit/abc123def456"
+            },
+            {
+                "sha": "789ghi012jkl",
+                "commit": {
+                    "message": "fix: resolve bug\n\nDetailed description of the fix.",
+                    "author": {
+                        "name": "Bob Smith",
+                        "date": "2025-01-16T08:00:00Z"
+                    }
+                },
+                "author": { "login": "bob" },
+                "html_url": "https://github.com/owner/repo/commit/789ghi012jkl"
+            }
+        ]"#;
+
+        let gh_commits: Vec<GhCommit> = serde_json::from_str(json).unwrap();
+        let commits: Vec<CommitInfo> = gh_commits.into_iter().map(CommitInfo::from).collect();
+
+        assert_eq!(commits.len(), 2);
+
+        assert_eq!(commits[0].sha, "abc123def456");
+        assert_eq!(commits[0].message, "feat: add new feature");
+        assert_eq!(commits[0].author, "alice");
+        assert_eq!(commits[0].date, "2025-01-15T10:30:00Z");
+        assert_eq!(
+            commits[0].commit_url,
+            "https://github.com/owner/repo/commit/abc123def456"
+        );
+
+        assert_eq!(commits[1].sha, "789ghi012jkl");
+        assert_eq!(
+            commits[1].message,
+            "fix: resolve bug\n\nDetailed description of the fix."
+        );
+        assert_eq!(commits[1].author, "bob");
+        assert_eq!(commits[1].date, "2025-01-16T08:00:00Z");
+    }
+
+    /// Test that when GitHub author is null, the commit author name is used as fallback.
+    #[test]
+    fn test_parse_commit_without_github_author() {
+        let json = r#"[
+            {
+                "sha": "deadbeef",
+                "commit": {
+                    "message": "chore: update deps",
+                    "author": {
+                        "name": "CI Bot",
+                        "date": "2025-02-01T00:00:00Z"
+                    }
+                },
+                "author": null,
+                "html_url": "https://github.com/owner/repo/commit/deadbeef"
+            }
+        ]"#;
+
+        let gh_commits: Vec<GhCommit> = serde_json::from_str(json).unwrap();
+        let commits: Vec<CommitInfo> = gh_commits.into_iter().map(CommitInfo::from).collect();
+
+        assert_eq!(commits.len(), 1);
+        assert_eq!(commits[0].sha, "deadbeef");
+        assert_eq!(commits[0].author, "CI Bot");
+    }
+
+    /// Test parsing an empty commits response.
+    #[test]
+    fn test_parse_empty_commits_list() {
+        let json = "[]";
+        let gh_commits: Vec<GhCommit> = serde_json::from_str(json).unwrap();
+        let commits: Vec<CommitInfo> = gh_commits.into_iter().map(CommitInfo::from).collect();
+        assert!(commits.is_empty());
+    }
+
+    /// Test CommitInfo serializes correctly for Tauri IPC.
+    #[test]
+    fn test_commit_info_serializes() {
+        let commit = CommitInfo {
+            sha: "abc123".to_string(),
+            message: "test commit".to_string(),
+            author: "alice".to_string(),
+            date: "2025-01-15T10:30:00Z".to_string(),
+            commit_url: "https://github.com/owner/repo/commit/abc123".to_string(),
+        };
+        let json = serde_json::to_value(&commit).unwrap();
+        assert_eq!(json["sha"], "abc123");
+        assert_eq!(json["message"], "test commit");
+        assert_eq!(json["author"], "alice");
+        assert_eq!(json["date"], "2025-01-15T10:30:00Z");
+        assert_eq!(
+            json["commit_url"],
+            "https://github.com/owner/repo/commit/abc123"
+        );
     }
 }

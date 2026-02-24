@@ -50,6 +50,14 @@ export interface PrInfo {
   html_url: string;
 }
 
+export interface CommitInfo {
+  sha: string;
+  message: string;
+  author: string;
+  date: string;
+  commit_url: string;
+}
+
 export interface RepositoryEntry {
   name: string;
   path: string;
