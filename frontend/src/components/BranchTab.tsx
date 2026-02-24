@@ -1,6 +1,7 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useCallback, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
+import { useRepository } from "../RepositoryContext";
 import type { BranchInfo } from "../types";
 import { BranchActionMenu } from "./BranchActionMenu";
 import { Button } from "./Button";
@@ -14,6 +15,7 @@ interface Props {
 
 export function BranchTab({ showConfirm }: Props) {
   const { t } = useTranslation();
+  const { repoPath } = useRepository();
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,31 +27,32 @@ export function BranchTab({ showConfirm }: Props) {
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function loadBranches() {
+  const loadBranches = useCallback(async () => {
+    if (!repoPath) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await invoke("list_branches");
+      const result = await invoke("list_branches", { repoPath });
       setBranches(result);
     } catch (err) {
       setError(String(err));
     } finally {
       setLoading(false);
     }
-  }
+  }, [repoPath]);
 
   useEffect(() => {
     loadBranches();
-  }, []);
+  }, [loadBranches]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!branchName.trim()) return;
+    if (!repoPath || !branchName.trim()) return;
 
     setSubmitting(true);
     setFormMessage(null);
     try {
-      await invoke("create_branch", { name: branchName.trim() });
+      await invoke("create_branch", { repoPath, name: branchName.trim() });
       setFormMessage({
         text: t("branch.created", { name: branchName.trim() }),
         type: "success",
@@ -67,9 +70,10 @@ export function BranchTab({ showConfirm }: Props) {
   }
 
   async function handleSwitch(name: string) {
+    if (!repoPath) return;
     setFormMessage(null);
     try {
-      await invoke("switch_branch", { name });
+      await invoke("switch_branch", { repoPath, name });
       setFormMessage({
         text: t("branch.switched", { name }),
         type: "success",
@@ -84,6 +88,7 @@ export function BranchTab({ showConfirm }: Props) {
   }
 
   async function handleDelete(name: string) {
+    if (!repoPath) return;
     const confirmed = await showConfirm(
       t("branch.confirmDelete", { name })
     );
@@ -91,7 +96,7 @@ export function BranchTab({ showConfirm }: Props) {
 
     setFormMessage(null);
     try {
-      await invoke("delete_branch", { name });
+      await invoke("delete_branch", { repoPath, name });
       setFormMessage({
         text: t("branch.deleted", { name }),
         type: "success",

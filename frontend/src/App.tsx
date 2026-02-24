@@ -7,6 +7,7 @@ import { DiffTab } from "./components/DiffTab";
 import { PrTab } from "./components/PrTab";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Layout } from "./components/Layout";
+import { RepositoryProvider } from "./RepositoryContext";
 import { invoke } from "./invoke";
 import type { RepositoryEntry } from "./types";
 import "./style.css";
@@ -136,27 +137,29 @@ export function App() {
   }, [confirmDialog]);
 
   return (
-    <Layout
-      repositories={repositories}
-      selectedRepoPath={selectedRepoPath}
-      onSelectRepo={setSelectedRepoPath}
-      onAddRepo={handleAddRepo}
-      onRemoveRepo={handleRemoveRepo}
-      navItems={[...NAV_ITEMS]}
-      activeTabId={activeTab}
-      onSelectTab={(id) => setActiveTab(id as TabName)}
-    >
-      {activeTab === "worktree" && <WorktreeTab />}
-      {activeTab === "branch" && <BranchTab showConfirm={showConfirm} />}
-      {activeTab === "diff" && <DiffTab />}
-      {activeTab === "pr" && <PrTab />}
+    <RepositoryProvider repoPath={selectedRepoPath}>
+      <Layout
+        repositories={repositories}
+        selectedRepoPath={selectedRepoPath}
+        onSelectRepo={setSelectedRepoPath}
+        onAddRepo={handleAddRepo}
+        onRemoveRepo={handleRemoveRepo}
+        navItems={[...NAV_ITEMS]}
+        activeTabId={activeTab}
+        onSelectTab={(id) => setActiveTab(id as TabName)}
+      >
+        {activeTab === "worktree" && <WorktreeTab />}
+        {activeTab === "branch" && <BranchTab showConfirm={showConfirm} />}
+        {activeTab === "diff" && <DiffTab />}
+        {activeTab === "pr" && <PrTab />}
 
-      <ConfirmDialog
-        open={confirmDialog !== null}
-        message={confirmDialog?.message ?? ""}
-        onConfirm={() => handleConfirm(true)}
-        onCancel={() => handleConfirm(false)}
-      />
-    </Layout>
+        <ConfirmDialog
+          open={confirmDialog !== null}
+          message={confirmDialog?.message ?? ""}
+          onConfirm={() => handleConfirm(true)}
+          onCancel={() => handleConfirm(false)}
+        />
+      </Layout>
+    </RepositoryProvider>
   );
 }

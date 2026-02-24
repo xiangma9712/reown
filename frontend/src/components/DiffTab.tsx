@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
+import { useRepository } from "../RepositoryContext";
 import type { FileDiff } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -47,16 +48,18 @@ function getOriginString(
 
 export function DiffTab() {
   const { t } = useTranslation();
+  const { repoPath } = useRepository();
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleLoad() {
+    if (!repoPath) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await invoke("diff_workdir");
+      const result = await invoke("diff_workdir", { repoPath });
       setDiffs(result);
       if (result.length > 0) {
         setSelectedIndex(0);
