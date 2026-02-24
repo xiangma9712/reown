@@ -5,6 +5,7 @@ import { WorktreeTab } from "./components/WorktreeTab";
 import { BranchTab } from "./components/BranchTab";
 import { DiffTab } from "./components/DiffTab";
 import { PrTab } from "./components/PrTab";
+import { TodoTab } from "./components/TodoTab";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { ConfirmDialog } from "./components/ConfirmDialog";
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { id: "branch", labelKey: "tabs.branches", shortcut: "B" },
   { id: "diff", labelKey: "tabs.diff", shortcut: "D" },
   { id: "pr", labelKey: "tabs.prs", shortcut: "P" },
+  { id: "todo", labelKey: "tabs.todo", shortcut: "T" },
   { id: "settings", labelKey: "tabs.settings", shortcut: "S" },
 ] as const;
 
@@ -141,6 +143,9 @@ export function App() {
           break;
         case "p":
           setActiveTab("pr");
+          break;
+        case "t":
+          setActiveTab("todo");
           break;
         case "s":
           setActiveTab("settings");

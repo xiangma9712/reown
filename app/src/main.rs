@@ -390,6 +390,13 @@ fn load_automation_config(
     Ok(config.automation)
 }
 
+// ── TODO extraction commands ─────────────────────────────────────────────────
+
+#[tauri::command]
+fn extract_todos(repo_path: String) -> Result<Vec<reown::git::todo::TodoItem>, AppError> {
+    reown::git::todo::extract_todos(&repo_path).map_err(AppError::git)
+}
+
 // ── Review History commands ──────────────────────────────────────────────────
 
 #[tauri::command]
@@ -451,6 +458,7 @@ fn main() {
             test_llm_connection,
             save_automation_config,
             load_automation_config,
+            extract_todos,
             list_review_history,
             add_review_record,
         ])

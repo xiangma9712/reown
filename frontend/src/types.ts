@@ -100,6 +100,17 @@ export interface ConsistencyResult {
   warnings: string[];
 }
 
+// ── TODO Types ──────────────────────────────────────────────────────────────
+
+export type TodoKind = "Todo" | "Fixme";
+
+export interface TodoItem {
+  file_path: string;
+  line_number: number;
+  kind: TodoKind;
+  content: string;
+}
+
 // ── Review Types ────────────────────────────────────────────────────────────
 
 export type ReviewEvent = "APPROVE" | "REQUEST_CHANGES";

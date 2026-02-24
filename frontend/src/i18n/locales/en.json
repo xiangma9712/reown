@@ -156,5 +156,15 @@
     "saveSuccess": "Automation settings saved successfully",
     "saveError": "Failed to save automation settings: {{message}}",
     "loadError": "Failed to load automation settings: {{message}}"
+  },
+  "todo": {
+    "title": "TODO / FIXME",
+    "empty": "No TODO/FIXME comments found.",
+    "loadButton": "Extract TODO/FIXME",
+    "loading": "Extracting…",
+    "count": "{{count}} items",
+    "filterAll": "All",
+    "filterTodo": "TODO",
+    "filterFixme": "FIXME"
   }
 }
