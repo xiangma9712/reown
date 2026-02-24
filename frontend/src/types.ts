@@ -206,3 +206,39 @@ export interface HybridAnalysisResult {
   llm_analysis: LlmAnalysisResult;
   combined_risk_level: RiskLevel;
 }
+
+// ── Review Pattern Types ────────────────────────────────────────────────────
+
+export interface CategoryStat {
+  total: number;
+  approved: number;
+  rejected: number;
+  reject_rate: number;
+}
+
+export interface RiskStat {
+  total: number;
+  approved: number;
+  rejected: number;
+  reject_rate: number;
+}
+
+export interface RejectPathPattern {
+  pattern: string;
+  reject_count: number;
+}
+
+export interface ReviewPatternStats {
+  category_stats: Record<ChangeCategory, CategoryStat>;
+  risk_stats: Record<RiskLevel, RiskStat>;
+  reject_path_patterns: RejectPathPattern[];
+  total_reviews: number;
+}
+
+export type SuggestionSeverity = "Info" | "Warning" | "Alert";
+
+export interface ReviewSuggestion {
+  message: string;
+  severity: SuggestionSeverity;
+  source: string;
+}
