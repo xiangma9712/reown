@@ -130,7 +130,7 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
   const [diffLoading, setDiffLoading] = useState(false);
   const [diffError, setDiffError] = useState<string | null>(null);
   const llmConfigRef = useRef<LlmConfig>({ llm_endpoint: "", llm_model: "", llm_api_key_stored: false });
-  const automationConfigRef = useRef<AutomationConfig>({ enabled: false, auto_approve_max_risk: "Low" });
+  const automationConfigRef = useRef<AutomationConfig>({ enabled: false, auto_approve_max_risk: "Low", enable_auto_merge: false, auto_merge_method: "Squash" });
 
   // Category accordion state (expanded categories)
   const [expandedCategories, setExpandedCategories] = useState<Set<ChangeCategory>>(new Set(["Logic"]));
