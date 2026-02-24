@@ -390,6 +390,33 @@ fn load_automation_config(
     Ok(config.automation)
 }
 
+// ── Review History commands ──────────────────────────────────────────────────
+
+#[tauri::command]
+fn list_review_history(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<reown::review_history::ReviewRecord>, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let storage_path = reown::review_history::default_review_history_path(&app_data_dir);
+    reown::review_history::load_review_history(&storage_path).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn add_review_record(
+    app_handle: tauri::AppHandle,
+    record: reown::review_history::ReviewRecord,
+) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let storage_path = reown::review_history::default_review_history_path(&app_data_dir);
+    reown::review_history::add_review_record(&storage_path, record).map_err(AppError::storage)
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
@@ -424,6 +451,8 @@ fn main() {
             test_llm_connection,
             save_automation_config,
             load_automation_config,
+            list_review_history,
+            add_review_record,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
