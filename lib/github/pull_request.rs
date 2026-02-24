@@ -1,7 +1,22 @@
 use anyhow::{Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::git::diff::{DiffChunk, DiffLineInfo, FileDiff, FileStatus, LineOrigin};
+
+/// Review event type for PR review submission.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ReviewEvent {
+    Approve,
+    RequestChanges,
+}
+
+/// Request body for submitting a PR review.
+#[derive(Debug, Serialize)]
+struct SubmitReviewRequest {
+    event: ReviewEvent,
+    body: String,
+}
 
 /// Information about a GitHub pull request.
 #[derive(Debug, Clone, serde::Serialize)]
@@ -344,6 +359,50 @@ pub async fn get_pull_request_files(
     }
 
     Ok(all_files)
+}
+
+/// Submit a review on a pull request.
+///
+/// Calls `POST /repos/{owner}/{repo}/pulls/{pr_number}/reviews` with
+/// the specified event (APPROVE or REQUEST_CHANGES) and body text.
+pub async fn submit_review(
+    owner: &str,
+    repo: &str,
+    pr_number: u64,
+    event: ReviewEvent,
+    body: &str,
+    token: &str,
+) -> Result<()> {
+    let client = reqwest::Client::new();
+    let url = format!(
+        "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/reviews"
+    );
+
+    let request_body = SubmitReviewRequest {
+        event,
+        body: body.to_string(),
+    };
+
+    let response = client
+        .post(&url)
+        .header("Accept", "application/vnd.github+json")
+        .header("Authorization", format!("Bearer {token}"))
+        .header("User-Agent", "reown")
+        .header("X-GitHub-Api-Version", "2022-11-28")
+        .json(&request_body)
+        .send()
+        .await
+        .with_context(|| {
+            format!("Failed to submit review for PR #{pr_number} in {owner}/{repo}")
+        })?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        anyhow::bail!("GitHub API returned {status}: {body}");
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -754,5 +813,57 @@ mod tests {
 
         let diff = file.into_file_diff();
         assert!(diff.chunks.is_empty());
+    }
+
+    /// Test ReviewEvent serializes to SCREAMING_SNAKE_CASE.
+    #[test]
+    fn test_review_event_serialize() {
+        let approve = serde_json::to_value(&ReviewEvent::Approve).unwrap();
+        assert_eq!(approve, "APPROVE");
+
+        let request_changes = serde_json::to_value(&ReviewEvent::RequestChanges).unwrap();
+        assert_eq!(request_changes, "REQUEST_CHANGES");
+    }
+
+    /// Test ReviewEvent deserializes from SCREAMING_SNAKE_CASE.
+    #[test]
+    fn test_review_event_deserialize() {
+        let approve: ReviewEvent = serde_json::from_str("\"APPROVE\"").unwrap();
+        assert_eq!(approve, ReviewEvent::Approve);
+
+        let request_changes: ReviewEvent = serde_json::from_str("\"REQUEST_CHANGES\"").unwrap();
+        assert_eq!(request_changes, ReviewEvent::RequestChanges);
+    }
+
+    /// Test SubmitReviewRequest serializes correctly.
+    #[test]
+    fn test_submit_review_request_serialize() {
+        let request = SubmitReviewRequest {
+            event: ReviewEvent::Approve,
+            body: "LGTM!".to_string(),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["event"], "APPROVE");
+        assert_eq!(json["body"], "LGTM!");
+
+        let request = SubmitReviewRequest {
+            event: ReviewEvent::RequestChanges,
+            body: "Please fix the error handling.".to_string(),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["event"], "REQUEST_CHANGES");
+        assert_eq!(json["body"], "Please fix the error handling.");
+    }
+
+    /// Test SubmitReviewRequest with empty body.
+    #[test]
+    fn test_submit_review_request_empty_body() {
+        let request = SubmitReviewRequest {
+            event: ReviewEvent::Approve,
+            body: String::new(),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["event"], "APPROVE");
+        assert_eq!(json["body"], "");
     }
 }

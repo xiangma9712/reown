@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AnalysisResult, HybridAnalysisResult } from "../types";
+import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -139,6 +139,12 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
   // Per-PR analysis results cache (keyed by PR number)
   const analysisCache = useRef<Map<number, { analysis: AnalysisResult; hybrid?: HybridAnalysisResult }>>(new Map());
 
+  // Review state
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [confirmingReview, setConfirmingReview] = useState<ReviewEvent | null>(null);
+
   useEffect(() => {
     invoke("load_app_config").then((config) => {
       if (config.github_token) setToken(config.github_token);
@@ -196,6 +202,9 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     setExpandedFiles(new Set());
     setExpandedCategories(new Set(["Logic"]));
     setAnalysisError(null);
+    setReviewComment("");
+    setReviewMessage(null);
+    setConfirmingReview(null);
     // Load cached analysis if available
     const cached = analysisCache.current.get(pr.number);
     if (cached) {
@@ -248,6 +257,9 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     setAnalysisResult(null);
     setHybridResult(null);
     setAnalysisError(null);
+    setReviewComment("");
+    setReviewMessage(null);
+    setConfirmingReview(null);
   }
 
   async function handleAnalyze(pr: PrInfo) {
@@ -311,6 +323,33 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     });
   }
 
+  async function handleSubmitReview(event: ReviewEvent) {
+    if (!selectedPr) return;
+    if (event === "REQUEST_CHANGES" && !reviewComment.trim()) {
+      setReviewMessage({ type: "error", text: t("pr.reviewCommentRequired") });
+      return;
+    }
+    setReviewLoading(true);
+    setReviewMessage(null);
+    setConfirmingReview(null);
+    try {
+      await invoke("submit_pr_review", {
+        owner: owner.trim(),
+        repo: repo.trim(),
+        prNumber: selectedPr.number,
+        event,
+        body: reviewComment.trim(),
+        token: token.trim(),
+      });
+      setReviewMessage({ type: "success", text: t("pr.reviewSuccess") });
+      setReviewComment("");
+    } catch (err) {
+      setReviewMessage({ type: "error", text: `${t("pr.reviewError")}: ${err}` });
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
   const filteredPrs =
     stateFilter === "all"
       ? prs
@@ -352,6 +391,71 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
           prNumber={selectedPr.number}
           token={token.trim()}
         />
+        {/* Review action section */}
+        <Card className="mt-4">
+          <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+            Review
+          </h2>
+          <textarea
+            className="w-full rounded-md border border-border bg-bg-primary px-3 py-2 text-[0.85rem] text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            rows={3}
+            placeholder={t("pr.reviewComment")}
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+            disabled={reviewLoading}
+          />
+          <div className="mt-3 flex items-center gap-2">
+            {confirmingReview === null ? (
+              <>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setConfirmingReview("APPROVE")}
+                  disabled={reviewLoading || selectedPr.state !== "open"}
+                >
+                  {t("pr.approve")}
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setConfirmingReview("REQUEST_CHANGES")}
+                  disabled={reviewLoading || selectedPr.state !== "open"}
+                >
+                  {t("pr.requestChanges")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-[0.85rem] text-text-secondary">
+                  {confirmingReview === "APPROVE"
+                    ? t("pr.confirmApprove")
+                    : t("pr.confirmRequestChanges")}
+                </span>
+                <Button
+                  variant={confirmingReview === "APPROVE" ? "primary" : "danger"}
+                  size="sm"
+                  onClick={() => handleSubmitReview(confirmingReview)}
+                  disabled={reviewLoading}
+                >
+                  {reviewLoading ? t("pr.reviewSubmitting") : t("common.confirm")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setConfirmingReview(null)}
+                  disabled={reviewLoading}
+                >
+                  {t("common.cancel")}
+                </Button>
+              </>
+            )}
+          </div>
+          {reviewMessage && (
+            <p className={`mt-2 text-[0.85rem] ${reviewMessage.type === "success" ? "text-accent" : "text-danger"}`}>
+              {reviewMessage.text}
+            </p>
+          )}
+        </Card>
         <Card className="mt-4">
           <div className="mb-4 flex items-center gap-3 border-b border-border pb-2">
             <h2 className="text-lg text-text-heading">

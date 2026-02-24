@@ -112,7 +112,16 @@
     "consistencyWarning": "PR title/body may not match the actual changes",
     "consistencyWarnings": "Consistency Warnings",
     "cancelGeneration": "Cancel",
-    "summaryError": "Failed to generate AI summary"
+    "summaryError": "Failed to generate AI summary",
+    "approve": "Approve",
+    "requestChanges": "Request Changes",
+    "reviewComment": "Comment (optional)",
+    "reviewCommentRequired": "A comment is required for Request Changes.",
+    "confirmApprove": "Are you sure you want to approve this PR?",
+    "confirmRequestChanges": "Are you sure you want to request changes on this PR?",
+    "reviewSubmitting": "Submitting review…",
+    "reviewSuccess": "Review submitted successfully",
+    "reviewError": "Failed to submit review"
   },
   "llmSettings": {
     "title": "LLM Settings",

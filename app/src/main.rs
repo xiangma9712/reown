@@ -83,6 +83,22 @@ async fn get_pull_request_files(
     Ok(reown::analysis::categorize_diffs(diffs))
 }
 
+#[tauri::command]
+async fn submit_pr_review(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    event: reown::github::ReviewEvent,
+    body: String,
+    token: String,
+) -> Result<(), AppError> {
+    reown::github::pull_request::submit_review(
+        &owner, &repo, pr_number, event, &body, &token,
+    )
+    .await
+    .map_err(AppError::github)
+}
+
 // ── Git info commands ──────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -360,6 +376,7 @@ fn main() {
             diff_commit,
             list_pull_requests,
             get_pull_request_files,
+            submit_pr_review,
             analyze_pr_risk,
             analyze_pr_risk_with_llm,
             summarize_pull_request,

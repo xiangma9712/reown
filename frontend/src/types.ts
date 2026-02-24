@@ -92,6 +92,10 @@ export interface ConsistencyResult {
   warnings: string[];
 }
 
+// ── Review Types ────────────────────────────────────────────────────────────
+
+export type ReviewEvent = "APPROVE" | "REQUEST_CHANGES";
+
 // ── Risk Analysis Types ─────────────────────────────────────────────────────
 
 export type RiskLevel = "Low" | "Medium" | "High";

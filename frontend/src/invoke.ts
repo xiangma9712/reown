@@ -1,5 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import type { WorktreeInfo, BranchInfo, FileDiff, CategorizedFileDiff, PrInfo, RepositoryEntry, AppConfig, LlmConfig, RepoInfo, PrSummary, ConsistencyResult, AnalysisResult, HybridAnalysisResult } from "./types";
+import type { WorktreeInfo, BranchInfo, FileDiff, CategorizedFileDiff, PrInfo, RepositoryEntry, AppConfig, LlmConfig, RepoInfo, PrSummary, ConsistencyResult, AnalysisResult, HybridAnalysisResult, ReviewEvent } from "./types";
 
 type Commands = {
   list_worktrees: { args: { repoPath: string }; ret: WorktreeInfo[] };
@@ -20,6 +20,10 @@ type Commands = {
   get_pull_request_files: {
     args: { owner: string; repo: string; prNumber: number; token: string };
     ret: CategorizedFileDiff[];
+  };
+  submit_pr_review: {
+    args: { owner: string; repo: string; prNumber: number; event: ReviewEvent; body: string; token: string };
+    ret: void;
   };
   get_repo_info: {
     args: { repoPath: string };
