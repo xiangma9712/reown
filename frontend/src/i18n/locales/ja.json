@@ -15,7 +15,8 @@
     "worktrees": "Worktrees",
     "branches": "Branches",
     "diff": "Diff",
-    "prs": "PRs"
+    "prs": "PRs",
+    "settings": "Settings"
   },
   "common": {
     "loading": "読み込み中…",
@@ -106,5 +107,26 @@
     "consistencyWarnings": "整合性の警告",
     "cancelGeneration": "キャンセル",
     "summaryError": "AI要約の生成に失敗しました"
+  },
+  "llmSettings": {
+    "title": "LLM設定",
+    "endpoint": "エンドポイントURL",
+    "model": "モデル名",
+    "apiKey": "APIキー",
+    "apiKeyPlaceholder": "APIキーを入力",
+    "apiKeyStoredPlaceholder": "保存済み（変更する場合は新しいキーを入力）",
+    "apiKeyStored": "APIキーは安全に保存されています",
+    "deleteApiKey": "APIキーを削除",
+    "apiKeyDeleted": "APIキーを削除しました",
+    "showApiKey": "表示",
+    "hideApiKey": "非表示",
+    "save": "保存",
+    "reset": "リセット",
+    "testConnection": "接続テスト",
+    "saveSuccess": "設定を保存しました",
+    "saveError": "設定の保存に失敗しました: {{message}}",
+    "loadError": "設定の読み込みに失敗しました: {{message}}",
+    "testSuccess": "接続テストに成功しました",
+    "testError": "接続テストに失敗しました: {{message}}"
   }
 }
