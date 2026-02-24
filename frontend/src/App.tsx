@@ -31,6 +31,7 @@ export function App() {
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
   const [prs, setPrs] = useState<PrInfo[]>([]);
+  const [selectedPrNumber, setSelectedPrNumber] = useState<number | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
     resolve: (value: boolean) => void;
@@ -72,6 +73,11 @@ export function App() {
     },
     [confirmDialog]
   );
+
+  const navigateToPr = useCallback((prNumber: number) => {
+    setSelectedPrNumber(prNumber);
+    setActiveTab("pr");
+  }, []);
 
   const handleAddRepo = useCallback(async () => {
     const selected = await open({ directory: true, multiple: false });
@@ -166,10 +172,10 @@ export function App() {
         activeTabId={activeTab}
         onSelectTab={(id) => setActiveTab(id as TabName)}
       >
-        {activeTab === "worktree" && <WorktreeTab prs={prs} />}
-        {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} />}
+        {activeTab === "worktree" && <WorktreeTab prs={prs} onNavigateToPr={navigateToPr} />}
+        {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} onNavigateToPr={navigateToPr} />}
         {activeTab === "diff" && <DiffTab />}
-        {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} />}
+        {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} selectedPrNumber={selectedPrNumber} onPrSelected={() => setSelectedPrNumber(null)} />}
         {activeTab === "settings" && (
           <div className="mx-auto max-w-xl space-y-8">
             <LlmSettingsTab />

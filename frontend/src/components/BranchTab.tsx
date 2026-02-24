@@ -27,9 +27,10 @@ function prStateVariant(
 interface Props {
   showConfirm: (message: string) => Promise<boolean>;
   prs: PrInfo[];
+  onNavigateToPr: (prNumber: number) => void;
 }
 
-export function BranchTab({ showConfirm, prs }: Props) {
+export function BranchTab({ showConfirm, prs, onNavigateToPr }: Props) {
   const { t } = useTranslation();
   const { repoPath } = useRepository();
   const [branches, setBranches] = useState<BranchInfo[]>([]);
@@ -173,17 +174,17 @@ export function BranchTab({ showConfirm, prs }: Props) {
                       {b.is_head ? `* ${b.name}` : b.name}
                     </span>
                     {pr && (
-                      <a
-                        href={pr.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 no-underline"
-                        onClick={(e) => e.stopPropagation()}
+                      <button
+                        className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigateToPr(pr.number);
+                        }}
                       >
                         <Badge variant={prStateVariant(pr.state)}>
                           #{pr.number} {pr.state}
                         </Badge>
-                      </a>
+                      </button>
                     )}
                   </div>
                   {b.upstream && (
