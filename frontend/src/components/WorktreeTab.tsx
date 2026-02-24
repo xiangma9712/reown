@@ -1,6 +1,7 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useCallback, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
+import { useRepository } from "../RepositoryContext";
 import type { WorktreeInfo } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -10,6 +11,7 @@ import { Loading } from "./Loading";
 
 export function WorktreeTab() {
   const { t } = useTranslation();
+  const { repoPath } = useRepository();
   const [worktrees, setWorktrees] = useState<WorktreeInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,31 +25,33 @@ export function WorktreeTab() {
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function loadWorktrees() {
+  const loadWorktrees = useCallback(async () => {
+    if (!repoPath) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await invoke("list_worktrees");
+      const result = await invoke("list_worktrees", { repoPath });
       setWorktrees(result);
     } catch (err) {
       setError(String(err));
     } finally {
       setLoading(false);
     }
-  }
+  }, [repoPath]);
 
   useEffect(() => {
     loadWorktrees();
-  }, []);
+  }, [loadWorktrees]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!wtPath.trim() || !wtBranch.trim()) return;
+    if (!repoPath || !wtPath.trim() || !wtBranch.trim()) return;
 
     setSubmitting(true);
     setFormMessage(null);
     try {
       await invoke("add_worktree", {
+        repoPath,
         worktreePath: wtPath.trim(),
         branch: wtBranch.trim(),
       });
