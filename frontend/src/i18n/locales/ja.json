@@ -16,6 +16,7 @@
     "branches": "Branches",
     "diff": "Diff",
     "prs": "PRs",
+    "todo": "TODO",
     "settings": "Settings"
   },
   "common": {
@@ -156,5 +157,15 @@
     "saveSuccess": "オートメーション設定を保存しました",
     "saveError": "オートメーション設定の保存に失敗しました: {{message}}",
     "loadError": "オートメーション設定の読み込みに失敗しました: {{message}}"
+  },
+  "todo": {
+    "title": "TODO / FIXME",
+    "empty": "TODO/FIXMEコメントは見つかりませんでした。",
+    "loadButton": "TODO/FIXMEを抽出",
+    "loading": "抽出中…",
+    "count": "{{count}} 件",
+    "filterAll": "すべて",
+    "filterTodo": "TODO",
+    "filterFixme": "FIXME"
   }
 }

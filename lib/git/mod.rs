@@ -2,6 +2,7 @@ pub mod branch;
 pub mod diff;
 #[cfg(test)]
 pub mod test_utils;
+pub mod todo;
 pub mod worktree;
 
 use anyhow::{Context, Result};
