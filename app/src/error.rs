@@ -23,6 +23,8 @@ pub enum ErrorKind {
     GitHub,
     /// リポジトリ管理（追加・削除・永続化）のエラー
     Storage,
+    /// 分析処理のエラー
+    Analysis,
 }
 
 impl std::fmt::Display for AppError {
@@ -49,6 +51,13 @@ impl AppError {
     pub fn storage(err: anyhow::Error) -> Self {
         Self {
             kind: ErrorKind::Storage,
+            message: format!("{err:#}"),
+        }
+    }
+
+    pub fn analysis(err: anyhow::Error) -> Self {
+        Self {
+            kind: ErrorKind::Analysis,
             message: format!("{err:#}"),
         }
     }

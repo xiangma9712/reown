@@ -128,6 +128,34 @@ fn remove_repository(
     reown::repository::remove_repository(&storage_path, &path).map_err(AppError::storage)
 }
 
+// ── Analysis commands ───────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn analyze_pr_risk(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+) -> Result<reown::analysis::AnalysisResult, AppError> {
+    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+        .await
+        .map_err(AppError::github)?;
+
+    let pr = prs
+        .into_iter()
+        .find(|p| p.number == pr_number)
+        .ok_or_else(|| {
+            AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found"))
+        })?;
+
+    let diffs =
+        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
+            .await
+            .map_err(AppError::github)?;
+
+    Ok(reown::analysis::analyze_pr_risk(&pr, &diffs))
+}
+
 // ── Config commands ─────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -171,6 +199,7 @@ fn main() {
             diff_commit,
             list_pull_requests,
             get_pull_request_files,
+            analyze_pr_risk,
             get_repo_info,
             add_repository,
             list_repositories,
