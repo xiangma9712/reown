@@ -79,9 +79,13 @@ export interface LlmConfig {
 
 export type AutoApproveMaxRisk = "Low" | "Medium";
 
+export type ConfigMergeMethod = "Merge" | "Squash" | "Rebase";
+
 export interface AutomationConfig {
   enabled: boolean;
   auto_approve_max_risk: AutoApproveMaxRisk;
+  enable_auto_merge: boolean;
+  auto_merge_method: ConfigMergeMethod;
 }
 
 export interface AppConfig {

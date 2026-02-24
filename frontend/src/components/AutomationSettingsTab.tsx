@@ -3,12 +3,19 @@ import { useTranslation } from "react-i18next";
 import { Card } from "./Card";
 import { Button } from "./Button";
 import { invoke } from "../invoke";
-import type { AutomationConfig, AutoApproveMaxRisk } from "../types";
+import type {
+  AutomationConfig,
+  AutoApproveMaxRisk,
+  ConfigMergeMethod,
+} from "../types";
 
 export function AutomationSettingsTab() {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState(false);
   const [maxRisk, setMaxRisk] = useState<AutoApproveMaxRisk>("Low");
+  const [enableAutoMerge, setEnableAutoMerge] = useState(false);
+  const [autoMergeMethod, setAutoMergeMethod] =
+    useState<ConfigMergeMethod>("Merge");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
@@ -22,6 +29,8 @@ export function AutomationSettingsTab() {
       const config = await invoke("load_automation_config");
       setEnabled(config.enabled);
       setMaxRisk(config.auto_approve_max_risk);
+      setEnableAutoMerge(config.enable_auto_merge);
+      setAutoMergeMethod(config.auto_merge_method);
     } catch (e) {
       setMessage({
         type: "error",
@@ -46,6 +55,8 @@ export function AutomationSettingsTab() {
       const automationConfig: AutomationConfig = {
         enabled,
         auto_approve_max_risk: maxRisk,
+        enable_auto_merge: enableAutoMerge,
+        auto_merge_method: autoMergeMethod,
       };
       await invoke("save_automation_config", { automationConfig });
 
@@ -60,7 +71,7 @@ export function AutomationSettingsTab() {
     } finally {
       setSaving(false);
     }
-  }, [enabled, maxRisk, t]);
+  }, [enabled, maxRisk, enableAutoMerge, autoMergeMethod, t]);
 
   const handleReset = useCallback(() => {
     setMessage(null);
@@ -131,6 +142,67 @@ export function AutomationSettingsTab() {
                   {t("automation.riskMedium")}
                 </span>
               </label>
+
+              <div className="mt-4 border-t border-border pt-4">
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={enableAutoMerge}
+                    onChange={(e) => setEnableAutoMerge(e.target.checked)}
+                    className="h-4 w-4 accent-accent"
+                  />
+                  <span className="text-[0.9rem] text-text-primary">
+                    {t("automation.enableAutoMerge")}
+                  </span>
+                </label>
+
+                {enableAutoMerge && (
+                  <div className="mt-2 space-y-2 pl-7">
+                    <p className="text-[0.85rem] font-medium text-text-secondary">
+                      {t("automation.mergeMethod")}
+                    </p>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        name="mergeMethod"
+                        value="Merge"
+                        checked={autoMergeMethod === "Merge"}
+                        onChange={() => setAutoMergeMethod("Merge")}
+                        className="accent-accent"
+                      />
+                      <span className="text-[0.85rem] text-text-primary">
+                        {t("automation.mergeMerge")}
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        name="mergeMethod"
+                        value="Squash"
+                        checked={autoMergeMethod === "Squash"}
+                        onChange={() => setAutoMergeMethod("Squash")}
+                        className="accent-accent"
+                      />
+                      <span className="text-[0.85rem] text-text-primary">
+                        {t("automation.mergeSquash")}
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        name="mergeMethod"
+                        value="Rebase"
+                        checked={autoMergeMethod === "Rebase"}
+                        onChange={() => setAutoMergeMethod("Rebase")}
+                        className="accent-accent"
+                      />
+                      <span className="text-[0.85rem] text-text-primary">
+                        {t("automation.mergeRebase")}
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

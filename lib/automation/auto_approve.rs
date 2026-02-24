@@ -145,6 +145,7 @@ mod tests {
         let config = AutomationConfig {
             enabled: false,
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+            ..Default::default()
         };
 
         let candidates = evaluate_auto_approve(&analyses, &config);
@@ -161,6 +162,7 @@ mod tests {
         let config = AutomationConfig {
             enabled: true,
             auto_approve_max_risk: AutoApproveMaxRisk::Low,
+            ..Default::default()
         };
 
         let candidates = evaluate_auto_approve(&analyses, &config);
@@ -179,6 +181,7 @@ mod tests {
         let config = AutomationConfig {
             enabled: true,
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+            ..Default::default()
         };
 
         let candidates = evaluate_auto_approve(&analyses, &config);
@@ -196,6 +199,7 @@ mod tests {
         let config = AutomationConfig {
             enabled: true,
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+            ..Default::default()
         };
 
         let candidates = evaluate_auto_approve(&analyses, &config);
@@ -207,6 +211,7 @@ mod tests {
         let config = AutomationConfig {
             enabled: true,
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+            ..Default::default()
         };
 
         let candidates = evaluate_auto_approve(&[], &config);
@@ -219,6 +224,7 @@ mod tests {
         let config = AutomationConfig {
             enabled: true,
             auto_approve_max_risk: AutoApproveMaxRisk::Low,
+            ..Default::default()
         };
 
         let candidates = evaluate_auto_approve(&analyses, &config);

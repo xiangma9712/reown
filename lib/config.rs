@@ -10,6 +10,15 @@ pub enum AutoApproveMaxRisk {
     Medium,
 }
 
+/// auto merge時のマージ方法
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MergeMethod {
+    #[default]
+    Merge,
+    Squash,
+    Rebase,
+}
+
 /// オートメーション設定
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AutomationConfig {
@@ -19,6 +28,12 @@ pub struct AutomationConfig {
     /// 自動approveする最大リスクレベル
     #[serde(default)]
     pub auto_approve_max_risk: AutoApproveMaxRisk,
+    /// auto merge有効/無効
+    #[serde(default)]
+    pub enable_auto_merge: bool,
+    /// auto mergeのマージ方法
+    #[serde(default)]
+    pub auto_merge_method: MergeMethod,
 }
 
 impl Default for AutomationConfig {
@@ -26,6 +41,8 @@ impl Default for AutomationConfig {
         Self {
             enabled: false,
             auto_approve_max_risk: AutoApproveMaxRisk::Low,
+            enable_auto_merge: false,
+            auto_merge_method: MergeMethod::Merge,
         }
     }
 }
@@ -339,6 +356,8 @@ mod tests {
             automation: AutomationConfig {
                 enabled: true,
                 auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                enable_auto_merge: true,
+                auto_merge_method: MergeMethod::Squash,
             },
         };
 
@@ -347,6 +366,8 @@ mod tests {
         assert_eq!(loaded, config);
         assert!(loaded.automation.enabled);
         assert_eq!(loaded.automation.auto_approve_max_risk, AutoApproveMaxRisk::Medium);
+        assert!(loaded.automation.enable_auto_merge);
+        assert_eq!(loaded.automation.auto_merge_method, MergeMethod::Squash);
     }
 
     #[test]
@@ -354,10 +375,14 @@ mod tests {
         let config = AutomationConfig {
             enabled: true,
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+            enable_auto_merge: true,
+            auto_merge_method: MergeMethod::Rebase,
         };
         let json = serde_json::to_value(&config).unwrap();
         assert_eq!(json["enabled"], true);
         assert_eq!(json["auto_approve_max_risk"], "Medium");
+        assert_eq!(json["enable_auto_merge"], true);
+        assert_eq!(json["auto_merge_method"], "Rebase");
     }
 
     #[test]
@@ -366,5 +391,38 @@ mod tests {
         assert_eq!(low, "Low");
         let medium = serde_json::to_value(&AutoApproveMaxRisk::Medium).unwrap();
         assert_eq!(medium, "Medium");
+    }
+
+    #[test]
+    fn test_automation_config_default_has_auto_merge() {
+        let config = AutomationConfig::default();
+        assert!(!config.enable_auto_merge);
+        assert_eq!(config.auto_merge_method, MergeMethod::Merge);
+    }
+
+    #[test]
+    fn test_merge_method_serializes() {
+        assert_eq!(serde_json::to_value(&MergeMethod::Merge).unwrap(), "Merge");
+        assert_eq!(
+            serde_json::to_value(&MergeMethod::Squash).unwrap(),
+            "Squash"
+        );
+        assert_eq!(
+            serde_json::to_value(&MergeMethod::Rebase).unwrap(),
+            "Rebase"
+        );
+    }
+
+    #[test]
+    fn test_backward_compat_load_without_auto_merge_fields() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // automationにenable_auto_merge/auto_merge_methodなしの旧形式JSON
+        let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r","automation":{"enabled":true,"auto_approve_max_risk":"Low"}}"#;
+        std::fs::write(&config_path, old_json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert!(config.automation.enabled);
+        assert!(!config.automation.enable_auto_merge);
+        assert_eq!(config.automation.auto_merge_method, MergeMethod::Merge);
     }
 }
