@@ -10,6 +10,7 @@ import { Loading } from "./Loading";
 import { RiskBadge } from "./RiskBadge";
 import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 import { AiSummaryPanel } from "./AiSummaryPanel";
+import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 
 function stateVariant(
   state: string,
@@ -447,6 +448,12 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
           </Button>
         </div>
         <AiSummaryPanel
+          owner={owner.trim()}
+          repo={repo.trim()}
+          prNumber={selectedPr.number}
+          token={token.trim()}
+        />
+        <ConsistencyCheckPanel
           owner={owner.trim()}
           repo={repo.trim()}
           prNumber={selectedPr.number}
