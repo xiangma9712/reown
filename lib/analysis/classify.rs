@@ -60,7 +60,7 @@ pub fn classify_file_change(diff: &FileDiff) -> ChangeCategory {
     ChangeCategory::Other
 }
 
-fn effective_path(diff: &FileDiff) -> &str {
+pub(crate) fn effective_path(diff: &FileDiff) -> &str {
     diff.new_path
         .as_deref()
         .or(diff.old_path.as_deref())
@@ -182,7 +182,7 @@ fn classify_source_change(diff: &FileDiff) -> ChangeCategory {
     ChangeCategory::Logic
 }
 
-fn count_changes(diff: &FileDiff) -> (usize, usize) {
+pub(crate) fn count_changes(diff: &FileDiff) -> (usize, usize) {
     let mut additions = 0;
     let mut deletions = 0;
     for chunk in &diff.chunks {

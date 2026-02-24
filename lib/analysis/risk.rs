@@ -1,7 +1,7 @@
-use crate::git::diff::{FileDiff, LineOrigin};
+use crate::git::diff::FileDiff;
 use crate::github::PrInfo;
 
-use super::classify::{ChangeCategory, classify_file_change};
+use super::classify::{ChangeCategory, classify_file_change, count_changes, effective_path};
 
 /// リスクレベル
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
@@ -100,28 +100,6 @@ pub fn analyze_pr_risk(pr: &PrInfo, diffs: &[FileDiff]) -> AnalysisResult {
         files: file_analyses,
         summary,
     }
-}
-
-fn effective_path(diff: &FileDiff) -> &str {
-    diff.new_path
-        .as_deref()
-        .or(diff.old_path.as_deref())
-        .unwrap_or("")
-}
-
-fn count_changes(diff: &FileDiff) -> (usize, usize) {
-    let mut additions = 0;
-    let mut deletions = 0;
-    for chunk in &diff.chunks {
-        for line in &chunk.lines {
-            match line.origin {
-                LineOrigin::Addition => additions += 1,
-                LineOrigin::Deletion => deletions += 1,
-                _ => {}
-            }
-        }
-    }
-    (additions, deletions)
 }
 
 fn build_summary(files: &[FileAnalysis]) -> AnalysisSummary {
@@ -290,7 +268,7 @@ fn calculate_sensitive_path_score(diffs: &[FileDiff]) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::git::diff::{DiffChunk, DiffLineInfo, FileStatus};
+    use crate::git::diff::{DiffChunk, DiffLineInfo, FileStatus, LineOrigin};
 
     fn make_pr(number: u64) -> PrInfo {
         PrInfo {
