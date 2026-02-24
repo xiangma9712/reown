@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, FileDiff, LlmConfig } from "../types";
+import type { PrInfo, FileDiff, LlmConfig, AnalysisResult, HybridAnalysisResult } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { Input } from "./Input";
 import { Loading } from "./Loading";
+import { RiskBadge } from "./RiskBadge";
+import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 
 function stateVariant(
   state: string,
@@ -83,6 +85,14 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
   const [diffError, setDiffError] = useState<string | null>(null);
   const llmConfigRef = useRef<LlmConfig>({ llm_endpoint: "", llm_model: "", llm_api_key_stored: false });
 
+  // Analysis state
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [hybridResult, setHybridResult] = useState<HybridAnalysisResult | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  // Per-PR analysis results cache (keyed by PR number)
+  const analysisCache = useRef<Map<number, { analysis: AnalysisResult; hybrid?: HybridAnalysisResult }>>(new Map());
+
   useEffect(() => {
     invoke("load_app_config").then((config) => {
       if (config.github_token) setToken(config.github_token);
@@ -138,6 +148,16 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     setDiffLoading(true);
     setDiffs([]);
     setSelectedFileIndex(-1);
+    setAnalysisError(null);
+    // Load cached analysis if available
+    const cached = analysisCache.current.get(pr.number);
+    if (cached) {
+      setAnalysisResult(cached.analysis);
+      setHybridResult(cached.hybrid ?? null);
+    } else {
+      setAnalysisResult(null);
+      setHybridResult(null);
+    }
     try {
       const result = await invoke("get_pull_request_files", {
         owner: owner.trim(),
@@ -161,6 +181,58 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     setDiffs([]);
     setSelectedFileIndex(-1);
     setDiffError(null);
+    setAnalysisResult(null);
+    setHybridResult(null);
+    setAnalysisError(null);
+  }
+
+  async function handleAnalyze(pr: PrInfo) {
+    // Check cache first
+    const cached = analysisCache.current.get(pr.number);
+    if (cached) {
+      setAnalysisResult(cached.analysis);
+      setHybridResult(cached.hybrid ?? null);
+      return;
+    }
+
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+    setAnalysisResult(null);
+    setHybridResult(null);
+    try {
+      const result = await invoke("analyze_pr_risk", {
+        owner: owner.trim(),
+        repo: repo.trim(),
+        prNumber: pr.number,
+        token: token.trim(),
+      });
+      setAnalysisResult(result);
+      analysisCache.current.set(pr.number, { analysis: result });
+
+      // Try LLM analysis if API key is stored
+      if (llmConfigRef.current.llm_api_key_stored) {
+        try {
+          const hybrid = await invoke("analyze_pr_risk_with_llm", {
+            owner: owner.trim(),
+            repo: repo.trim(),
+            prNumber: pr.number,
+            token: token.trim(),
+          });
+          setHybridResult(hybrid);
+          setAnalysisResult(hybrid.static_analysis);
+          analysisCache.current.set(pr.number, {
+            analysis: hybrid.static_analysis,
+            hybrid,
+          });
+        } catch {
+          // LLM analysis is optional; static analysis result is already set
+        }
+      }
+    } catch (err) {
+      setAnalysisError(String(err));
+    } finally {
+      setAnalysisLoading(false);
+    }
   }
 
   const selectedDiff =
@@ -181,6 +253,18 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
           <Badge variant={stateVariant(selectedPr.state)}>
             {selectedPr.state}
           </Badge>
+          {analysisResult && (
+            <RiskBadge level={hybridResult?.combined_risk_level ?? analysisResult.risk.level} />
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleAnalyze(selectedPr)}
+            disabled={analysisLoading}
+            className="ml-auto"
+          >
+            {analysisLoading ? t("pr.analyzing") : t("pr.analyze")}
+          </Button>
         </div>
         <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
           <Card className="flex flex-col">
@@ -287,6 +371,16 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
             </div>
           </Card>
         </div>
+        {/* Analysis section */}
+        {analysisLoading && <Loading className="mt-4" />}
+        {analysisError && (
+          <p className="mt-4 text-[0.9rem] text-danger">
+            {t("common.error", { message: analysisError })}
+          </p>
+        )}
+        {analysisResult && !analysisLoading && (
+          <AnalysisDetailPanel result={analysisResult} hybridResult={hybridResult ?? undefined} />
+        )}
       </div>
     );
   }
@@ -377,6 +471,14 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
                   {pr.title}
                 </span>
                 <Badge variant={stateVariant(pr.state)}>{pr.state}</Badge>
+                {analysisCache.current.get(pr.number) && (
+                  <RiskBadge
+                    level={
+                      analysisCache.current.get(pr.number)!.hybrid?.combined_risk_level ??
+                      analysisCache.current.get(pr.number)!.analysis.risk.level
+                    }
+                  />
+                )}
               </div>
               <div className="mt-0.5 flex gap-4 text-xs text-text-secondary">
                 <span>@{pr.author}</span>
