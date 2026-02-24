@@ -40,11 +40,11 @@ type Commands = {
   };
   load_app_config: { args?: Record<string, unknown>; ret: AppConfig };
   summarize_pull_request: {
-    args: { owner: string; repo: string; prNumber: number; token: string; openaiApiKey: string };
+    args: { owner: string; repo: string; prNumber: number; token: string };
     ret: PrSummary;
   };
   check_pr_consistency: {
-    args: { owner: string; repo: string; prNumber: number; token: string; openaiApiKey: string };
+    args: { owner: string; repo: string; prNumber: number; token: string };
     ret: ConsistencyResult;
   };
   save_llm_config: {
