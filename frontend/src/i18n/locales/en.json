@@ -57,6 +57,8 @@
     "fetch": "Fetch",
     "fillAllFields": "Please fill in all fields.",
     "empty": "Enter the form above to fetch PR information.",
-    "files": "{{count}} files"
+    "files": "{{count}} files",
+    "backToList": "← Back to list",
+    "noDiffFiles": "No changed files."
   }
 }

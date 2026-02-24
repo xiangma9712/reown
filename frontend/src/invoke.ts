@@ -17,6 +17,10 @@ type Commands = {
     args: { owner: string; repo: string; token: string };
     ret: PrInfo[];
   };
+  get_pull_request_files: {
+    args: { owner: string; repo: string; prNumber: number; token: string };
+    ret: FileDiff[];
+  };
 };
 
 export async function invoke<C extends keyof Commands>(
