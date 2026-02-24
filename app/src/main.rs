@@ -4,6 +4,7 @@
 mod error;
 
 use error::AppError;
+use tauri::Manager;
 
 // ── Branch commands ─────────────────────────────────────────────────────────
 
@@ -80,10 +81,51 @@ async fn get_pull_request_files(
         .map_err(AppError::github)
 }
 
+// ── Repository commands ────────────────────────────────────────────────────
+
+#[tauri::command]
+fn add_repository(
+    app_handle: tauri::AppHandle,
+    path: String,
+) -> Result<reown::repository::RepositoryEntry, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let storage_path = reown::repository::default_storage_path(&app_data_dir);
+    reown::repository::add_repository(&storage_path, &path).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn list_repositories(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<reown::repository::RepositoryEntry>, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let storage_path = reown::repository::default_storage_path(&app_data_dir);
+    reown::repository::load_repositories(&storage_path).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn remove_repository(
+    app_handle: tauri::AppHandle,
+    path: String,
+) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let storage_path = reown::repository::default_storage_path(&app_data_dir);
+    reown::repository::remove_repository(&storage_path, &path).map_err(AppError::storage)
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             list_branches,
             create_branch,
@@ -95,6 +137,9 @@ fn main() {
             diff_commit,
             list_pull_requests,
             get_pull_request_files,
+            add_repository,
+            list_repositories,
+            remove_repository,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
