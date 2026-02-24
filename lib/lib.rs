@@ -4,4 +4,5 @@ pub mod git;
 pub mod github;
 pub mod llm;
 pub mod repository;
+pub mod review_history;
 pub mod ui;

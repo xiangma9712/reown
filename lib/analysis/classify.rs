@@ -20,7 +20,7 @@ pub fn categorize_diffs(diffs: Vec<FileDiff>) -> Vec<CategorizedFileDiff> {
 }
 
 /// 変更種別の分類
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ChangeCategory {
     /// ロジック変更（ソースコードの実質的な変更）
     Logic,
