@@ -130,7 +130,17 @@
     "focusFilter": "Focus Filter",
     "focusFilterActive": "Filtered: {{current}}/{{total}} files",
     "focusFilterReset": "Show All",
-    "focusModuleFilter": "Module"
+    "focusModuleFilter": "Module",
+    "commits": "Commits",
+    "commitsLoading": "Loading commits…",
+    "commitsError": "Failed to load commits",
+    "commitsEmpty": "No commits found.",
+    "viewAllFiles": "All Files",
+    "viewByCommit": "By Commit",
+    "commitDiffLoading": "Loading commit diff…",
+    "commitDiffError": "Failed to load commit diff",
+    "commitDiffEmpty": "No changes in this commit.",
+    "selectCommit": "Select a commit to view its diff."
   },
   "llmSettings": {
     "title": "LLM Settings",

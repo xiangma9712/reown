@@ -130,7 +130,17 @@
     "focusFilter": "フォーカスフィルタ",
     "focusFilterActive": "フィルタ中: {{current}}/{{total}} ファイル",
     "focusFilterReset": "すべて表示",
-    "focusModuleFilter": "モジュール"
+    "focusModuleFilter": "モジュール",
+    "commits": "コミット一覧",
+    "commitsLoading": "コミット一覧を取得中…",
+    "commitsError": "コミット一覧の取得に失敗しました",
+    "commitsEmpty": "コミットがありません。",
+    "viewAllFiles": "全ファイル",
+    "viewByCommit": "コミット別",
+    "commitDiffLoading": "コミットの差分を取得中…",
+    "commitDiffError": "コミットの差分の取得に失敗しました",
+    "commitDiffEmpty": "このコミットには差分がありません。",
+    "selectCommit": "コミットを選択してください。"
   },
   "llmSettings": {
     "title": "LLM設定",
