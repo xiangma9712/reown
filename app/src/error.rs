@@ -21,6 +21,8 @@ pub enum ErrorKind {
     /// GitHub APIのネットワークエラーやHTTPエラー
     #[serde(rename = "github")]
     GitHub,
+    /// リポジトリ管理（追加・削除・永続化）のエラー
+    Storage,
 }
 
 impl std::fmt::Display for AppError {
@@ -40,6 +42,13 @@ impl AppError {
     pub fn github(err: anyhow::Error) -> Self {
         Self {
             kind: ErrorKind::GitHub,
+            message: format!("{err:#}"),
+        }
+    }
+
+    pub fn storage(err: anyhow::Error) -> Self {
+        Self {
+            kind: ErrorKind::Storage,
             message: format!("{err:#}"),
         }
     }

@@ -45,3 +45,8 @@ export interface PrInfo {
   body: string;
   html_url: string;
 }
+
+export interface RepositoryEntry {
+  name: string;
+  path: string;
+}
