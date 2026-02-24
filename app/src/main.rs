@@ -156,6 +156,31 @@ async fn analyze_pr_risk(
     Ok(reown::analysis::analyze_pr_risk(&pr, &diffs))
 }
 
+// ── LLM helpers ─────────────────────────────────────────────────────────────
+
+/// 保存済みの設定からLlmClientを構築する
+fn build_llm_client(app_handle: &tauri::AppHandle) -> Result<reown::llm::client::LlmClient, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::llm(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let config = reown::config::load_config(&config_path).map_err(AppError::llm)?;
+    let llm_config = config.llm;
+
+    let api_key = if llm_config.llm_api_key_stored {
+        reown::config::load_llm_api_key().ok()
+    } else {
+        None
+    };
+
+    Ok(reown::llm::client::LlmClient::with_api_base(
+        api_key,
+        llm_config.llm_endpoint,
+        llm_config.llm_model,
+    ))
+}
+
 // ── LLM commands ────────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -164,10 +189,9 @@ async fn summarize_pull_request(
     repo: String,
     pr_number: u64,
     token: String,
-    openai_api_key: String,
+    app_handle: tauri::AppHandle,
 ) -> Result<reown::llm::summary::PrSummary, AppError> {
-    let llm_client =
-        reown::llm::client::LlmClient::new(openai_api_key, "gpt-4o".to_string());
+    let llm_client = build_llm_client(&app_handle)?;
     reown::llm::summary::summarize_pr(&owner, &repo, pr_number, &token, &llm_client)
         .await
         .map_err(AppError::llm)
@@ -179,10 +203,9 @@ async fn check_pr_consistency(
     repo: String,
     pr_number: u64,
     token: String,
-    openai_api_key: String,
+    app_handle: tauri::AppHandle,
 ) -> Result<reown::llm::summary::ConsistencyResult, AppError> {
-    let llm_client =
-        reown::llm::client::LlmClient::new(openai_api_key, "gpt-4o".to_string());
+    let llm_client = build_llm_client(&app_handle)?;
     reown::llm::summary::check_pr_consistency(&owner, &repo, pr_number, &token, &llm_client)
         .await
         .map_err(AppError::llm)
