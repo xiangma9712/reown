@@ -73,6 +73,8 @@
     "files": "{{count}} files",
     "backToList": "← 一覧に戻る",
     "noDiffFiles": "変更ファイルがありません。",
+    "expandAll": "全て展開",
+    "collapseAll": "全て折りたたみ",
     "analyze": "分析",
     "analyzing": "リスク分析中…",
     "riskLevel": "リスクレベル",
