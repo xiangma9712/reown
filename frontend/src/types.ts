@@ -31,6 +31,10 @@ export interface FileDiff {
   chunks: DiffChunk[];
 }
 
+export interface CategorizedFileDiff extends FileDiff {
+  category: ChangeCategory;
+}
+
 export interface PrInfo {
   number: number;
   title: string;

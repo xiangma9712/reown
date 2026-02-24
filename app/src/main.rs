@@ -75,10 +75,12 @@ async fn get_pull_request_files(
     repo: String,
     pr_number: u64,
     token: String,
-) -> Result<Vec<reown::git::diff::FileDiff>, AppError> {
-    reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
-        .await
-        .map_err(AppError::github)
+) -> Result<Vec<reown::analysis::CategorizedFileDiff>, AppError> {
+    let diffs =
+        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
+            .await
+            .map_err(AppError::github)?;
+    Ok(reown::analysis::categorize_diffs(diffs))
 }
 
 // ── Git info commands ──────────────────────────────────────────────────────
