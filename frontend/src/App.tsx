@@ -166,7 +166,7 @@ export function App() {
         activeTabId={activeTab}
         onSelectTab={(id) => setActiveTab(id as TabName)}
       >
-        {activeTab === "worktree" && <WorktreeTab />}
+        {activeTab === "worktree" && <WorktreeTab prs={prs} />}
         {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} />}
         {activeTab === "diff" && <DiffTab />}
         {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} />}
