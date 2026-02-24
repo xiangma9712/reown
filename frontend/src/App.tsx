@@ -9,7 +9,7 @@ import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
 import { invoke } from "./invoke";
-import type { RepositoryEntry } from "./types";
+import type { RepositoryEntry, RepoInfo } from "./types";
 import "./style.css";
 
 const NAV_ITEMS = [
@@ -26,10 +26,21 @@ export function App() {
   const [activeTab, setActiveTab] = useState<TabName>("worktree");
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
+  const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
     resolve: (value: boolean) => void;
   } | null>(null);
+
+  useEffect(() => {
+    if (!selectedRepoPath) {
+      setRepoInfo(null);
+      return;
+    }
+    invoke("get_repo_info", { repoPath: selectedRepoPath })
+      .then(setRepoInfo)
+      .catch(() => setRepoInfo(null));
+  }, [selectedRepoPath]);
 
   const loadRepositories = useCallback(async () => {
     try {
@@ -137,7 +148,7 @@ export function App() {
   }, [confirmDialog]);
 
   return (
-    <RepositoryProvider repoPath={selectedRepoPath}>
+    <RepositoryProvider repoPath={selectedRepoPath} repoInfo={repoInfo}>
       <Layout
         repositories={repositories}
         selectedRepoPath={selectedRepoPath}

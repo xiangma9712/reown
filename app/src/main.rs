@@ -81,6 +81,13 @@ async fn get_pull_request_files(
         .map_err(AppError::github)
 }
 
+// ── Git info commands ──────────────────────────────────────────────────────
+
+#[tauri::command]
+fn get_repo_info(repo_path: String) -> Result<reown::git::RepoInfo, AppError> {
+    reown::git::get_repo_info(&repo_path).map_err(AppError::git)
+}
+
 // ── Repository commands ────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -164,6 +171,7 @@ fn main() {
             diff_commit,
             list_pull_requests,
             get_pull_request_files,
+            get_repo_info,
             add_repository,
             list_repositories,
             remove_repository,
