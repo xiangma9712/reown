@@ -70,6 +70,8 @@ interface PrTabProps {
   setPrs: (prs: PrInfo[]) => void;
 }
 
+type PrStateFilter = "all" | "open" | "closed" | "merged";
+
 export function PrTab({ prs, setPrs }: PrTabProps) {
   const { t } = useTranslation();
   const [owner, setOwner] = useState("");
@@ -78,6 +80,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [stateFilter, setStateFilter] = useState<PrStateFilter>("open");
 
   const [selectedPr, setSelectedPr] = useState<PrInfo | null>(null);
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
@@ -235,6 +238,11 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
       setAnalysisLoading(false);
     }
   }
+
+  const filteredPrs =
+    stateFilter === "all"
+      ? prs
+      : prs.filter((pr) => pr.state === stateFilter);
 
   const selectedDiff =
     selectedFileIndex >= 0 ? diffs[selectedFileIndex] : null;
@@ -446,6 +454,23 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
             </div>
           )}
         </div>
+        {prs.length > 0 && (
+          <div className="mb-3 flex gap-1">
+            {(["all", "open", "closed", "merged"] as const).map((filter) => (
+              <button
+                key={filter}
+                className={`rounded-md px-3 py-1 text-[0.8rem] font-medium transition-colors ${
+                  stateFilter === filter
+                    ? "bg-accent text-white"
+                    : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                }`}
+                onClick={() => setStateFilter(filter)}
+              >
+                {t(`pr.filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`)}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="scrollbar-custom overflow-y-auto">
           {loading && <Loading />}
           {error && (
@@ -458,7 +483,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
               {t("pr.empty")}
             </p>
           )}
-          {prs.map((pr) => (
+          {filteredPrs.map((pr) => (
             <div
               key={pr.number}
               className="cursor-pointer border-b border-border px-3 py-3 transition-colors last:border-b-0 hover:bg-bg-hover"
