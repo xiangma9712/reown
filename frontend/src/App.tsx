@@ -6,6 +6,7 @@ import { BranchTab } from "./components/BranchTab";
 import { DiffTab } from "./components/DiffTab";
 import { PrTab } from "./components/PrTab";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
+import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
@@ -169,7 +170,12 @@ export function App() {
         {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} />}
         {activeTab === "diff" && <DiffTab />}
         {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} />}
-        {activeTab === "settings" && <LlmSettingsTab />}
+        {activeTab === "settings" && (
+          <div className="mx-auto max-w-xl space-y-8">
+            <LlmSettingsTab />
+            <AutomationSettingsTab />
+          </div>
+        )}
 
         <ConfirmDialog
           open={confirmDialog !== null}

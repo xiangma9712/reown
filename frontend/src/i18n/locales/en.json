@@ -143,5 +143,18 @@
     "loadError": "Failed to load settings: {{message}}",
     "testSuccess": "Connection test successful",
     "testError": "Connection test failed: {{message}}"
+  },
+  "automation": {
+    "title": "Automation Settings",
+    "description": "Automatically approve PRs based on risk level.",
+    "enabled": "Enable automation",
+    "maxRiskLevel": "Maximum risk level for auto-approve",
+    "riskLow": "Low — Auto-approve low risk PRs only",
+    "riskMedium": "Medium — Auto-approve medium risk and below",
+    "save": "Save",
+    "reset": "Reset",
+    "saveSuccess": "Automation settings saved successfully",
+    "saveError": "Failed to save automation settings: {{message}}",
+    "loadError": "Failed to load automation settings: {{message}}"
   }
 }

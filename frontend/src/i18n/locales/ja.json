@@ -143,5 +143,18 @@
     "loadError": "設定の読み込みに失敗しました: {{message}}",
     "testSuccess": "接続テストに成功しました",
     "testError": "接続テストに失敗しました: {{message}}"
+  },
+  "automation": {
+    "title": "オートメーション設定",
+    "description": "リスクレベルに応じてPRを自動的にApproveします。",
+    "enabled": "オートメーションを有効にする",
+    "maxRiskLevel": "自動Approveする最大リスクレベル",
+    "riskLow": "Low — 低リスクのPRのみ自動Approve",
+    "riskMedium": "Medium — 中リスク以下のPRを自動Approve",
+    "save": "保存",
+    "reset": "リセット",
+    "saveSuccess": "オートメーション設定を保存しました",
+    "saveError": "オートメーション設定の保存に失敗しました: {{message}}",
+    "loadError": "オートメーション設定の読み込みに失敗しました: {{message}}"
   }
 }

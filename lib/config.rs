@@ -2,6 +2,34 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
+/// 自動approveの最大リスクレベル
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AutoApproveMaxRisk {
+    #[default]
+    Low,
+    Medium,
+}
+
+/// オートメーション設定
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AutomationConfig {
+    /// オートメーション有効/無効
+    #[serde(default)]
+    pub enabled: bool,
+    /// 自動approveする最大リスクレベル
+    #[serde(default)]
+    pub auto_approve_max_risk: AutoApproveMaxRisk,
+}
+
+impl Default for AutomationConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            auto_approve_max_risk: AutoApproveMaxRisk::Low,
+        }
+    }
+}
+
 /// LLM設定
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LlmConfig {
@@ -46,6 +74,9 @@ pub struct AppConfig {
     /// LLM設定
     #[serde(default)]
     pub llm: LlmConfig,
+    /// オートメーション設定
+    #[serde(default)]
+    pub automation: AutomationConfig,
 }
 
 /// 設定を JSON ファイルから読み込む。ファイルが存在しない場合はデフォルト値を返す。
@@ -245,6 +276,7 @@ mod tests {
                 llm_model: "llama3".to_string(),
                 llm_api_key_stored: true,
             },
+            ..Default::default()
         };
 
         save_config(&config_path, &config).unwrap();
@@ -266,5 +298,73 @@ mod tests {
         assert_eq!(json["llm_endpoint"], "https://api.example.com");
         assert_eq!(json["llm_model"], "test-model");
         assert_eq!(json["llm_api_key_stored"], true);
+    }
+
+    #[test]
+    fn test_automation_config_default() {
+        let config = AutomationConfig::default();
+        assert!(!config.enabled);
+        assert_eq!(config.auto_approve_max_risk, AutoApproveMaxRisk::Low);
+    }
+
+    #[test]
+    fn test_app_config_default_has_automation() {
+        let config = AppConfig::default();
+        assert_eq!(config.automation, AutomationConfig::default());
+        assert!(!config.automation.enabled);
+    }
+
+    #[test]
+    fn test_backward_compat_load_without_automation_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // automationフィールドなしの旧形式JSON
+        let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r","llm":{"llm_endpoint":"https://api.anthropic.com","llm_model":"claude-sonnet-4-5-20250929","llm_api_key_stored":false}}"#;
+        std::fs::write(&config_path, old_json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert_eq!(config.github_token, "tok");
+        assert_eq!(config.automation, AutomationConfig::default());
+    }
+
+    #[test]
+    fn test_save_and_load_config_with_automation() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+
+        let config = AppConfig {
+            github_token: "ghp_test".to_string(),
+            default_owner: "org".to_string(),
+            default_repo: "repo".to_string(),
+            llm: LlmConfig::default(),
+            automation: AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+            },
+        };
+
+        save_config(&config_path, &config).unwrap();
+        let loaded = load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+        assert!(loaded.automation.enabled);
+        assert_eq!(loaded.automation.auto_approve_max_risk, AutoApproveMaxRisk::Medium);
+    }
+
+    #[test]
+    fn test_automation_config_serializes() {
+        let config = AutomationConfig {
+            enabled: true,
+            auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+        };
+        let json = serde_json::to_value(&config).unwrap();
+        assert_eq!(json["enabled"], true);
+        assert_eq!(json["auto_approve_max_risk"], "Medium");
+    }
+
+    #[test]
+    fn test_auto_approve_max_risk_serializes() {
+        let low = serde_json::to_value(&AutoApproveMaxRisk::Low).unwrap();
+        assert_eq!(low, "Low");
+        let medium = serde_json::to_value(&AutoApproveMaxRisk::Medium).unwrap();
+        assert_eq!(medium, "Medium");
     }
 }

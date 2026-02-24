@@ -69,11 +69,19 @@ export interface LlmConfig {
   llm_api_key_stored: boolean;
 }
 
+export type AutoApproveMaxRisk = "Low" | "Medium";
+
+export interface AutomationConfig {
+  enabled: boolean;
+  auto_approve_max_risk: AutoApproveMaxRisk;
+}
+
 export interface AppConfig {
   github_token: string;
   default_owner: string;
   default_repo: string;
   llm: LlmConfig;
+  automation: AutomationConfig;
 }
 
 export interface FileSummary {
