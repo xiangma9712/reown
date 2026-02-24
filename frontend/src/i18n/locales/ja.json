@@ -3,6 +3,14 @@
     "title": "reown",
     "tagline": "エージェントPRの嵐の時代でも、コードベースを自分のものに。"
   },
+  "repository": {
+    "title": "リポジトリ",
+    "add": "リポジトリを追加",
+    "remove": "削除",
+    "confirmRemove": "リポジトリ '{{name}}' を一覧から削除しますか？",
+    "selectPrompt": "左のサイドメニューからリポジトリを選択してください。",
+    "empty": "リポジトリが登録されていません。「リポジトリを追加」から追加してください。"
+  },
   "tabs": {
     "worktrees": "Worktrees",
     "branches": "Branches",
