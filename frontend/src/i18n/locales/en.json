@@ -73,6 +73,8 @@
     "files": "{{count}} files",
     "backToList": "← Back to list",
     "noDiffFiles": "No changed files.",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All",
     "analyze": "Analyze",
     "analyzing": "Analyzing risk…",
     "riskLevel": "Risk Level",

@@ -123,7 +123,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
 
   const [selectedPr, setSelectedPr] = useState<PrInfo | null>(null);
   const [diffs, setDiffs] = useState<CategorizedFileDiff[]>([]);
-  const [selectedFileIndex, setSelectedFileIndex] = useState(-1);
+  const [expandedFiles, setExpandedFiles] = useState<Set<number>>(new Set());
   const [diffLoading, setDiffLoading] = useState(false);
   const [diffError, setDiffError] = useState<string | null>(null);
   const llmConfigRef = useRef<LlmConfig>({ llm_endpoint: "", llm_model: "", llm_api_key_stored: false });
@@ -162,7 +162,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     setLoading(true);
     setSelectedPr(null);
     setDiffs([]);
-    setSelectedFileIndex(-1);
+    setExpandedFiles(new Set());
     try {
       const result = await invoke("list_pull_requests", {
         owner: owner.trim(),
@@ -193,7 +193,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     setDiffError(null);
     setDiffLoading(true);
     setDiffs([]);
-    setSelectedFileIndex(-1);
+    setExpandedFiles(new Set());
     setExpandedCategories(new Set(["Logic"]));
     setAnalysisError(null);
     // Load cached analysis if available
@@ -213,9 +213,6 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
         token: token.trim(),
       });
       setDiffs(result);
-      if (result.length > 0) {
-        setSelectedFileIndex(0);
-      }
     } catch (err) {
       setDiffError(String(err));
     } finally {
@@ -223,10 +220,30 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
     }
   }
 
+  function toggleFile(index: number) {
+    setExpandedFiles((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }
+
+  function expandAllFiles() {
+    setExpandedFiles(new Set(diffs.map((_, i) => i)));
+  }
+
+  function collapseAllFiles() {
+    setExpandedFiles(new Set());
+  }
+
   function handleBackToList() {
     setSelectedPr(null);
     setDiffs([]);
-    setSelectedFileIndex(-1);
+    setExpandedFiles(new Set());
     setDiffError(null);
     setAnalysisResult(null);
     setHybridResult(null);
@@ -301,9 +318,6 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
 
   const groupedDiffs = groupByCategory(diffs);
 
-  const selectedDiff =
-    selectedFileIndex >= 0 ? diffs[selectedFileIndex] : null;
-
   // PR diff view
   if (selectedPr) {
     return (
@@ -338,130 +352,131 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
           prNumber={selectedPr.number}
           token={token.trim()}
         />
-        <div className="mt-4 grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
-          <Card className="flex flex-col">
-            <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
+        <Card className="mt-4">
+          <div className="mb-4 flex items-center gap-3 border-b border-border pb-2">
+            <h2 className="text-lg text-text-heading">
               {t("diff.changedFiles")}
             </h2>
-            <div className="scrollbar-custom flex-1 overflow-y-auto">
-              {diffLoading && <Loading />}
-              {diffError && (
-                <p className="p-2 text-[0.9rem] text-danger">
-                  {t("common.error", { message: diffError })}
-                </p>
-              )}
-              {!diffLoading && !diffError && diffs.length === 0 && (
-                <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                  {t("pr.noDiffFiles")}
-                </p>
-              )}
-              {groupedDiffs.map((group) => {
-                const isExpanded = expandedCategories.has(group.category);
-                return (
-                  <div key={group.category}>
-                    <button
-                      className="flex w-full cursor-pointer items-center gap-2 border-b border-border bg-bg-primary px-3 py-2 text-left text-[0.8rem] font-semibold text-text-heading transition-colors hover:bg-bg-hover"
-                      onClick={() => toggleCategory(group.category)}
-                    >
-                      <span className="text-[0.7rem]">{isExpanded ? "\u25BC" : "\u25B6"}</span>
-                      <span>{categoryIcons[group.category]}</span>
-                      <span>{t(categoryLabelKeys[group.category])}</span>
-                      <span className="ml-auto text-[0.75rem] font-normal text-text-secondary">
-                        {group.files.length}
-                      </span>
-                    </button>
-                    {isExpanded &&
-                      group.files.map(({ diff, originalIndex }) => (
-                        <div
-                          key={diff.new_path ?? diff.old_path ?? originalIndex}
-                          className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 pl-7 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                            selectedFileIndex === originalIndex
-                              ? "border-l-2 border-l-accent bg-bg-hover"
-                              : ""
-                          }`}
-                          onClick={() => setSelectedFileIndex(originalIndex)}
-                        >
-                          <Badge variant={statusVariant(diff.status)}>
-                            {statusLabel(diff.status)}
-                          </Badge>
-                          <span
-                            className="truncate text-text-primary"
-                            title={diff.new_path ?? diff.old_path ?? ""}
+            {diffs.length > 0 && (
+              <div className="ml-auto flex gap-2">
+                <Button variant="secondary" size="sm" onClick={expandAllFiles}>
+                  {t("pr.expandAll")}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={collapseAllFiles}>
+                  {t("pr.collapseAll")}
+                </Button>
+              </div>
+            )}
+          </div>
+          <div className="scrollbar-custom overflow-y-auto">
+            {diffLoading && <Loading />}
+            {diffError && (
+              <p className="p-2 text-[0.9rem] text-danger">
+                {t("common.error", { message: diffError })}
+              </p>
+            )}
+            {!diffLoading && !diffError && diffs.length === 0 && (
+              <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                {t("pr.noDiffFiles")}
+              </p>
+            )}
+            {groupedDiffs.map((group) => {
+              const isCategoryExpanded = expandedCategories.has(group.category);
+              return (
+                <div key={group.category}>
+                  <button
+                    className="flex w-full cursor-pointer items-center gap-2 border-b border-border bg-bg-primary px-3 py-2 text-left text-[0.8rem] font-semibold text-text-heading transition-colors hover:bg-bg-hover"
+                    onClick={() => toggleCategory(group.category)}
+                  >
+                    <span className="text-[0.7rem]">{isCategoryExpanded ? "\u25BC" : "\u25B6"}</span>
+                    <span>{categoryIcons[group.category]}</span>
+                    <span>{t(categoryLabelKeys[group.category])}</span>
+                    <span className="ml-auto text-[0.75rem] font-normal text-text-secondary">
+                      {group.files.length}
+                    </span>
+                  </button>
+                  {isCategoryExpanded &&
+                    group.files.map(({ diff, originalIndex }) => {
+                      const isFileExpanded = expandedFiles.has(originalIndex);
+                      return (
+                        <div key={diff.new_path ?? diff.old_path ?? originalIndex}>
+                          <div
+                            className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 pl-7 font-mono text-[0.8rem] transition-colors hover:bg-bg-primary"
+                            onClick={() => toggleFile(originalIndex)}
                           >
-                            {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                          </span>
+                            <span className="text-[0.65rem] text-text-secondary">{isFileExpanded ? "\u25BC" : "\u25B6"}</span>
+                            <Badge variant={statusVariant(diff.status)}>
+                              {statusLabel(diff.status)}
+                            </Badge>
+                            <span
+                              className="truncate text-text-primary"
+                              title={diff.new_path ?? diff.old_path ?? ""}
+                            >
+                              {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                            </span>
+                          </div>
+                          {isFileExpanded && (
+                            <div className="border-b border-border bg-bg-secondary font-mono text-[0.8rem] leading-relaxed">
+                              {diff.chunks.length === 0 && (
+                                <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                                  {t("diff.noDiffContent")}
+                                </p>
+                              )}
+                              {diff.chunks.map((chunk, ci) => (
+                                <div key={ci}>
+                                  <div className="border-y border-border bg-diff-header-bg px-3 py-1 text-xs text-info">
+                                    {chunk.header}
+                                  </div>
+                                  {chunk.lines.map((line, li) => {
+                                    const origin = getOriginString(line.origin);
+                                    const lineClass =
+                                      origin === "Addition"
+                                        ? "diff-line-addition"
+                                        : origin === "Deletion"
+                                          ? "diff-line-deletion"
+                                          : "";
+                                    const prefix =
+                                      origin === "Addition"
+                                        ? "+"
+                                        : origin === "Deletion"
+                                          ? "-"
+                                          : " ";
+                                    const textColor =
+                                      origin === "Addition"
+                                        ? "text-accent"
+                                        : origin === "Deletion"
+                                          ? "text-danger"
+                                          : "text-text-secondary";
+                                    return (
+                                      <div
+                                        key={li}
+                                        className={`flex whitespace-pre ${lineClass}`}
+                                      >
+                                        <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                                          {line.old_lineno ?? ""}
+                                        </span>
+                                        <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                                          {line.new_lineno ?? ""}
+                                        </span>
+                                        <span className={`flex-1 px-2 ${textColor}`}>
+                                          {prefix}
+                                          {line.content}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-          <Card className="flex flex-col overflow-hidden">
-            <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
-              {selectedDiff
-                ? (selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff")
-                : "Diff"}
-            </h2>
-            <div className="scrollbar-custom flex-1 overflow-auto font-mono text-[0.8rem] leading-relaxed">
-              {!selectedDiff && (
-                <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                  {t("diff.selectFile")}
-                </p>
-              )}
-              {selectedDiff && selectedDiff.chunks.length === 0 && (
-                <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                  {t("diff.noDiffContent")}
-                </p>
-              )}
-              {selectedDiff?.chunks.map((chunk, ci) => (
-                <div key={ci}>
-                  <div className="border-y border-border bg-diff-header-bg px-3 py-1 text-xs text-info">
-                    {chunk.header}
-                  </div>
-                  {chunk.lines.map((line, li) => {
-                    const origin = getOriginString(line.origin);
-                    const lineClass =
-                      origin === "Addition"
-                        ? "diff-line-addition"
-                        : origin === "Deletion"
-                          ? "diff-line-deletion"
-                          : "";
-                    const prefix =
-                      origin === "Addition"
-                        ? "+"
-                        : origin === "Deletion"
-                          ? "-"
-                          : " ";
-                    const textColor =
-                      origin === "Addition"
-                        ? "text-accent"
-                        : origin === "Deletion"
-                          ? "text-danger"
-                          : "text-text-secondary";
-                    return (
-                      <div
-                        key={li}
-                        className={`flex whitespace-pre ${lineClass}`}
-                      >
-                        <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
-                          {line.old_lineno ?? ""}
-                        </span>
-                        <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
-                          {line.new_lineno ?? ""}
-                        </span>
-                        <span className={`flex-1 px-2 ${textColor}`}>
-                          {prefix}
-                          {line.content}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
-              ))}
-            </div>
-          </Card>
-        </div>
+              );
+            })}
+          </div>
+        </Card>
         {/* Analysis section */}
         {analysisLoading && <Loading className="mt-4" />}
         {analysisError && (
