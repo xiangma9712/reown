@@ -112,7 +112,16 @@
     "consistencyWarning": "PRタイトル・本文と実際の変更内容に乖離があります",
     "consistencyWarnings": "整合性の警告",
     "cancelGeneration": "キャンセル",
-    "summaryError": "AI要約の生成に失敗しました"
+    "summaryError": "AI要約の生成に失敗しました",
+    "approve": "Approve",
+    "requestChanges": "Request Changes",
+    "reviewComment": "コメント（任意）",
+    "reviewCommentRequired": "Request Changesにはコメントが必要です。",
+    "confirmApprove": "このPRをApproveしますか？",
+    "confirmRequestChanges": "このPRにRequest Changesを送信しますか？",
+    "reviewSubmitting": "レビューを送信中…",
+    "reviewSuccess": "レビューを送信しました",
+    "reviewError": "レビューの送信に失敗しました"
   },
   "llmSettings": {
     "title": "LLM設定",
