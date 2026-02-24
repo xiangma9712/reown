@@ -1,32 +1,34 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: #1a1a2e;
-  --color-bg-secondary: #16213e;
-  --color-bg-hover: #1a2a3e;
-  --color-border: #2a2a3e;
-  --color-border-hover: #3a3a5e;
-  --color-text-primary: #e0e0e0;
-  --color-text-secondary: #a0a0b0;
-  --color-text-muted: #5a5a7e;
-  --color-accent: #4ec9b0;
-  --color-accent-hover: #3db89f;
-  --color-danger: #e06c75;
-  --color-danger-hover: #c85a63;
-  --color-warning: #e5c07b;
-  --color-info: #61afef;
-  --color-purple: #c678dd;
-  --color-btn-secondary: #3a3a5e;
-  --color-btn-secondary-hover: #4a4a6e;
-  --color-bg-hint: #2a2a3e;
-  --color-diff-add-bg: rgba(78, 201, 176, 0.1);
-  --color-diff-del-bg: rgba(224, 108, 117, 0.1);
-  --color-diff-header-bg: #1a1a3e;
-  --color-status-added-bg: #2a4a2a;
-  --color-status-deleted-bg: #4a2a2a;
-  --color-status-modified-bg: #3a3a2a;
-  --color-status-renamed-bg: #2a2a4a;
-  --color-pr-merged-bg: #3a2a4a;
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f3f4f6;
+  --color-bg-hover: #e5e7eb;
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-text-heading: #111827;
+  --color-accent: #0d9488;
+  --color-accent-hover: #0f766e;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-warning: #d97706;
+  --color-info: #2563eb;
+  --color-purple: #9333ea;
+  --color-btn-secondary: #e5e7eb;
+  --color-btn-secondary-hover: #d1d5db;
+  --color-bg-hint: #f3f4f6;
+  --color-diff-add-bg: rgba(22, 163, 74, 0.08);
+  --color-diff-del-bg: rgba(220, 38, 38, 0.08);
+  --color-diff-header-bg: #f0f4ff;
+  --color-status-added-bg: #dcfce7;
+  --color-status-deleted-bg: #fee2e2;
+  --color-status-modified-bg: #fef3c7;
+  --color-status-renamed-bg: #dbeafe;
+  --color-pr-merged-bg: #f3e8ff;
+  --color-sidebar-bg: #f9fafb;
   --font-family-mono: "SF Mono", "Fira Code", monospace;
 }
 
@@ -66,6 +68,10 @@ body {
 .scrollbar-custom::-webkit-scrollbar-thumb {
   background-color: var(--color-border-hover);
   border-radius: 3px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
 }
 
 /* ── Diff line backgrounds (need rgba, not in theme tokens) ──── */

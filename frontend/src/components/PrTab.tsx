@@ -184,7 +184,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
         </div>
         <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
           <Card className="flex flex-col">
-            <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+            <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
               {t("diff.changedFiles")}
             </h2>
             <div className="scrollbar-custom flex-1 overflow-y-auto">
@@ -223,7 +223,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
             </div>
           </Card>
           <Card className="flex flex-col overflow-hidden">
-            <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+            <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
               {selectedDiff
                 ? (selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff")
                 : "Diff"}
@@ -295,7 +295,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
   return (
     <div>
       <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
-        <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+        <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
           {t("pr.title")}
         </h2>
         <div>

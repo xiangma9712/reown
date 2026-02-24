@@ -79,7 +79,7 @@ export function DiffTab() {
     <div>
       <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
         <Card className="flex flex-col">
-          <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+          <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
             {t("diff.changedFiles")}
           </h2>
           <div className="scrollbar-custom flex-1 overflow-y-auto">
@@ -126,7 +126,7 @@ export function DiffTab() {
           </div>
         </Card>
         <Card className="flex flex-col overflow-hidden">
-          <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+          <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
             {selectedDiff
               ? (selectedDiff.new_path ?? selectedDiff.old_path ?? "Diff")
               : "Diff"}
