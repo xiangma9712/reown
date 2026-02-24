@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod automation;
 pub mod config;
 pub mod git;
 pub mod github;
