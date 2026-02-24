@@ -51,6 +51,14 @@ export interface RepositoryEntry {
   path: string;
 }
 
+export interface RepoInfo {
+  path: string;
+  name: string;
+  remote_url: string | null;
+  github_owner: string | null;
+  github_repo: string | null;
+}
+
 export interface AppConfig {
   github_token: string;
   default_owner: string;

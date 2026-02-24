@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
-import type { RepositoryEntry } from "../types";
+import type { RepositoryEntry, RepoInfo } from "../types";
 
 interface NavItem {
   id: string;
@@ -13,6 +13,7 @@ interface NavItem {
 interface Props {
   repositories: RepositoryEntry[];
   selectedRepoPath: string | null;
+  repoInfo: RepoInfo | null;
   onSelectRepo: (path: string) => void;
   onAddRepo: () => void;
   onRemoveRepo: (path: string) => void;
@@ -25,6 +26,7 @@ interface Props {
 export function Layout({
   repositories,
   selectedRepoPath,
+  repoInfo,
   onSelectRepo,
   onAddRepo,
   onRemoveRepo,
