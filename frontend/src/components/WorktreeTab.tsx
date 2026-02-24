@@ -1,15 +1,34 @@
-import { useState, useEffect, useCallback, FormEvent } from "react";
+import { useState, useEffect, useCallback, useMemo, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import { useRepository } from "../RepositoryContext";
-import type { WorktreeInfo } from "../types";
+import type { WorktreeInfo, PrInfo } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { Input } from "./Input";
 import { Loading } from "./Loading";
 
-export function WorktreeTab() {
+function prStateVariant(
+  state: string,
+): "success" | "danger" | "purple" | "default" {
+  switch (state) {
+    case "open":
+      return "success";
+    case "closed":
+      return "danger";
+    case "merged":
+      return "purple";
+    default:
+      return "default";
+  }
+}
+
+interface Props {
+  prs: PrInfo[];
+}
+
+export function WorktreeTab({ prs }: Props) {
   const { t } = useTranslation();
   const { repoPath } = useRepository();
   const [worktrees, setWorktrees] = useState<WorktreeInfo[]>([]);
@@ -24,6 +43,14 @@ export function WorktreeTab() {
     type: "success" | "error";
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const prByBranch = useMemo(() => {
+    const map = new Map<string, PrInfo>();
+    for (const pr of prs) {
+      map.set(pr.head_branch, pr);
+    }
+    return map;
+  }, [prs]);
 
   const loadWorktrees = useCallback(async () => {
     if (!repoPath) return;
@@ -87,7 +114,9 @@ export function WorktreeTab() {
               {t("worktree.empty")}
             </p>
           )}
-          {worktrees.map((wt, index) => (
+          {worktrees.map((wt, index) => {
+            const pr = wt.branch ? prByBranch.get(wt.branch) : undefined;
+            return (
             <div
               key={wt.path}
               className={`cursor-pointer border-b border-border px-3 py-2.5 font-mono text-[0.85rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
@@ -97,21 +126,36 @@ export function WorktreeTab() {
               }`}
               onClick={() => setSelectedIndex(index)}
             >
-              <span
-                className={`font-bold ${wt.is_main ? "text-accent" : "text-text-primary"}`}
-              >
-                {wt.name}
-              </span>
-              {wt.is_locked && (
-                <Badge variant="danger" className="ml-2">
-                  {t("worktree.locked")}
-                </Badge>
-              )}
-              {!wt.branch && (
-                <Badge variant="warning" className="ml-2">
-                  {t("worktree.detached")}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                <span
+                  className={`font-bold ${wt.is_main ? "text-accent" : "text-text-primary"}`}
+                >
+                  {wt.name}
+                </span>
+                {wt.is_locked && (
+                  <Badge variant="danger">
+                    {t("worktree.locked")}
+                  </Badge>
+                )}
+                {!wt.branch && (
+                  <Badge variant="warning">
+                    {t("worktree.detached")}
+                  </Badge>
+                )}
+                {pr && (
+                  <a
+                    href={pr.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 no-underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Badge variant={prStateVariant(pr.state)}>
+                      #{pr.number} {pr.state}
+                    </Badge>
+                  </a>
+                )}
+              </div>
               <div className="mt-0.5 text-[0.8rem] text-text-secondary">
                 {t("worktree.branchLabel", {
                   name: wt.branch ?? "(detached)",
@@ -121,7 +165,8 @@ export function WorktreeTab() {
                 {t("worktree.pathLabel", { path: wt.path })}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         <div className="border-t border-border pt-4">
           <h3 className="mb-3 text-[0.9rem] text-text-primary/80">
