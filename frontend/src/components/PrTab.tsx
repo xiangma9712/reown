@@ -166,9 +166,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     const pr = prs.find((p) => p.number === selectedPrNumber);
     if (pr) {
       handleSelectPr(pr);
+      onPrSelected();
     }
-    onPrSelected();
-  }, [selectedPrNumber]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedPrNumber, prs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleLoad(e?: FormEvent) {
     e?.preventDefault();
