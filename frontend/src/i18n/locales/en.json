@@ -122,7 +122,11 @@
     "confirmRequestChanges": "Are you sure you want to request changes on this PR?",
     "reviewSubmitting": "Submitting review…",
     "reviewSuccess": "Review submitted successfully",
-    "reviewError": "Failed to submit review"
+    "reviewError": "Failed to submit review",
+    "focusFilter": "Focus Filter",
+    "focusFilterActive": "Filtered: {{current}}/{{total}} files",
+    "focusFilterReset": "Show All",
+    "focusModuleFilter": "Module"
   },
   "llmSettings": {
     "title": "LLM Settings",
