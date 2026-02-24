@@ -64,3 +64,19 @@ export interface AppConfig {
   default_owner: string;
   default_repo: string;
 }
+
+export interface FileSummary {
+  path: string;
+  summary: string;
+}
+
+export interface PrSummary {
+  overall_summary: string;
+  reason: string;
+  file_summaries: FileSummary[];
+}
+
+export interface ConsistencyResult {
+  is_consistent: boolean;
+  warnings: string[];
+}
