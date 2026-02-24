@@ -89,6 +89,9 @@ const MAX_PAGES: u32 = 10;
 /// Maximum number of pages when fetching PR files (300 files / 100 per page).
 const MAX_FILE_PAGES: u32 = 3;
 
+/// Maximum number of pages when fetching PR commits (250 commits / 100 per page).
+const MAX_COMMIT_PAGES: u32 = 3;
+
 /// Parse the `Link` header to check if a `rel="next"` link exists.
 fn has_next_page(link_header: &str) -> bool {
     link_header
@@ -344,6 +347,111 @@ pub async fn get_pull_request_files(
     }
 
     Ok(all_files)
+}
+
+/// Information about a commit in a pull request.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CommitInfo {
+    pub sha: String,
+    pub message: String,
+    pub author: String,
+    pub date: String,
+}
+
+/// Raw GitHub API response for a commit in a pull request.
+#[derive(Debug, Deserialize)]
+struct GhPrCommit {
+    sha: String,
+    commit: GhCommitDetail,
+    #[serde(default)]
+    author: Option<GhUser>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhCommitDetail {
+    message: String,
+    author: GhCommitAuthor,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhCommitAuthor {
+    name: String,
+    date: String,
+}
+
+impl GhPrCommit {
+    fn into_commit_info(self) -> CommitInfo {
+        let author = self
+            .author
+            .map(|u| u.login)
+            .unwrap_or(self.commit.author.name);
+        CommitInfo {
+            sha: self.sha,
+            message: self.commit.message,
+            author,
+            date: self.commit.author.date,
+        }
+    }
+}
+
+/// Fetch the list of commits for a pull request from GitHub API.
+///
+/// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/commits` and converts
+/// the response into `Vec<CommitInfo>`. Paginates up to 250 commits (3 pages of 100).
+pub async fn list_pr_commits(
+    owner: &str,
+    repo: &str,
+    pr_number: u64,
+    token: &str,
+) -> Result<Vec<CommitInfo>> {
+    let client = reqwest::Client::new();
+    let mut all_commits = Vec::new();
+
+    for page in 1..=MAX_COMMIT_PAGES {
+        let url = format!(
+            "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
+        );
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/vnd.github+json")
+            .header("Authorization", format!("Bearer {token}"))
+            .header("User-Agent", "reown")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .send()
+            .await
+            .with_context(|| {
+                format!(
+                    "Failed to fetch PR #{pr_number} commits from {owner}/{repo} (page {page})"
+                )
+            })?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("GitHub API returned {status}: {body}");
+        }
+
+        let has_next = response
+            .headers()
+            .get("link")
+            .and_then(|v| v.to_str().ok())
+            .is_some_and(has_next_page);
+
+        let commits: Vec<GhPrCommit> = response
+            .json()
+            .await
+            .context("Failed to parse GitHub PR commits response")?;
+
+        let is_empty = commits.is_empty();
+        all_commits.extend(commits.into_iter().map(GhPrCommit::into_commit_info));
+
+        if is_empty || !has_next {
+            break;
+        }
+    }
+
+    Ok(all_commits)
 }
 
 #[cfg(test)]
@@ -754,5 +862,107 @@ mod tests {
 
         let diff = file.into_file_diff();
         assert!(diff.chunks.is_empty());
+    }
+
+    /// Test parsing a PR commits response with GitHub user author.
+    #[test]
+    fn test_parse_pr_commits_with_github_user() {
+        let json = r#"[
+            {
+                "sha": "abc123def456",
+                "commit": {
+                    "message": "feat: add new feature",
+                    "author": {
+                        "name": "Alice Smith",
+                        "date": "2025-01-15T10:30:00Z"
+                    }
+                },
+                "author": {
+                    "login": "alice"
+                }
+            }
+        ]"#;
+
+        let commits: Vec<GhPrCommit> = serde_json::from_str(json).unwrap();
+        let infos: Vec<CommitInfo> = commits.into_iter().map(GhPrCommit::into_commit_info).collect();
+
+        assert_eq!(infos.len(), 1);
+        assert_eq!(infos[0].sha, "abc123def456");
+        assert_eq!(infos[0].message, "feat: add new feature");
+        assert_eq!(infos[0].author, "alice");
+        assert_eq!(infos[0].date, "2025-01-15T10:30:00Z");
+    }
+
+    /// Test parsing a PR commit without a GitHub user (uses git author name).
+    #[test]
+    fn test_parse_pr_commits_without_github_user() {
+        let json = r#"[
+            {
+                "sha": "def789abc012",
+                "commit": {
+                    "message": "fix: resolve bug",
+                    "author": {
+                        "name": "Bob Jones",
+                        "date": "2025-01-16T08:00:00Z"
+                    }
+                },
+                "author": null
+            }
+        ]"#;
+
+        let commits: Vec<GhPrCommit> = serde_json::from_str(json).unwrap();
+        let infos: Vec<CommitInfo> = commits.into_iter().map(GhPrCommit::into_commit_info).collect();
+
+        assert_eq!(infos.len(), 1);
+        assert_eq!(infos[0].sha, "def789abc012");
+        assert_eq!(infos[0].message, "fix: resolve bug");
+        assert_eq!(infos[0].author, "Bob Jones");
+        assert_eq!(infos[0].date, "2025-01-16T08:00:00Z");
+    }
+
+    /// Test parsing multiple PR commits.
+    #[test]
+    fn test_parse_multiple_pr_commits() {
+        let json = r#"[
+            {
+                "sha": "aaa111",
+                "commit": {
+                    "message": "first commit",
+                    "author": {
+                        "name": "Dev",
+                        "date": "2025-01-01T00:00:00Z"
+                    }
+                },
+                "author": { "login": "dev1" }
+            },
+            {
+                "sha": "bbb222",
+                "commit": {
+                    "message": "second commit\n\nWith body text",
+                    "author": {
+                        "name": "Dev2",
+                        "date": "2025-01-02T00:00:00Z"
+                    }
+                },
+                "author": { "login": "dev2" }
+            }
+        ]"#;
+
+        let commits: Vec<GhPrCommit> = serde_json::from_str(json).unwrap();
+        let infos: Vec<CommitInfo> = commits.into_iter().map(GhPrCommit::into_commit_info).collect();
+
+        assert_eq!(infos.len(), 2);
+        assert_eq!(infos[0].sha, "aaa111");
+        assert_eq!(infos[0].message, "first commit");
+        assert_eq!(infos[1].sha, "bbb222");
+        assert_eq!(infos[1].message, "second commit\n\nWith body text");
+    }
+
+    /// Test parsing an empty commits list.
+    #[test]
+    fn test_parse_empty_pr_commits() {
+        let json = "[]";
+        let commits: Vec<GhPrCommit> = serde_json::from_str(json).unwrap();
+        assert!(commits.is_empty());
     }
 }

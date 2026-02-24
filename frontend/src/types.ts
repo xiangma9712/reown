@@ -31,6 +31,13 @@ export interface FileDiff {
   chunks: DiffChunk[];
 }
 
+export interface CommitInfo {
+  sha: string;
+  message: string;
+  author: string;
+  date: string;
+}
+
 export interface PrInfo {
   number: number;
   title: string;

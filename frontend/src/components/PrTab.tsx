@@ -1,7 +1,7 @@
 import { useState, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, FileDiff } from "../types";
+import type { PrInfo, FileDiff, CommitInfo } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -78,6 +78,10 @@ export function PrTab() {
   const [diffLoading, setDiffLoading] = useState(false);
   const [diffError, setDiffError] = useState<string | null>(null);
 
+  const [commits, setCommits] = useState<CommitInfo[]>([]);
+  const [commitsLoading, setCommitsLoading] = useState(false);
+  const [commitsError, setCommitsError] = useState<string | null>(null);
+
   async function handleLoad(e?: FormEvent) {
     e?.preventDefault();
     if (!owner.trim() || !repo.trim() || !token.trim()) {
@@ -91,6 +95,8 @@ export function PrTab() {
     setSelectedPr(null);
     setDiffs([]);
     setSelectedFileIndex(-1);
+    setCommits([]);
+    setCommitsError(null);
     try {
       const result = await invoke("list_pull_requests", {
         owner: owner.trim(),
@@ -111,22 +117,34 @@ export function PrTab() {
     setDiffLoading(true);
     setDiffs([]);
     setSelectedFileIndex(-1);
-    try {
-      const result = await invoke("get_pull_request_files", {
-        owner: owner.trim(),
-        repo: repo.trim(),
-        prNumber: pr.number,
-        token: token.trim(),
-      });
-      setDiffs(result);
-      if (result.length > 0) {
-        setSelectedFileIndex(0);
-      }
-    } catch (err) {
-      setDiffError(String(err));
-    } finally {
-      setDiffLoading(false);
-    }
+    setCommits([]);
+    setCommitsError(null);
+    setCommitsLoading(true);
+
+    const params = {
+      owner: owner.trim(),
+      repo: repo.trim(),
+      prNumber: pr.number,
+      token: token.trim(),
+    };
+
+    // Fetch files and commits in parallel
+    const filesPromise = invoke("get_pull_request_files", params)
+      .then((result) => {
+        setDiffs(result);
+        if (result.length > 0) {
+          setSelectedFileIndex(0);
+        }
+      })
+      .catch((err) => setDiffError(String(err)))
+      .finally(() => setDiffLoading(false));
+
+    const commitsPromise = invoke("list_pr_commits", params)
+      .then((result) => setCommits(result))
+      .catch((err) => setCommitsError(String(err)))
+      .finally(() => setCommitsLoading(false));
+
+    await Promise.all([filesPromise, commitsPromise]);
   }
 
   function handleBackToList() {
@@ -134,6 +152,8 @@ export function PrTab() {
     setDiffs([]);
     setSelectedFileIndex(-1);
     setDiffError(null);
+    setCommits([]);
+    setCommitsError(null);
   }
 
   const selectedDiff =
@@ -156,45 +176,87 @@ export function PrTab() {
           </Badge>
         </div>
         <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
-          <Card className="flex flex-col">
-            <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
-              {t("diff.changedFiles")}
-            </h2>
-            <div className="scrollbar-custom flex-1 overflow-y-auto">
-              {diffLoading && <Loading />}
-              {diffError && (
-                <p className="p-2 text-[0.9rem] text-danger">
-                  {t("common.error", { message: diffError })}
-                </p>
-              )}
-              {!diffLoading && !diffError && diffs.length === 0 && (
-                <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                  {t("pr.noDiffFiles")}
-                </p>
-              )}
-              {diffs.map((diff, index) => (
-                <div
-                  key={diff.new_path ?? diff.old_path ?? index}
-                  className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                    selectedFileIndex === index
-                      ? "border-l-2 border-l-accent bg-bg-hover"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedFileIndex(index)}
-                >
-                  <Badge variant={statusVariant(diff.status)}>
-                    {statusLabel(diff.status)}
-                  </Badge>
-                  <span
-                    className="truncate text-text-primary"
-                    title={diff.new_path ?? diff.old_path ?? ""}
+          <div className="flex flex-col gap-4">
+            <Card className="flex flex-col">
+              <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+                {t("pr.commits")}
+              </h2>
+              <div className="scrollbar-custom max-h-[200px] overflow-y-auto">
+                {commitsLoading && <Loading />}
+                {commitsError && (
+                  <p className="p-2 text-[0.9rem] text-danger">
+                    {t("common.error", { message: commitsError })}
+                  </p>
+                )}
+                {!commitsLoading && !commitsError && commits.length === 0 && (
+                  <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                    {t("pr.noCommits")}
+                  </p>
+                )}
+                {commits.map((commit) => (
+                  <div
+                    key={commit.sha}
+                    className="border-b border-border px-3 py-2 last:border-b-0"
                   >
-                    {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Card>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="shrink-0 font-mono text-[0.75rem] text-info"
+                        title={commit.sha}
+                      >
+                        {commit.sha.slice(0, 7)}
+                      </span>
+                      <span className="truncate text-[0.8rem] text-text-primary">
+                        {commit.message.split("\n")[0]}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex gap-3 text-[0.7rem] text-text-secondary">
+                      <span>@{commit.author}</span>
+                      <span>{new Date(commit.date).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card className="flex min-h-0 flex-1 flex-col">
+              <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
+                {t("diff.changedFiles")}
+              </h2>
+              <div className="scrollbar-custom flex-1 overflow-y-auto">
+                {diffLoading && <Loading />}
+                {diffError && (
+                  <p className="p-2 text-[0.9rem] text-danger">
+                    {t("common.error", { message: diffError })}
+                  </p>
+                )}
+                {!diffLoading && !diffError && diffs.length === 0 && (
+                  <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                    {t("pr.noDiffFiles")}
+                  </p>
+                )}
+                {diffs.map((diff, index) => (
+                  <div
+                    key={diff.new_path ?? diff.old_path ?? index}
+                    className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                      selectedFileIndex === index
+                        ? "border-l-2 border-l-accent bg-bg-hover"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedFileIndex(index)}
+                  >
+                    <Badge variant={statusVariant(diff.status)}>
+                      {statusLabel(diff.status)}
+                    </Badge>
+                    <span
+                      className="truncate text-text-primary"
+                      title={diff.new_path ?? diff.old_path ?? ""}
+                    >
+                      {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
           <Card className="flex flex-col overflow-hidden">
             <h2 className="mb-4 border-b border-border pb-2 text-lg text-white">
               {selectedDiff

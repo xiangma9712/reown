@@ -1,5 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo } from "./types";
+import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo, CommitInfo } from "./types";
 
 type Commands = {
   list_worktrees: { args?: Record<string, unknown>; ret: WorktreeInfo[] };
@@ -20,6 +20,10 @@ type Commands = {
   get_pull_request_files: {
     args: { owner: string; repo: string; prNumber: number; token: string };
     ret: FileDiff[];
+  };
+  list_pr_commits: {
+    args: { owner: string; repo: string; prNumber: number; token: string };
+    ret: CommitInfo[];
   };
 };
 

@@ -59,6 +59,8 @@
     "empty": "PR情報を取得するには上のフォームに入力してください。",
     "files": "{{count}} files",
     "backToList": "← 一覧に戻る",
-    "noDiffFiles": "変更ファイルがありません。"
+    "noDiffFiles": "変更ファイルがありません。",
+    "commits": "コミット",
+    "noCommits": "コミットがありません。"
   }
 }

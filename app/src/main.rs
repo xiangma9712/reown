@@ -80,6 +80,18 @@ async fn get_pull_request_files(
         .map_err(AppError::github)
 }
 
+#[tauri::command]
+async fn list_pr_commits(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+) -> Result<Vec<reown::github::CommitInfo>, AppError> {
+    reown::github::pull_request::list_pr_commits(&owner, &repo, pr_number, &token)
+        .await
+        .map_err(AppError::github)
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
@@ -95,6 +107,7 @@ fn main() {
             diff_commit,
             list_pull_requests,
             get_pull_request_files,
+            list_pr_commits,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -106,7 +119,7 @@ mod tests {
     use reown::git::branch::BranchInfo;
     use reown::git::diff::{DiffChunk, DiffLineInfo, FileDiff, FileStatus, LineOrigin};
     use reown::git::worktree::WorktreeInfo;
-    use reown::github::PrInfo;
+    use reown::github::{CommitInfo, PrInfo};
     use std::path::PathBuf;
 
     #[test]
@@ -217,6 +230,21 @@ mod tests {
         assert_eq!(json, "Context");
         let json = serde_json::to_value(&LineOrigin::Other('=')).unwrap();
         assert_eq!(json["Other"], "=");
+    }
+
+    #[test]
+    fn test_commit_info_serializes() {
+        let commit = CommitInfo {
+            sha: "abc123".to_string(),
+            message: "feat: add feature".to_string(),
+            author: "alice".to_string(),
+            date: "2025-01-15T10:30:00Z".to_string(),
+        };
+        let json = serde_json::to_value(&commit).unwrap();
+        assert_eq!(json["sha"], "abc123");
+        assert_eq!(json["message"], "feat: add feature");
+        assert_eq!(json["author"], "alice");
+        assert_eq!(json["date"], "2025-01-15T10:30:00Z");
     }
 
     #[test]

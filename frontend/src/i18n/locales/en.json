@@ -59,6 +59,8 @@
     "empty": "Enter the form above to fetch PR information.",
     "files": "{{count}} files",
     "backToList": "← Back to list",
-    "noDiffFiles": "No changed files."
+    "noDiffFiles": "No changed files.",
+    "commits": "Commits",
+    "noCommits": "No commits."
   }
 }
