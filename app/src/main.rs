@@ -240,6 +240,41 @@ async fn check_pr_consistency(
         .map_err(AppError::llm)
 }
 
+// ── LLM connection test ─────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn test_llm_connection(
+    endpoint: String,
+    model: String,
+    api_key: Option<String>,
+    app_handle: tauri::AppHandle,
+) -> Result<(), AppError> {
+    // 入力されたAPIキーがなければ、保存済みのキーを使う
+    let resolved_key = match api_key {
+        Some(ref k) if !k.is_empty() => Some(k.clone()),
+        _ => {
+            let app_data_dir = app_handle
+                .path()
+                .app_data_dir()
+                .map_err(|e| AppError::llm(anyhow::anyhow!("{e}")))?;
+            let config_path = reown::config::default_config_path(&app_data_dir);
+            let config = reown::config::load_config(&config_path).map_err(AppError::llm)?;
+            if config.llm.llm_api_key_stored {
+                reown::config::load_llm_api_key().ok()
+            } else {
+                None
+            }
+        }
+    };
+
+    let client = reown::llm::client::LlmClient::with_api_base(resolved_key, endpoint, model);
+    client
+        .chat("Say hello in one word.")
+        .await
+        .map_err(AppError::llm)?;
+    Ok(())
+}
+
 // ── Config commands ─────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -337,6 +372,7 @@ fn main() {
             load_llm_config,
             save_llm_api_key,
             delete_llm_api_key,
+            test_llm_connection,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

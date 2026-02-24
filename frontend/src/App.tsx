@@ -5,6 +5,7 @@ import { WorktreeTab } from "./components/WorktreeTab";
 import { BranchTab } from "./components/BranchTab";
 import { DiffTab } from "./components/DiffTab";
 import { PrTab } from "./components/PrTab";
+import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { id: "branch", labelKey: "tabs.branches", shortcut: "B" },
   { id: "diff", labelKey: "tabs.diff", shortcut: "D" },
   { id: "pr", labelKey: "tabs.prs", shortcut: "P" },
+  { id: "settings", labelKey: "tabs.settings", shortcut: "S" },
 ] as const;
 
 type TabName = (typeof NAV_ITEMS)[number]["id"];
@@ -133,6 +135,9 @@ export function App() {
         case "p":
           setActiveTab("pr");
           break;
+        case "s":
+          setActiveTab("settings");
+          break;
         case "Tab":
           e.preventDefault();
           setActiveTab((prev) => {
@@ -164,6 +169,7 @@ export function App() {
         {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} />}
         {activeTab === "diff" && <DiffTab />}
         {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} />}
+        {activeTab === "settings" && <LlmSettingsTab />}
 
         <ConfirmDialog
           open={confirmDialog !== null}

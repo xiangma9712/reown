@@ -15,7 +15,8 @@
     "worktrees": "Worktrees",
     "branches": "Branches",
     "diff": "Diff",
-    "prs": "PRs"
+    "prs": "PRs",
+    "settings": "Settings"
   },
   "common": {
     "loading": "Loading…",
@@ -106,5 +107,26 @@
     "consistencyWarnings": "Consistency Warnings",
     "cancelGeneration": "Cancel",
     "summaryError": "Failed to generate AI summary"
+  },
+  "llmSettings": {
+    "title": "LLM Settings",
+    "endpoint": "Endpoint URL",
+    "model": "Model Name",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "Enter API key",
+    "apiKeyStoredPlaceholder": "Stored (enter a new key to update)",
+    "apiKeyStored": "API key is securely stored",
+    "deleteApiKey": "Delete API key",
+    "apiKeyDeleted": "API key deleted",
+    "showApiKey": "Show",
+    "hideApiKey": "Hide",
+    "save": "Save",
+    "reset": "Reset",
+    "testConnection": "Test Connection",
+    "saveSuccess": "Settings saved successfully",
+    "saveError": "Failed to save settings: {{message}}",
+    "loadError": "Failed to load settings: {{message}}",
+    "testSuccess": "Connection test successful",
+    "testError": "Connection test failed: {{message}}"
   }
 }

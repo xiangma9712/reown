@@ -57,6 +57,10 @@ type Commands = {
     ret: void;
   };
   delete_llm_api_key: { args?: Record<string, unknown>; ret: void };
+  test_llm_connection: {
+    args: { endpoint: string; model: string; apiKey?: string };
+    ret: void;
+  };
   analyze_pr_risk: {
     args: { owner: string; repo: string; prNumber: number; token: string };
     ret: AnalysisResult;
