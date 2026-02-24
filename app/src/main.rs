@@ -156,6 +156,38 @@ async fn analyze_pr_risk(
     Ok(reown::analysis::analyze_pr_risk(&pr, &diffs))
 }
 
+// ── LLM commands ────────────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn summarize_pull_request(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+    openai_api_key: String,
+) -> Result<reown::llm::summary::PrSummary, AppError> {
+    let llm_client =
+        reown::llm::client::LlmClient::new(openai_api_key, "gpt-4o".to_string());
+    reown::llm::summary::summarize_pr(&owner, &repo, pr_number, &token, &llm_client)
+        .await
+        .map_err(AppError::llm)
+}
+
+#[tauri::command]
+async fn check_pr_consistency(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+    openai_api_key: String,
+) -> Result<reown::llm::summary::ConsistencyResult, AppError> {
+    let llm_client =
+        reown::llm::client::LlmClient::new(openai_api_key, "gpt-4o".to_string());
+    reown::llm::summary::check_pr_consistency(&owner, &repo, pr_number, &token, &llm_client)
+        .await
+        .map_err(AppError::llm)
+}
+
 // ── Config commands ─────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -200,6 +232,8 @@ fn main() {
             list_pull_requests,
             get_pull_request_files,
             analyze_pr_risk,
+            summarize_pull_request,
+            check_pr_consistency,
             get_repo_info,
             add_repository,
             list_repositories,

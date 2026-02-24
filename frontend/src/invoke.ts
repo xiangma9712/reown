@@ -1,5 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo, RepositoryEntry, AppConfig, RepoInfo } from "./types";
+import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo, RepositoryEntry, AppConfig, RepoInfo, PrSummary, ConsistencyResult } from "./types";
 
 type Commands = {
   list_worktrees: { args: { repoPath: string }; ret: WorktreeInfo[] };
@@ -39,6 +39,14 @@ type Commands = {
     ret: void;
   };
   load_app_config: { args?: Record<string, unknown>; ret: AppConfig };
+  summarize_pull_request: {
+    args: { owner: string; repo: string; prNumber: number; token: string; openaiApiKey: string };
+    ret: PrSummary;
+  };
+  check_pr_consistency: {
+    args: { owner: string; repo: string; prNumber: number; token: string; openaiApiKey: string };
+    ret: ConsistencyResult;
+  };
 };
 
 export async function invoke<C extends keyof Commands>(

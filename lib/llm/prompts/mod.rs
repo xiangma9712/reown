@@ -1,3 +1,3 @@
 mod templates;
 
-pub use templates::{Language, PromptBuilder};
+pub use templates::{Language, PrMetadata, PromptBuilder};

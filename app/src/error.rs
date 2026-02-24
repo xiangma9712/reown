@@ -25,6 +25,8 @@ pub enum ErrorKind {
     Storage,
     /// 分析処理のエラー
     Analysis,
+    /// LLM API呼び出しのエラー
+    Llm,
 }
 
 impl std::fmt::Display for AppError {
@@ -58,6 +60,13 @@ impl AppError {
     pub fn analysis(err: anyhow::Error) -> Self {
         Self {
             kind: ErrorKind::Analysis,
+            message: format!("{err:#}"),
+        }
+    }
+
+    pub fn llm(err: anyhow::Error) -> Self {
+        Self {
+            kind: ErrorKind::Llm,
             message: format!("{err:#}"),
         }
     }
