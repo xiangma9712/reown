@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent } from "../types";
+import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AutomationConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -127,6 +127,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
   const [diffLoading, setDiffLoading] = useState(false);
   const [diffError, setDiffError] = useState<string | null>(null);
   const llmConfigRef = useRef<LlmConfig>({ llm_endpoint: "", llm_model: "", llm_api_key_stored: false });
+  const automationConfigRef = useRef<AutomationConfig>({ enabled: false, auto_approve_max_risk: "Low" });
 
   // Category accordion state (expanded categories)
   const [expandedCategories, setExpandedCategories] = useState<Set<ChangeCategory>>(new Set(["Logic"]));
@@ -151,6 +152,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
       if (config.default_owner) setOwner(config.default_owner);
       if (config.default_repo) setRepo(config.default_repo);
       llmConfigRef.current = config.llm;
+      automationConfigRef.current = config.automation;
     }).catch(() => {
       // 設定ファイルが読み込めない場合は無視する
     });
@@ -183,6 +185,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
           default_owner: owner.trim(),
           default_repo: repo.trim(),
           llm: llmConfigRef.current,
+          automation: automationConfigRef.current,
         },
       }).catch(() => {
         // 設定の保存に失敗しても PR 取得結果は表示する
