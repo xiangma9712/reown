@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AutomationConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent, AffectedModule } from "../types";
+import { useRepository } from "../RepositoryContext";
+import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AutomationConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent, AffectedModule, CommitInfo, FileDiff } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -116,6 +117,7 @@ type PrStateFilter = "all" | "open" | "closed" | "merged";
 
 export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProps) {
   const { t } = useTranslation();
+  const { repoPath } = useRepository();
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
   const [token, setToken] = useState("");
@@ -146,6 +148,19 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   // Per-PR analysis results cache (keyed by PR number)
   const analysisCache = useRef<Map<number, { analysis: AnalysisResult; hybrid?: HybridAnalysisResult }>>(new Map());
+
+  // Commit list state
+  const [commits, setCommits] = useState<CommitInfo[]>([]);
+  const [commitsLoading, setCommitsLoading] = useState(false);
+  const [commitsError, setCommitsError] = useState<string | null>(null);
+
+  // View mode: "all" shows all PR files, "commit" shows per-commit diff
+  const [viewMode, setViewMode] = useState<"all" | "commit">("all");
+  const [selectedCommit, setSelectedCommit] = useState<CommitInfo | null>(null);
+  const [commitDiffs, setCommitDiffs] = useState<FileDiff[]>([]);
+  const [commitDiffLoading, setCommitDiffLoading] = useState(false);
+  const [commitDiffError, setCommitDiffError] = useState<string | null>(null);
+  const [commitExpandedFiles, setCommitExpandedFiles] = useState<Set<number>>(new Set());
 
   // Review state
   const [reviewComment, setReviewComment] = useState("");
@@ -227,6 +242,14 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     setReviewComment("");
     setReviewMessage(null);
     setConfirmingReview(null);
+    // Reset commit state
+    setCommits([]);
+    setCommitsError(null);
+    setViewMode("all");
+    setSelectedCommit(null);
+    setCommitDiffs([]);
+    setCommitDiffError(null);
+    setCommitExpandedFiles(new Set());
     // Load cached analysis if available
     const cached = analysisCache.current.get(pr.number);
     if (cached) {
@@ -236,18 +259,35 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
       setAnalysisResult(null);
       setHybridResult(null);
     }
+    // Fetch PR files and commits in parallel
+    const filesPromise = invoke("get_pull_request_files", {
+      owner: owner.trim(),
+      repo: repo.trim(),
+      prNumber: pr.number,
+      token: token.trim(),
+    });
+    setCommitsLoading(true);
+    const commitsPromise = invoke("list_pr_commits", {
+      owner: owner.trim(),
+      repo: repo.trim(),
+      prNumber: pr.number,
+      token: token.trim(),
+    });
     try {
-      const result = await invoke("get_pull_request_files", {
-        owner: owner.trim(),
-        repo: repo.trim(),
-        prNumber: pr.number,
-        token: token.trim(),
-      });
+      const result = await filesPromise;
       setDiffs(result);
     } catch (err) {
       setDiffError(String(err));
     } finally {
       setDiffLoading(false);
+    }
+    try {
+      const commitResult = await commitsPromise;
+      setCommits(commitResult);
+    } catch (err) {
+      setCommitsError(String(err));
+    } finally {
+      setCommitsLoading(false);
     }
   }
 
@@ -271,6 +311,50 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     setExpandedFiles(new Set());
   }
 
+  async function handleSelectCommit(commit: CommitInfo) {
+    setSelectedCommit(commit);
+    setCommitDiffError(null);
+    setCommitDiffLoading(true);
+    setCommitDiffs([]);
+    setCommitExpandedFiles(new Set());
+    if (!repoPath) {
+      setCommitDiffError("No repository selected");
+      setCommitDiffLoading(false);
+      return;
+    }
+    try {
+      const result = await invoke("diff_commit", {
+        repoPath,
+        commitSha: commit.sha,
+      });
+      setCommitDiffs(result);
+    } catch (err) {
+      setCommitDiffError(String(err));
+    } finally {
+      setCommitDiffLoading(false);
+    }
+  }
+
+  function toggleCommitFile(index: number) {
+    setCommitExpandedFiles((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }
+
+  function expandAllCommitFiles() {
+    setCommitExpandedFiles(new Set(commitDiffs.map((_, i) => i)));
+  }
+
+  function collapseAllCommitFiles() {
+    setCommitExpandedFiles(new Set());
+  }
+
   function handleBackToList() {
     setSelectedPr(null);
     setDiffs([]);
@@ -284,6 +368,13 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     setReviewComment("");
     setReviewMessage(null);
     setConfirmingReview(null);
+    setCommits([]);
+    setCommitsError(null);
+    setViewMode("all");
+    setSelectedCommit(null);
+    setCommitDiffs([]);
+    setCommitDiffError(null);
+    setCommitExpandedFiles(new Set());
   }
 
   async function handleAnalyze(pr: PrInfo) {
@@ -524,17 +615,89 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
             </p>
           )}
         </Card>
+        {/* Commit list panel */}
+        <Card className="mt-4">
+          <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+            {t("pr.commits")}
+          </h2>
+          {commitsLoading && <Loading />}
+          {commitsError && (
+            <p className="p-2 text-[0.9rem] text-danger">
+              {t("pr.commitsError")}: {commitsError}
+            </p>
+          )}
+          {!commitsLoading && !commitsError && commits.length === 0 && (
+            <p className="p-2 text-[0.9rem] italic text-text-secondary">
+              {t("pr.commitsEmpty")}
+            </p>
+          )}
+          {commits.length > 0 && (
+            <div className="scrollbar-custom max-h-60 overflow-y-auto">
+              {commits.map((commit) => {
+                const isSelected = selectedCommit?.sha === commit.sha;
+                return (
+                  <div
+                    key={commit.sha}
+                    className={`cursor-pointer border-b border-border px-3 py-2 transition-colors last:border-b-0 hover:bg-bg-hover ${
+                      isSelected ? "bg-bg-hover" : ""
+                    }`}
+                    onClick={() => {
+                      if (viewMode === "all") setViewMode("commit");
+                      handleSelectCommit(commit);
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="shrink-0 font-mono text-[0.75rem] text-info">
+                        {commit.sha.slice(0, 7)}
+                      </span>
+                      <span className="truncate text-[0.8rem] text-text-primary">
+                        {commit.message.split("\n")[0]}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex gap-3 text-[0.7rem] text-text-secondary">
+                      <span>@{commit.author}</span>
+                      <span>{commit.date}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
         <Card className="mt-4">
           <div className="mb-4 flex items-center gap-3 border-b border-border pb-2">
             <h2 className="text-lg text-text-heading">
               {t("diff.changedFiles")}
             </h2>
-            {isFocusActive && (
+            {/* View toggle */}
+            <div className="flex gap-1">
+              <button
+                className={`rounded-md px-3 py-1 text-[0.8rem] font-medium transition-colors ${
+                  viewMode === "all"
+                    ? "bg-accent text-white"
+                    : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                }`}
+                onClick={() => setViewMode("all")}
+              >
+                {t("pr.viewAllFiles")}
+              </button>
+              <button
+                className={`rounded-md px-3 py-1 text-[0.8rem] font-medium transition-colors ${
+                  viewMode === "commit"
+                    ? "bg-accent text-white"
+                    : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                }`}
+                onClick={() => setViewMode("commit")}
+              >
+                {t("pr.viewByCommit")}
+              </button>
+            </div>
+            {viewMode === "all" && isFocusActive && (
               <span className="text-[0.8rem] text-text-secondary">
                 {t("pr.focusFilterActive", { current: filteredDiffs.length, total: diffs.length })}
               </span>
             )}
-            {diffs.length > 0 && (
+            {viewMode === "all" && diffs.length > 0 && (
               <div className="ml-auto flex gap-2">
                 <Button variant="secondary" size="sm" onClick={expandAllFiles}>
                   {t("pr.expandAll")}
@@ -544,172 +707,301 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                 </Button>
               </div>
             )}
+            {viewMode === "commit" && commitDiffs.length > 0 && (
+              <div className="ml-auto flex gap-2">
+                <Button variant="secondary" size="sm" onClick={expandAllCommitFiles}>
+                  {t("pr.expandAll")}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={collapseAllCommitFiles}>
+                  {t("pr.collapseAll")}
+                </Button>
+              </div>
+            )}
           </div>
-          {/* Focus filter bar */}
-          {diffs.length > 0 && (
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              {categoryOrder
-                .filter((cat) => diffs.some((d) => d.category === cat))
-                .map((cat) => {
-                  const isSelected = focusCategoryFilters.has(cat);
-                  return (
+          {/* All files view */}
+          {viewMode === "all" && (
+            <>
+              {/* Focus filter bar */}
+              {diffs.length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {categoryOrder
+                    .filter((cat) => diffs.some((d) => d.category === cat))
+                    .map((cat) => {
+                      const isSelected = focusCategoryFilters.has(cat);
+                      return (
+                        <button
+                          key={cat}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium transition-colors ${
+                            isSelected
+                              ? "bg-accent text-white"
+                              : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                          }`}
+                          onClick={() => toggleFocusCategory(cat)}
+                        >
+                          <span>{categoryIcons[cat]}</span>
+                          <span>{t(categoryLabelKeys[cat])}</span>
+                        </button>
+                      );
+                    })}
+                  {affectedModules.length > 0 && (
+                    <>
+                      <span className="text-[0.7rem] text-text-muted">|</span>
+                      <span className="text-[0.7rem] text-text-muted">{t("pr.focusModuleFilter")}:</span>
+                      {affectedModules.map((mod) => {
+                        const isSelected = focusModuleFilter === mod.name;
+                        return (
+                          <button
+                            key={mod.name}
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium transition-colors ${
+                              isSelected
+                                ? "bg-accent text-white"
+                                : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                            }`}
+                            onClick={() =>
+                              setFocusModuleFilter(isSelected ? null : mod.name)
+                            }
+                            title={mod.description}
+                          >
+                            {mod.name}
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
+                  {isFocusActive && (
                     <button
-                      key={cat}
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium transition-colors ${
-                        isSelected
-                          ? "bg-accent text-white"
-                          : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
-                      }`}
-                      onClick={() => toggleFocusCategory(cat)}
+                      className="ml-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium text-danger transition-colors hover:bg-bg-hover"
+                      onClick={resetFocusFilters}
                     >
-                      <span>{categoryIcons[cat]}</span>
-                      <span>{t(categoryLabelKeys[cat])}</span>
+                      {t("pr.focusFilterReset")}
                     </button>
+                  )}
+                </div>
+              )}
+              <div className="scrollbar-custom overflow-y-auto">
+                {diffLoading && <Loading />}
+                {diffError && (
+                  <p className="p-2 text-[0.9rem] text-danger">
+                    {t("common.error", { message: diffError })}
+                  </p>
+                )}
+                {!diffLoading && !diffError && diffs.length === 0 && (
+                  <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                    {t("pr.noDiffFiles")}
+                  </p>
+                )}
+                {groupedDiffs.map((group) => {
+                  const isCategoryExpanded = expandedCategories.has(group.category);
+                  return (
+                    <div key={group.category}>
+                      <button
+                        className="flex w-full cursor-pointer items-center gap-2 border-b border-border bg-bg-primary px-3 py-2 text-left text-[0.8rem] font-semibold text-text-heading transition-colors hover:bg-bg-hover"
+                        onClick={() => toggleCategory(group.category)}
+                      >
+                        <span className="text-[0.7rem]">{isCategoryExpanded ? "\u25BC" : "\u25B6"}</span>
+                        <span>{categoryIcons[group.category]}</span>
+                        <span>{t(categoryLabelKeys[group.category])}</span>
+                        <span className="ml-auto text-[0.75rem] font-normal text-text-secondary">
+                          {group.files.length}
+                        </span>
+                      </button>
+                      {isCategoryExpanded &&
+                        group.files.map(({ diff, originalIndex }) => {
+                          const isFileExpanded = expandedFiles.has(originalIndex);
+                          return (
+                            <div key={diff.new_path ?? diff.old_path ?? originalIndex}>
+                              <div
+                                className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 pl-7 font-mono text-[0.8rem] transition-colors hover:bg-bg-primary"
+                                onClick={() => toggleFile(originalIndex)}
+                              >
+                                <span className="text-[0.65rem] text-text-secondary">{isFileExpanded ? "\u25BC" : "\u25B6"}</span>
+                                <Badge variant={statusVariant(diff.status)}>
+                                  {statusLabel(diff.status)}
+                                </Badge>
+                                <span
+                                  className="truncate text-text-primary"
+                                  title={diff.new_path ?? diff.old_path ?? ""}
+                                >
+                                  {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                                </span>
+                              </div>
+                              {isFileExpanded && (
+                                <div className="border-b border-border bg-bg-secondary font-mono text-[0.8rem] leading-relaxed">
+                                  {diff.chunks.length === 0 && (
+                                    <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                                      {t("diff.noDiffContent")}
+                                    </p>
+                                  )}
+                                  {diff.chunks.map((chunk, ci) => (
+                                    <div key={ci}>
+                                      <div className="border-y border-border bg-diff-header-bg px-3 py-1 text-xs text-info">
+                                        {chunk.header}
+                                      </div>
+                                      {chunk.lines.map((line, li) => {
+                                        const origin = getOriginString(line.origin);
+                                        const lineClass =
+                                          origin === "Addition"
+                                            ? "diff-line-addition"
+                                            : origin === "Deletion"
+                                              ? "diff-line-deletion"
+                                              : "";
+                                        const prefix =
+                                          origin === "Addition"
+                                            ? "+"
+                                            : origin === "Deletion"
+                                              ? "-"
+                                              : " ";
+                                        const textColor =
+                                          origin === "Addition"
+                                            ? "text-accent"
+                                            : origin === "Deletion"
+                                              ? "text-danger"
+                                              : "text-text-secondary";
+                                        return (
+                                          <div
+                                            key={li}
+                                            className={`flex whitespace-pre ${lineClass}`}
+                                          >
+                                            <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                                              {line.old_lineno ?? ""}
+                                            </span>
+                                            <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                                              {line.new_lineno ?? ""}
+                                            </span>
+                                            <span className={`flex-1 px-2 ${textColor}`}>
+                                              {prefix}
+                                              {line.content}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
                   );
                 })}
-              {affectedModules.length > 0 && (
+              </div>
+            </>
+          )}
+          {/* Commit-specific diff view */}
+          {viewMode === "commit" && (
+            <div className="scrollbar-custom overflow-y-auto">
+              {!selectedCommit && (
+                <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                  {t("pr.selectCommit")}
+                </p>
+              )}
+              {selectedCommit && (
                 <>
-                  <span className="text-[0.7rem] text-text-muted">|</span>
-                  <span className="text-[0.7rem] text-text-muted">{t("pr.focusModuleFilter")}:</span>
-                  {affectedModules.map((mod) => {
-                    const isSelected = focusModuleFilter === mod.name;
+                  <div className="mb-3 rounded-md border border-border bg-bg-primary px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[0.75rem] text-info">
+                        {selectedCommit.sha.slice(0, 7)}
+                      </span>
+                      <span className="text-[0.85rem] font-medium text-text-primary">
+                        {selectedCommit.message.split("\n")[0]}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[0.7rem] text-text-secondary">
+                      @{selectedCommit.author} · {selectedCommit.date}
+                    </div>
+                  </div>
+                  {commitDiffLoading && <Loading />}
+                  {commitDiffError && (
+                    <p className="p-2 text-[0.9rem] text-danger">
+                      {t("pr.commitDiffError")}: {commitDiffError}
+                    </p>
+                  )}
+                  {!commitDiffLoading && !commitDiffError && commitDiffs.length === 0 && (
+                    <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                      {t("pr.commitDiffEmpty")}
+                    </p>
+                  )}
+                  {commitDiffs.map((diff, fileIndex) => {
+                    const isFileExpanded = commitExpandedFiles.has(fileIndex);
                     return (
-                      <button
-                        key={mod.name}
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium transition-colors ${
-                          isSelected
-                            ? "bg-accent text-white"
-                            : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
-                        }`}
-                        onClick={() =>
-                          setFocusModuleFilter(isSelected ? null : mod.name)
-                        }
-                        title={mod.description}
-                      >
-                        {mod.name}
-                      </button>
+                      <div key={diff.new_path ?? diff.old_path ?? fileIndex}>
+                        <div
+                          className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors hover:bg-bg-primary"
+                          onClick={() => toggleCommitFile(fileIndex)}
+                        >
+                          <span className="text-[0.65rem] text-text-secondary">{isFileExpanded ? "\u25BC" : "\u25B6"}</span>
+                          <Badge variant={statusVariant(diff.status)}>
+                            {statusLabel(diff.status)}
+                          </Badge>
+                          <span
+                            className="truncate text-text-primary"
+                            title={diff.new_path ?? diff.old_path ?? ""}
+                          >
+                            {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                          </span>
+                        </div>
+                        {isFileExpanded && (
+                          <div className="border-b border-border bg-bg-secondary font-mono text-[0.8rem] leading-relaxed">
+                            {diff.chunks.length === 0 && (
+                              <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                                {t("diff.noDiffContent")}
+                              </p>
+                            )}
+                            {diff.chunks.map((chunk, ci) => (
+                              <div key={ci}>
+                                <div className="border-y border-border bg-diff-header-bg px-3 py-1 text-xs text-info">
+                                  {chunk.header}
+                                </div>
+                                {chunk.lines.map((line, li) => {
+                                  const origin = getOriginString(line.origin);
+                                  const lineClass =
+                                    origin === "Addition"
+                                      ? "diff-line-addition"
+                                      : origin === "Deletion"
+                                        ? "diff-line-deletion"
+                                        : "";
+                                  const prefix =
+                                    origin === "Addition"
+                                      ? "+"
+                                      : origin === "Deletion"
+                                        ? "-"
+                                        : " ";
+                                  const textColor =
+                                    origin === "Addition"
+                                      ? "text-accent"
+                                      : origin === "Deletion"
+                                        ? "text-danger"
+                                        : "text-text-secondary";
+                                  return (
+                                    <div
+                                      key={li}
+                                      className={`flex whitespace-pre ${lineClass}`}
+                                    >
+                                      <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                                        {line.old_lineno ?? ""}
+                                      </span>
+                                      <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                                        {line.new_lineno ?? ""}
+                                      </span>
+                                      <span className={`flex-1 px-2 ${textColor}`}>
+                                        {prefix}
+                                        {line.content}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </>
               )}
-              {isFocusActive && (
-                <button
-                  className="ml-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium text-danger transition-colors hover:bg-bg-hover"
-                  onClick={resetFocusFilters}
-                >
-                  {t("pr.focusFilterReset")}
-                </button>
-              )}
             </div>
           )}
-          <div className="scrollbar-custom overflow-y-auto">
-            {diffLoading && <Loading />}
-            {diffError && (
-              <p className="p-2 text-[0.9rem] text-danger">
-                {t("common.error", { message: diffError })}
-              </p>
-            )}
-            {!diffLoading && !diffError && diffs.length === 0 && (
-              <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                {t("pr.noDiffFiles")}
-              </p>
-            )}
-            {groupedDiffs.map((group) => {
-              const isCategoryExpanded = expandedCategories.has(group.category);
-              return (
-                <div key={group.category}>
-                  <button
-                    className="flex w-full cursor-pointer items-center gap-2 border-b border-border bg-bg-primary px-3 py-2 text-left text-[0.8rem] font-semibold text-text-heading transition-colors hover:bg-bg-hover"
-                    onClick={() => toggleCategory(group.category)}
-                  >
-                    <span className="text-[0.7rem]">{isCategoryExpanded ? "\u25BC" : "\u25B6"}</span>
-                    <span>{categoryIcons[group.category]}</span>
-                    <span>{t(categoryLabelKeys[group.category])}</span>
-                    <span className="ml-auto text-[0.75rem] font-normal text-text-secondary">
-                      {group.files.length}
-                    </span>
-                  </button>
-                  {isCategoryExpanded &&
-                    group.files.map(({ diff, originalIndex }) => {
-                      const isFileExpanded = expandedFiles.has(originalIndex);
-                      return (
-                        <div key={diff.new_path ?? diff.old_path ?? originalIndex}>
-                          <div
-                            className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 pl-7 font-mono text-[0.8rem] transition-colors hover:bg-bg-primary"
-                            onClick={() => toggleFile(originalIndex)}
-                          >
-                            <span className="text-[0.65rem] text-text-secondary">{isFileExpanded ? "\u25BC" : "\u25B6"}</span>
-                            <Badge variant={statusVariant(diff.status)}>
-                              {statusLabel(diff.status)}
-                            </Badge>
-                            <span
-                              className="truncate text-text-primary"
-                              title={diff.new_path ?? diff.old_path ?? ""}
-                            >
-                              {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                            </span>
-                          </div>
-                          {isFileExpanded && (
-                            <div className="border-b border-border bg-bg-secondary font-mono text-[0.8rem] leading-relaxed">
-                              {diff.chunks.length === 0 && (
-                                <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                                  {t("diff.noDiffContent")}
-                                </p>
-                              )}
-                              {diff.chunks.map((chunk, ci) => (
-                                <div key={ci}>
-                                  <div className="border-y border-border bg-diff-header-bg px-3 py-1 text-xs text-info">
-                                    {chunk.header}
-                                  </div>
-                                  {chunk.lines.map((line, li) => {
-                                    const origin = getOriginString(line.origin);
-                                    const lineClass =
-                                      origin === "Addition"
-                                        ? "diff-line-addition"
-                                        : origin === "Deletion"
-                                          ? "diff-line-deletion"
-                                          : "";
-                                    const prefix =
-                                      origin === "Addition"
-                                        ? "+"
-                                        : origin === "Deletion"
-                                          ? "-"
-                                          : " ";
-                                    const textColor =
-                                      origin === "Addition"
-                                        ? "text-accent"
-                                        : origin === "Deletion"
-                                          ? "text-danger"
-                                          : "text-text-secondary";
-                                    return (
-                                      <div
-                                        key={li}
-                                        className={`flex whitespace-pre ${lineClass}`}
-                                      >
-                                        <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
-                                          {line.old_lineno ?? ""}
-                                        </span>
-                                        <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
-                                          {line.new_lineno ?? ""}
-                                        </span>
-                                        <span className={`flex-1 px-2 ${textColor}`}>
-                                          {prefix}
-                                          {line.content}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              );
-            })}
-          </div>
         </Card>
         {/* Analysis section */}
         {analysisLoading && <Loading className="mt-4" />}
