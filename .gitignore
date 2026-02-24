@@ -4,3 +4,4 @@ progress.txt
 .agent-stop
 node_modules/
 frontend/out/
+app/gen/

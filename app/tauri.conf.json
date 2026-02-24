@@ -4,13 +4,12 @@
   "version": "0.1.0",
   "identifier": "com.reown.app",
   "build": {
-    "beforeDevCommand": "cd ../frontend && npm run dev",
-    "beforeBuildCommand": "cd ../frontend && npm run build",
+    "beforeDevCommand": "npm run --prefix frontend dev",
+    "beforeBuildCommand": "npm run --prefix frontend build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../frontend/out"
   },
   "app": {
-    "title": "reown",
     "windows": [
       {
         "title": "reown",
