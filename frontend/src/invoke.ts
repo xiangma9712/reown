@@ -1,5 +1,5 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo, RepositoryEntry, AppConfig, RepoInfo, PrSummary, ConsistencyResult } from "./types";
+import type { WorktreeInfo, BranchInfo, FileDiff, PrInfo, RepositoryEntry, AppConfig, LlmConfig, RepoInfo, PrSummary, ConsistencyResult } from "./types";
 
 type Commands = {
   list_worktrees: { args: { repoPath: string }; ret: WorktreeInfo[] };
@@ -47,6 +47,16 @@ type Commands = {
     args: { owner: string; repo: string; prNumber: number; token: string; openaiApiKey: string };
     ret: ConsistencyResult;
   };
+  save_llm_config: {
+    args: { llmConfig: LlmConfig };
+    ret: void;
+  };
+  load_llm_config: { args?: Record<string, unknown>; ret: LlmConfig };
+  save_llm_api_key: {
+    args: { apiKey: string };
+    ret: void;
+  };
+  delete_llm_api_key: { args?: Record<string, unknown>; ret: void };
 };
 
 export async function invoke<C extends keyof Commands>(
