@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use futures::stream::Stream;
+use reqwest::StatusCode;
 
 use super::stream::parse_sse_stream;
 use super::types::{LlmRequest, LlmResponse, Message, StreamEvent};
@@ -10,6 +11,50 @@ use super::types::{LlmRequest, LlmResponse, Message, StreamEvent};
 const DEFAULT_API_BASE: &str = "https://api.anthropic.com";
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
 const ANTHROPIC_VERSION: &str = "2023-06-01";
+
+/// リトライ対象のHTTPステータスコード
+const RETRYABLE_STATUS_CODES: &[u16] = &[
+    429, // Too Many Requests
+    500, // Internal Server Error
+    502, // Bad Gateway
+    503, // Service Unavailable
+    529, // Overloaded
+];
+
+/// リトライ設定
+#[derive(Debug, Clone)]
+pub struct RetryConfig {
+    /// 最大リトライ回数
+    pub max_retries: u32,
+    /// 初期待機時間（秒）
+    pub initial_backoff_secs: u64,
+    /// バックオフ倍率
+    pub backoff_multiplier: u64,
+}
+
+impl Default for RetryConfig {
+    fn default() -> Self {
+        Self {
+            max_retries: 3,
+            initial_backoff_secs: 1,
+            backoff_multiplier: 2,
+        }
+    }
+}
+
+/// ステータスコードがリトライ対象かどうかを判定する
+fn is_retryable_status(status: StatusCode) -> bool {
+    RETRYABLE_STATUS_CODES.contains(&status.as_u16())
+}
+
+/// レスポンスから retry-after ヘッダーの値（秒）を取得する
+fn parse_retry_after(response: &reqwest::Response) -> Option<u64> {
+    response
+        .headers()
+        .get("retry-after")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u64>().ok())
+}
 
 /// Anthropic Messages API互換 LLMクライアント
 ///
@@ -20,6 +65,7 @@ pub struct LlmClient {
     api_base: String,
     model: String,
     http: reqwest::Client,
+    retry_config: RetryConfig,
 }
 
 impl LlmClient {
@@ -34,6 +80,7 @@ impl LlmClient {
             api_base: DEFAULT_API_BASE.to_string(),
             model,
             http,
+            retry_config: RetryConfig::default(),
         }
     }
 
@@ -48,41 +95,69 @@ impl LlmClient {
             api_base,
             model,
             http,
+            retry_config: RetryConfig::default(),
         }
+    }
+
+    /// リトライ設定を変更する
+    pub fn with_retry_config(mut self, config: RetryConfig) -> Self {
+        self.retry_config = config;
+        self
     }
 
     /// Anthropic Messages APIにリクエストを送信し、レスポンスを取得する
     pub async fn send(&self, request: &LlmRequest) -> Result<LlmResponse> {
         let url = format!("{}/v1/messages", self.api_base);
 
-        let mut builder = self
-            .http
-            .post(&url)
-            .header("content-type", "application/json")
-            .header("anthropic-version", ANTHROPIC_VERSION);
+        for attempt in 0..=self.retry_config.max_retries {
+            let mut builder = self
+                .http
+                .post(&url)
+                .header("content-type", "application/json")
+                .header("anthropic-version", ANTHROPIC_VERSION);
 
-        if let Some(ref key) = self.api_key {
-            builder = builder.header("x-api-key", key);
-        }
+            if let Some(ref key) = self.api_key {
+                builder = builder.header("x-api-key", key);
+            }
 
-        let response = builder
-            .json(request)
-            .send()
-            .await
-            .context("LLM APIリクエストの送信に失敗しました")?;
+            let response = builder
+                .json(request)
+                .send()
+                .await
+                .context("LLM APIリクエストの送信に失敗しました")?;
 
-        if !response.status().is_success() {
+            if response.status().is_success() {
+                let llm_response: LlmResponse = response
+                    .json()
+                    .await
+                    .context("LLM APIレスポンスのパースに失敗しました")?;
+                return Ok(llm_response);
+            }
+
             let status = response.status();
-            let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("LLM API returned {status}: {body}");
+
+            // リトライ対象でない場合は即座にエラーを返す
+            if !is_retryable_status(status) || attempt == self.retry_config.max_retries {
+                let body = response.text().await.unwrap_or_default();
+                anyhow::bail!("LLM API returned {status}: {body}");
+            }
+
+            // 429の場合は retry-after ヘッダーを尊重する
+            let wait_secs = if status == StatusCode::TOO_MANY_REQUESTS {
+                parse_retry_after(&response).unwrap_or(
+                    self.retry_config.initial_backoff_secs
+                        * self.retry_config.backoff_multiplier.pow(attempt),
+                )
+            } else {
+                self.retry_config.initial_backoff_secs
+                    * self.retry_config.backoff_multiplier.pow(attempt)
+            };
+
+            tokio::time::sleep(Duration::from_secs(wait_secs)).await;
         }
 
-        let llm_response: LlmResponse = response
-            .json()
-            .await
-            .context("LLM APIレスポンスのパースに失敗しました")?;
-
-        Ok(llm_response)
+        // ここには到達しないはずだが、安全のため
+        anyhow::bail!("LLM APIリクエストのリトライ上限に達しました")
     }
 
     /// Anthropic Messages APIにストリーミングリクエストを送信し、SSEイベントのストリームを返す
@@ -95,34 +170,57 @@ impl LlmClient {
         let url = format!("{}/v1/messages", self.api_base);
 
         // リクエストボディに stream: true を付与
-        let mut body = serde_json::to_value(request)
+        let body = serde_json::to_value(request)
             .context("LlmRequestのシリアライズに失敗しました")?;
-        body["stream"] = serde_json::Value::Bool(true);
+        let mut stream_body = body.clone();
+        stream_body["stream"] = serde_json::Value::Bool(true);
 
-        let mut builder = self
-            .http
-            .post(&url)
-            .header("content-type", "application/json")
-            .header("anthropic-version", ANTHROPIC_VERSION);
+        for attempt in 0..=self.retry_config.max_retries {
+            let mut builder = self
+                .http
+                .post(&url)
+                .header("content-type", "application/json")
+                .header("anthropic-version", ANTHROPIC_VERSION);
 
-        if let Some(ref key) = self.api_key {
-            builder = builder.header("x-api-key", key);
-        }
+            if let Some(ref key) = self.api_key {
+                builder = builder.header("x-api-key", key);
+            }
 
-        let response = builder
-            .json(&body)
-            .send()
-            .await
-            .context("LLM APIストリーミングリクエストの送信に失敗しました")?;
+            let response = builder
+                .json(&stream_body)
+                .send()
+                .await
+                .context("LLM APIストリーミングリクエストの送信に失敗しました")?;
 
-        if !response.status().is_success() {
+            if response.status().is_success() {
+                let byte_stream = response.bytes_stream();
+                return Ok(parse_sse_stream(byte_stream));
+            }
+
             let status = response.status();
-            let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("LLM API returned {status}: {body}");
+
+            // リトライ対象でない場合は即座にエラーを返す
+            if !is_retryable_status(status) || attempt == self.retry_config.max_retries {
+                let body = response.text().await.unwrap_or_default();
+                anyhow::bail!("LLM API returned {status}: {body}");
+            }
+
+            // 429の場合は retry-after ヘッダーを尊重する
+            let wait_secs = if status == StatusCode::TOO_MANY_REQUESTS {
+                parse_retry_after(&response).unwrap_or(
+                    self.retry_config.initial_backoff_secs
+                        * self.retry_config.backoff_multiplier.pow(attempt),
+                )
+            } else {
+                self.retry_config.initial_backoff_secs
+                    * self.retry_config.backoff_multiplier.pow(attempt)
+            };
+
+            tokio::time::sleep(Duration::from_secs(wait_secs)).await;
         }
 
-        let byte_stream = response.bytes_stream();
-        Ok(parse_sse_stream(byte_stream))
+        // ここには到達しないはずだが、安全のため
+        anyhow::bail!("LLM APIストリーミングリクエストのリトライ上限に達しました")
     }
 
     /// テキストプロンプトを送信して応答テキストを取得する（簡易メソッド）
@@ -276,7 +374,11 @@ mod tests {
             None,
             "http://127.0.0.1:1".to_string(),
             "test-model".to_string(),
-        );
+        )
+        .with_retry_config(RetryConfig {
+            max_retries: 0,
+            ..RetryConfig::default()
+        });
         let request = LlmRequest {
             model: "test-model".to_string(),
             messages: vec![Message {
@@ -305,7 +407,11 @@ mod tests {
             None,
             "http://127.0.0.1:1".to_string(),
             "test-model".to_string(),
-        );
+        )
+        .with_retry_config(RetryConfig {
+            max_retries: 0,
+            ..RetryConfig::default()
+        });
 
         let result = client.chat("hello").await;
         assert!(result.is_err());
@@ -313,5 +419,105 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("LLM APIリクエストの送信に失敗しました"));
+    }
+
+    // --- リトライ関連テスト ---
+
+    #[test]
+    fn test_retry_config_default() {
+        let config = RetryConfig::default();
+        assert_eq!(config.max_retries, 3);
+        assert_eq!(config.initial_backoff_secs, 1);
+        assert_eq!(config.backoff_multiplier, 2);
+    }
+
+    #[test]
+    fn test_retry_config_custom() {
+        let config = RetryConfig {
+            max_retries: 5,
+            initial_backoff_secs: 2,
+            backoff_multiplier: 3,
+        };
+        assert_eq!(config.max_retries, 5);
+        assert_eq!(config.initial_backoff_secs, 2);
+        assert_eq!(config.backoff_multiplier, 3);
+    }
+
+    #[test]
+    fn test_is_retryable_status() {
+        // リトライ対象
+        assert!(is_retryable_status(StatusCode::TOO_MANY_REQUESTS)); // 429
+        assert!(is_retryable_status(StatusCode::INTERNAL_SERVER_ERROR)); // 500
+        assert!(is_retryable_status(StatusCode::BAD_GATEWAY)); // 502
+        assert!(is_retryable_status(StatusCode::SERVICE_UNAVAILABLE)); // 503
+        assert!(is_retryable_status(
+            StatusCode::from_u16(529).unwrap()
+        )); // 529
+
+        // リトライ対象外
+        assert!(!is_retryable_status(StatusCode::OK)); // 200
+        assert!(!is_retryable_status(StatusCode::BAD_REQUEST)); // 400
+        assert!(!is_retryable_status(StatusCode::UNAUTHORIZED)); // 401
+        assert!(!is_retryable_status(StatusCode::FORBIDDEN)); // 403
+        assert!(!is_retryable_status(StatusCode::NOT_FOUND)); // 404
+    }
+
+    #[test]
+    fn test_with_retry_config() {
+        let client = LlmClient::new(None, "test-model".to_string()).with_retry_config(
+            RetryConfig {
+                max_retries: 5,
+                initial_backoff_secs: 2,
+                backoff_multiplier: 3,
+            },
+        );
+        assert_eq!(client.retry_config.max_retries, 5);
+        assert_eq!(client.retry_config.initial_backoff_secs, 2);
+        assert_eq!(client.retry_config.backoff_multiplier, 3);
+    }
+
+    #[test]
+    fn test_default_client_has_default_retry_config() {
+        let client = LlmClient::new(None, "test-model".to_string());
+        assert_eq!(client.retry_config.max_retries, 3);
+        assert_eq!(client.retry_config.initial_backoff_secs, 1);
+        assert_eq!(client.retry_config.backoff_multiplier, 2);
+    }
+
+    #[test]
+    fn test_parse_retry_after_valid() {
+        let response = http::Response::builder()
+            .status(429)
+            .header("retry-after", "5")
+            .body("")
+            .unwrap();
+        let reqwest_response = reqwest::Response::from(response);
+        assert_eq!(parse_retry_after(&reqwest_response), Some(5));
+    }
+
+    #[test]
+    fn test_parse_retry_after_missing() {
+        let response = http::Response::builder()
+            .status(429)
+            .body("")
+            .unwrap();
+        let reqwest_response = reqwest::Response::from(response);
+        assert_eq!(parse_retry_after(&reqwest_response), None);
+    }
+
+    #[test]
+    fn test_parse_retry_after_non_numeric() {
+        let response = http::Response::builder()
+            .status(429)
+            .header("retry-after", "not-a-number")
+            .body("")
+            .unwrap();
+        let reqwest_response = reqwest::Response::from(response);
+        assert_eq!(parse_retry_after(&reqwest_response), None);
+    }
+
+    #[test]
+    fn test_retryable_status_codes_list() {
+        assert_eq!(RETRYABLE_STATUS_CODES, &[429, 500, 502, 503, 529]);
     }
 }
