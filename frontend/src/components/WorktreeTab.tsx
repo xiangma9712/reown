@@ -26,9 +26,10 @@ function prStateVariant(
 
 interface Props {
   prs: PrInfo[];
+  onNavigateToPr: (prNumber: number) => void;
 }
 
-export function WorktreeTab({ prs }: Props) {
+export function WorktreeTab({ prs, onNavigateToPr }: Props) {
   const { t } = useTranslation();
   const { repoPath } = useRepository();
   const [worktrees, setWorktrees] = useState<WorktreeInfo[]>([]);
@@ -143,17 +144,17 @@ export function WorktreeTab({ prs }: Props) {
                   </Badge>
                 )}
                 {pr && (
-                  <a
-                    href={pr.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 no-underline"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigateToPr(pr.number);
+                    }}
                   >
                     <Badge variant={prStateVariant(pr.state)}>
                       #{pr.number} {pr.state}
                     </Badge>
-                  </a>
+                  </button>
                 )}
               </div>
               <div className="mt-0.5 text-[0.8rem] text-text-secondary">

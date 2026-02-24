@@ -107,11 +107,13 @@ function groupByCategory(diffs: CategorizedFileDiff[]): { category: ChangeCatego
 interface PrTabProps {
   prs: PrInfo[];
   setPrs: (prs: PrInfo[]) => void;
+  selectedPrNumber: number | null;
+  onPrSelected: () => void;
 }
 
 type PrStateFilter = "all" | "open" | "closed" | "merged";
 
-export function PrTab({ prs, setPrs }: PrTabProps) {
+export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProps) {
   const { t } = useTranslation();
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
@@ -157,6 +159,16 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
       // 設定ファイルが読み込めない場合は無視する
     });
   }, []);
+
+  // バッジクリックによるPR自動選択
+  useEffect(() => {
+    if (selectedPrNumber === null) return;
+    const pr = prs.find((p) => p.number === selectedPrNumber);
+    if (pr) {
+      handleSelectPr(pr);
+      onPrSelected();
+    }
+  }, [selectedPrNumber, prs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleLoad(e?: FormEvent) {
     e?.preventDefault();
