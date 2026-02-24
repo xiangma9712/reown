@@ -3,6 +3,14 @@
     "title": "reown",
     "tagline": "Own your codebase, even in the age of agent PR storms."
   },
+  "repository": {
+    "title": "Repositories",
+    "add": "Add Repository",
+    "remove": "Remove",
+    "confirmRemove": "Remove repository '{{name}}' from the list?",
+    "selectPrompt": "Select a repository from the sidebar.",
+    "empty": "No repositories registered. Click \"Add Repository\" to get started."
+  },
   "tabs": {
     "worktrees": "Worktrees",
     "branches": "Branches",
