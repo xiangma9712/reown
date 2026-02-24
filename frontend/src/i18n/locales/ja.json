@@ -122,7 +122,11 @@
     "confirmRequestChanges": "このPRにRequest Changesを送信しますか？",
     "reviewSubmitting": "レビューを送信中…",
     "reviewSuccess": "レビューを送信しました",
-    "reviewError": "レビューの送信に失敗しました"
+    "reviewError": "レビューの送信に失敗しました",
+    "focusFilter": "フォーカスフィルタ",
+    "focusFilterActive": "フィルタ中: {{current}}/{{total}} ファイル",
+    "focusFilterReset": "すべて表示",
+    "focusModuleFilter": "モジュール"
   },
   "llmSettings": {
     "title": "LLM設定",

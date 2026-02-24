@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
-import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AutomationConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent } from "../types";
+import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AutomationConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent, AffectedModule } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -134,6 +134,10 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
   // Category accordion state (expanded categories)
   const [expandedCategories, setExpandedCategories] = useState<Set<ChangeCategory>>(new Set(["Logic"]));
 
+  // Focus filter state
+  const [focusCategoryFilters, setFocusCategoryFilters] = useState<Set<ChangeCategory>>(new Set());
+  const [focusModuleFilter, setFocusModuleFilter] = useState<string | null>(null);
+
   // Analysis state
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [hybridResult, setHybridResult] = useState<HybridAnalysisResult | null>(null);
@@ -216,6 +220,8 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     setDiffs([]);
     setExpandedFiles(new Set());
     setExpandedCategories(new Set(["Logic"]));
+    setFocusCategoryFilters(new Set());
+    setFocusModuleFilter(null);
     setAnalysisError(null);
     setReviewComment("");
     setReviewMessage(null);
@@ -269,6 +275,8 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     setDiffs([]);
     setExpandedFiles(new Set());
     setDiffError(null);
+    setFocusCategoryFilters(new Set());
+    setFocusModuleFilter(null);
     setAnalysisResult(null);
     setHybridResult(null);
     setAnalysisError(null);
@@ -370,7 +378,45 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
       ? prs
       : prs.filter((pr) => pr.state === stateFilter);
 
-  const groupedDiffs = groupByCategory(diffs);
+  function toggleFocusCategory(category: ChangeCategory) {
+    setFocusCategoryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  }
+
+  function resetFocusFilters() {
+    setFocusCategoryFilters(new Set());
+    setFocusModuleFilter(null);
+  }
+
+  const isFocusActive = focusCategoryFilters.size > 0 || focusModuleFilter !== null;
+
+  // Get affected modules from LLM analysis for module filter
+  const affectedModules: AffectedModule[] = hybridResult?.llm_analysis.affected_modules ?? [];
+
+  // Apply focus filters to diffs
+  const filteredDiffs = isFocusActive
+    ? diffs.filter((diff) => {
+        const categoryMatch =
+          focusCategoryFilters.size === 0 || focusCategoryFilters.has(diff.category);
+        const moduleMatch =
+          focusModuleFilter === null ||
+          affectedModules.some(
+            (m) =>
+              m.name === focusModuleFilter &&
+              (diff.new_path ?? diff.old_path ?? "").includes(focusModuleFilter),
+          );
+        return categoryMatch && moduleMatch;
+      })
+    : diffs;
+
+  const groupedDiffs = groupByCategory(filteredDiffs);
 
   // PR diff view
   if (selectedPr) {
@@ -476,6 +522,11 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
             <h2 className="text-lg text-text-heading">
               {t("diff.changedFiles")}
             </h2>
+            {isFocusActive && (
+              <span className="text-[0.8rem] text-text-secondary">
+                {t("pr.focusFilterActive", { current: filteredDiffs.length, total: diffs.length })}
+              </span>
+            )}
             {diffs.length > 0 && (
               <div className="ml-auto flex gap-2">
                 <Button variant="secondary" size="sm" onClick={expandAllFiles}>
@@ -487,6 +538,63 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
               </div>
             )}
           </div>
+          {/* Focus filter bar */}
+          {diffs.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              {categoryOrder
+                .filter((cat) => diffs.some((d) => d.category === cat))
+                .map((cat) => {
+                  const isSelected = focusCategoryFilters.has(cat);
+                  return (
+                    <button
+                      key={cat}
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium transition-colors ${
+                        isSelected
+                          ? "bg-accent text-white"
+                          : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                      }`}
+                      onClick={() => toggleFocusCategory(cat)}
+                    >
+                      <span>{categoryIcons[cat]}</span>
+                      <span>{t(categoryLabelKeys[cat])}</span>
+                    </button>
+                  );
+                })}
+              {affectedModules.length > 0 && (
+                <>
+                  <span className="text-[0.7rem] text-text-muted">|</span>
+                  <span className="text-[0.7rem] text-text-muted">{t("pr.focusModuleFilter")}:</span>
+                  {affectedModules.map((mod) => {
+                    const isSelected = focusModuleFilter === mod.name;
+                    return (
+                      <button
+                        key={mod.name}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium transition-colors ${
+                          isSelected
+                            ? "bg-accent text-white"
+                            : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                        }`}
+                        onClick={() =>
+                          setFocusModuleFilter(isSelected ? null : mod.name)
+                        }
+                        title={mod.description}
+                      >
+                        {mod.name}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+              {isFocusActive && (
+                <button
+                  className="ml-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium text-danger transition-colors hover:bg-bg-hover"
+                  onClick={resetFocusFilters}
+                >
+                  {t("pr.focusFilterReset")}
+                </button>
+              )}
+            </div>
+          )}
           <div className="scrollbar-custom overflow-y-auto">
             {diffLoading && <Loading />}
             {diffError && (
