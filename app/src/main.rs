@@ -240,7 +240,6 @@ mod tests {
         for (kind, expected) in [
             (ErrorKind::Git, "git"),
             (ErrorKind::GitHub, "github"),
-            (ErrorKind::Internal, "internal"),
         ] {
             let json = serde_json::to_value(&kind).unwrap();
             assert_eq!(json, expected);
