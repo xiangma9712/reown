@@ -21,23 +21,23 @@ export function Sidebar({
   return (
     <aside className="flex h-full w-56 flex-col border-r border-border bg-sidebar-bg">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <h1 className="text-lg font-bold text-text-heading">{t("app.title")}</h1>
+        <h1 className="text-xl font-bold text-text-heading">{t("app.title")}</h1>
       </div>
       <div className="border-b border-border px-4 py-2">
-        <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-text-muted">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">
           {t("repository.title")}
         </span>
       </div>
       <nav className="scrollbar-custom flex-1 overflow-y-auto py-1">
         {repositories.length === 0 ? (
-          <p className="px-4 py-3 text-[0.75rem] text-text-muted">
+          <p className="px-4 py-3 text-sm text-text-muted">
             {t("repository.empty")}
           </p>
         ) : (
           repositories.map((repo) => (
             <div
               key={repo.path}
-              className={`group flex w-full items-center justify-between px-4 py-2 text-[0.85rem] transition-colors ${
+              className={`group flex w-full items-center justify-between px-4 py-2 text-base transition-colors ${
                 selectedPath === repo.path
                   ? "border-l-2 border-l-accent bg-bg-hover text-accent"
                   : "border-l-2 border-l-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
@@ -67,13 +67,13 @@ export function Sidebar({
       <div className="border-t border-border px-3 py-2">
         <button
           onClick={onAdd}
-          className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-[0.8rem] text-text-secondary transition-colors hover:border-accent hover:text-accent"
+          className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent"
         >
           + {t("repository.add")}
         </button>
       </div>
       <div className="border-t border-border px-4 py-3">
-        <p className="text-[0.7rem] text-text-muted">{t("app.tagline")}</p>
+        <p className="text-xs text-text-muted">{t("app.tagline")}</p>
       </div>
     </aside>
   );

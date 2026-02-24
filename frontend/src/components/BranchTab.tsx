@@ -137,22 +137,22 @@ export function BranchTab({ showConfirm, prs }: Props) {
   return (
     <div>
       <Card className="flex flex-col">
-        <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
+        <h2 className="mb-4 border-b border-border pb-2 text-xl text-text-heading">
           {t("branch.title")}
         </h2>
         <div className="scrollbar-custom mb-4 min-h-[120px] max-h-[360px] flex-1 overflow-y-auto">
           {loading && (
-            <p className="p-2 text-[0.9rem] text-text-secondary">
+            <p className="p-2 text-base text-text-secondary">
               {t("common.loading")}
             </p>
           )}
           {error && (
-            <p className="p-2 text-[0.9rem] text-danger">
+            <p className="p-2 text-base text-danger">
               {t("common.error", { message: error })}
             </p>
           )}
           {!loading && !error && branches.length === 0 && (
-            <p className="p-2 text-[0.9rem] italic text-text-secondary">
+            <p className="p-2 text-base italic text-text-secondary">
               {t("branch.empty")}
             </p>
           )}
@@ -161,7 +161,7 @@ export function BranchTab({ showConfirm, prs }: Props) {
             return (
               <div
                 key={b.name}
-                className="flex items-center justify-between border-b border-border px-3 py-2 font-mono text-[0.85rem] last:border-b-0"
+                className="flex items-center justify-between border-b border-border px-3 py-2 font-mono text-base last:border-b-0"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -206,7 +206,7 @@ export function BranchTab({ showConfirm, prs }: Props) {
           })}
         </div>
         <div className="border-t border-border pt-4">
-          <h3 className="mb-3 text-[0.9rem] text-text-primary/80">
+          <h3 className="mb-3 text-base text-text-primary/80">
             {t("branch.createNew")}
           </h3>
           <form onSubmit={handleSubmit}>
@@ -226,7 +226,7 @@ export function BranchTab({ showConfirm, prs }: Props) {
           </form>
           {formMessage && (
             <div
-              className={`mt-2 min-h-[1.2em] text-[0.8rem] ${formMessage.type === "success" ? "text-accent" : "text-danger"}`}
+              className={`mt-2 min-h-[1.2em] text-sm ${formMessage.type === "success" ? "text-accent" : "text-danger"}`}
             >
               {formMessage.text}
             </div>

@@ -10,7 +10,7 @@ export function Loading({ className = "" }: LoadingProps) {
   return (
     <div className={`flex items-center gap-2 p-2 ${className}`}>
       <Spinner />
-      <span className="text-[0.9rem] text-text-secondary">
+      <span className="text-base text-text-secondary">
         {t("common.loading")}
       </span>
     </div>

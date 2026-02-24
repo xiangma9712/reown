@@ -29,7 +29,7 @@ export function ConfirmDialog({
           <Dialog.Title className="sr-only">
             {t("common.confirm")}
           </Dialog.Title>
-          <Dialog.Description className="mb-5 text-[0.95rem] text-text-primary">
+          <Dialog.Description className="mb-5 text-lg text-text-primary">
             {message}
           </Dialog.Description>
           <div className="flex justify-end gap-2">
