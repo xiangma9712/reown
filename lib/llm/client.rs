@@ -1,8 +1,11 @@
+use std::pin::Pin;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use futures::stream::Stream;
 
-use super::types::{LlmRequest, LlmResponse, Message};
+use super::stream::parse_sse_stream;
+use super::types::{LlmRequest, LlmResponse, Message, StreamEvent};
 
 const DEFAULT_API_BASE: &str = "https://api.anthropic.com";
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
@@ -80,6 +83,46 @@ impl LlmClient {
             .context("LLM APIレスポンスのパースに失敗しました")?;
 
         Ok(llm_response)
+    }
+
+    /// Anthropic Messages APIにストリーミングリクエストを送信し、SSEイベントのストリームを返す
+    ///
+    /// リクエストに `"stream": true` を付与して送信し、SSEレスポンスをパースする。
+    pub async fn send_stream(
+        &self,
+        request: &LlmRequest,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamEvent>> + Send>>> {
+        let url = format!("{}/v1/messages", self.api_base);
+
+        // リクエストボディに stream: true を付与
+        let mut body = serde_json::to_value(request)
+            .context("LlmRequestのシリアライズに失敗しました")?;
+        body["stream"] = serde_json::Value::Bool(true);
+
+        let mut builder = self
+            .http
+            .post(&url)
+            .header("content-type", "application/json")
+            .header("anthropic-version", ANTHROPIC_VERSION);
+
+        if let Some(ref key) = self.api_key {
+            builder = builder.header("x-api-key", key);
+        }
+
+        let response = builder
+            .json(&body)
+            .send()
+            .await
+            .context("LLM APIストリーミングリクエストの送信に失敗しました")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("LLM API returned {status}: {body}");
+        }
+
+        let byte_stream = response.bytes_stream();
+        Ok(parse_sse_stream(byte_stream))
     }
 
     /// テキストプロンプトを送信して応答テキストを取得する（簡易メソッド）

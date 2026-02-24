@@ -1,5 +1,74 @@
 use serde::{Deserialize, Serialize};
 
+// ---------------------------------------------------------------------------
+// Streaming (SSE) 型定義
+// ---------------------------------------------------------------------------
+
+/// Anthropic Messages APIのSSEストリーミングイベント
+///
+/// <https://docs.anthropic.com/en/api/messages-streaming>
+#[derive(Debug, Clone, PartialEq)]
+pub enum StreamEvent {
+    /// `message_start` — メッセージオブジェクトの初期情報
+    MessageStart {
+        message: LlmResponse,
+    },
+    /// `content_block_start` — 新しいコンテンツブロックの開始
+    ContentBlockStart {
+        index: u32,
+        content_block: ContentBlock,
+    },
+    /// `content_block_delta` — コンテンツブロックの差分テキスト
+    ContentBlockDelta {
+        index: u32,
+        delta: TextDelta,
+    },
+    /// `content_block_stop` — コンテンツブロックの終了
+    ContentBlockStop {
+        index: u32,
+    },
+    /// `message_delta` — メッセージレベルの変更（stop_reason等）
+    MessageDelta {
+        delta: MessageDeltaBody,
+        usage: DeltaUsage,
+    },
+    /// `message_stop` — メッセージの完了
+    MessageStop,
+    /// `ping` — キープアライブ
+    Ping,
+    /// `error` — ストリーミングエラー
+    Error {
+        error_type: String,
+        message: String,
+    },
+}
+
+/// `content_block_delta` のテキスト差分
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TextDelta {
+    #[serde(rename = "type")]
+    pub delta_type: String,
+    pub text: String,
+}
+
+/// `message_delta` のボディ
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MessageDeltaBody {
+    pub stop_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stop_sequence: Option<String>,
+}
+
+/// `message_delta` 内のトークン使用量（output_tokensのみ）
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DeltaUsage {
+    pub output_tokens: u32,
+}
+
+// ---------------------------------------------------------------------------
+// 非ストリーミング型定義
+// ---------------------------------------------------------------------------
+
 /// Anthropic Messages APIリクエスト
 ///
 /// <https://docs.anthropic.com/en/api/messages>
@@ -38,7 +107,7 @@ pub struct Message {
 }
 
 /// Anthropic Messages APIレスポンス
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LlmResponse {
     /// メッセージID
     pub id: String,
@@ -61,7 +130,7 @@ pub struct LlmResponse {
 }
 
 /// レスポンスのコンテンツブロック
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ContentBlock {
     /// ブロックタイプ（"text"等）
     #[serde(rename = "type")]
@@ -71,7 +140,7 @@ pub struct ContentBlock {
 }
 
 /// トークン使用量
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Usage {
     /// 入力トークン数
     pub input_tokens: u32,
