@@ -57,6 +57,8 @@
     "fetch": "取得",
     "fillAllFields": "全てのフィールドを入力してください。",
     "empty": "PR情報を取得するには上のフォームに入力してください。",
-    "files": "{{count}} files"
+    "files": "{{count}} files",
+    "backToList": "← 一覧に戻る",
+    "noDiffFiles": "変更ファイルがありません。"
   }
 }

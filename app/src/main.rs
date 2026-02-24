@@ -68,6 +68,18 @@ async fn list_pull_requests(
         .map_err(AppError::github)
 }
 
+#[tauri::command]
+async fn get_pull_request_files(
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+) -> Result<Vec<reown::git::diff::FileDiff>, AppError> {
+    reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
+        .await
+        .map_err(AppError::github)
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 fn main() {
@@ -82,6 +94,7 @@ fn main() {
             diff_workdir,
             diff_commit,
             list_pull_requests,
+            get_pull_request_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -158,10 +171,13 @@ mod tests {
             author: "alice".to_string(),
             state: "open".to_string(),
             head_branch: "feature-x".to_string(),
+            base_branch: "main".to_string(),
             updated_at: "2025-01-15T10:30:00Z".to_string(),
             additions: 100,
             deletions: 20,
             changed_files: 5,
+            body: "PR description".to_string(),
+            html_url: "https://github.com/owner/repo/pull/42".to_string(),
         };
         let json = serde_json::to_value(&pr).unwrap();
         assert_eq!(json["number"], 42);
@@ -169,9 +185,12 @@ mod tests {
         assert_eq!(json["author"], "alice");
         assert_eq!(json["state"], "open");
         assert_eq!(json["head_branch"], "feature-x");
+        assert_eq!(json["base_branch"], "main");
         assert_eq!(json["additions"], 100);
         assert_eq!(json["deletions"], 20);
         assert_eq!(json["changed_files"], 5);
+        assert_eq!(json["body"], "PR description");
+        assert_eq!(json["html_url"], "https://github.com/owner/repo/pull/42");
     }
 
     #[test]
