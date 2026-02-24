@@ -416,7 +416,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
                   {t("pr.approve")}
                 </Button>
                 <Button
-                  variant="danger"
+                  variant="destructive"
                   size="sm"
                   onClick={() => setConfirmingReview("REQUEST_CHANGES")}
                   disabled={reviewLoading || selectedPr.state !== "open"}
@@ -432,7 +432,7 @@ export function PrTab({ prs, setPrs }: PrTabProps) {
                     : t("pr.confirmRequestChanges")}
                 </span>
                 <Button
-                  variant={confirmingReview === "APPROVE" ? "primary" : "danger"}
+                  variant={confirmingReview === "APPROVE" ? "primary" : "destructive"}
                   size="sm"
                   onClick={() => handleSubmitReview(confirmingReview)}
                   disabled={reviewLoading}
