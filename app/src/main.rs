@@ -424,6 +424,53 @@ fn extract_todos(repo_path: String) -> Result<Vec<reown::git::todo::TodoItem>, A
     reown::git::todo::extract_todos(&repo_path).map_err(AppError::git)
 }
 
+// ── Review Pattern commands ──────────────────────────────────────────────────
+
+#[tauri::command]
+async fn suggest_review_comments(
+    app_handle: tauri::AppHandle,
+    owner: String,
+    repo: String,
+    pr_number: u64,
+    token: String,
+) -> Result<Vec<reown::analysis::ReviewSuggestion>, AppError> {
+    // 1. レビュー履歴を読み込む
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let storage_path = reown::review_history::default_review_history_path(&app_data_dir);
+    let records =
+        reown::review_history::load_review_history(&storage_path).map_err(AppError::storage)?;
+
+    // 2. レビューパターンを分析する
+    let stats = reown::analysis::analyze_review_patterns(&records);
+
+    // 3. PRの情報を取得してリスク分析する
+    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+        .await
+        .map_err(AppError::github)?;
+
+    let pr = prs
+        .into_iter()
+        .find(|p| p.number == pr_number)
+        .ok_or_else(|| AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found")))?;
+
+    let diffs =
+        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
+            .await
+            .map_err(AppError::github)?;
+
+    let analysis = reown::analysis::analyze_pr_risk(&pr, &diffs);
+
+    // 4. サジェストを生成する
+    Ok(reown::analysis::suggest_review_focus(
+        &analysis.files,
+        &analysis.risk.level,
+        &stats,
+    ))
+}
+
 // ── Review History commands ──────────────────────────────────────────────────
 
 #[tauri::command]
@@ -488,6 +535,7 @@ fn main() {
             save_automation_config,
             load_automation_config,
             extract_todos,
+            suggest_review_comments,
             list_review_history,
             add_review_record,
         ])
