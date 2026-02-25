@@ -19,6 +19,7 @@ interface Props {
   navItems: NavItem[];
   activeTabId: string;
   onSelectTab: (id: string) => void;
+  branchSelector?: ReactNode;
   children: ReactNode;
 }
 
@@ -31,6 +32,7 @@ export function Layout({
   navItems,
   activeTabId,
   onSelectTab,
+  branchSelector,
   children,
 }: Props) {
   const { t } = useTranslation();
@@ -47,11 +49,18 @@ export function Layout({
       <div className="flex flex-1 flex-col overflow-hidden">
         {selectedRepoPath ? (
           <>
-            <TabBar
-              items={navItems}
-              activeId={activeTabId}
-              onSelect={onSelectTab}
-            />
+            <div className="flex items-center border-b border-border bg-bg-primary">
+              {branchSelector && (
+                <div className="shrink-0 border-r border-border px-3 py-1.5">
+                  {branchSelector}
+                </div>
+              )}
+              <TabBar
+                items={navItems}
+                activeId={activeTabId}
+                onSelect={onSelectTab}
+              />
+            </div>
             <main className="scrollbar-custom flex-1 overflow-y-auto p-6">
               {children}
             </main>

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
 import { WorktreeTab } from "./components/WorktreeTab";
 import { BranchTab } from "./components/BranchTab";
+import { BranchSelector } from "./components/BranchSelector";
 import { DiffTab } from "./components/DiffTab";
 import { PrTab } from "./components/PrTab";
 import { TodoTab } from "./components/TodoTab";
@@ -33,6 +34,7 @@ export function App() {
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
   const [prs, setPrs] = useState<PrInfo[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [selectedPrNumber, setSelectedPrNumber] = useState<number | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
@@ -42,6 +44,7 @@ export function App() {
   useEffect(() => {
     if (!selectedRepoPath) {
       setRepoInfo(null);
+      setSelectedBranch(null);
       return;
     }
     invoke("get_repo_info", { repoPath: selectedRepoPath })
@@ -176,6 +179,13 @@ export function App() {
         navItems={[...NAV_ITEMS]}
         activeTabId={activeTab}
         onSelectTab={(id) => setActiveTab(id as TabName)}
+        branchSelector={
+          <BranchSelector
+            prs={prs}
+            selectedBranch={selectedBranch}
+            onSelectBranch={setSelectedBranch}
+          />
+        }
       >
         {activeTab === "worktree" && (
           <WorktreeTab prs={prs} onNavigateToPr={navigateToPr} />
