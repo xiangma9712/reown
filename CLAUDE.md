@@ -46,7 +46,7 @@ frontend/                   — Web frontend (React + TypeScript)
   src/App.tsx               — Main app component (tab UI)
   src/types.ts              — TypeScript type definitions (mirrors Rust structs)
   src/invoke.ts             — Tauri IPC wrapper
-  src/components/           — UI components (WorktreeTab, BranchTab, DiffTab, PrTab)
+  src/components/           — UI components (ReviewTab, TodoTab, BranchSelector, Layout, etc.)
   src/i18n/                 — i18n (ja/en)
 ```
 

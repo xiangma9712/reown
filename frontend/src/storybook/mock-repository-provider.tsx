@@ -18,7 +18,7 @@ interface MockRepositoryProviderProps {
  * @example
  * ```tsx
  * <MockRepositoryProvider>
- *   <BranchTab />
+ *   <ReviewTab selectedBranch="main" prs={[]} />
  * </MockRepositoryProvider>
  * ```
  */
