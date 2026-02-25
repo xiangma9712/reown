@@ -114,9 +114,7 @@ const categoryOrder: ChangeCategory[] = [
   "Other",
 ];
 
-function groupByCategory(
-  diffs: CategorizedFileDiff[]
-): {
+function groupByCategory(diffs: CategorizedFileDiff[]): {
   category: ChangeCategory;
   files: { diff: CategorizedFileDiff; originalIndex: number }[];
 }[] {
