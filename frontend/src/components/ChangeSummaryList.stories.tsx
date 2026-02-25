@@ -98,7 +98,7 @@ export const EmptyDiffs: Story = {
 };
 
 /** エラー状態 */
-export const Error: Story = {
+export const ErrorState: Story = {
   args: {
     autoGenerate: true,
   },
