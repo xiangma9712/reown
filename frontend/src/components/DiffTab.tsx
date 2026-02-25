@@ -23,7 +23,7 @@ function statusLabel(status: string): string {
 }
 
 function statusVariant(
-  status: string,
+  status: string
 ): "success" | "danger" | "warning" | "info" | "default" {
   switch (status) {
     case "Added":
@@ -116,11 +116,7 @@ export function DiffTab() {
             ))}
           </div>
           <div className="border-t border-border pt-4">
-            <Button
-              className="w-full"
-              onClick={handleLoad}
-              disabled={loading}
-            >
+            <Button className="w-full" onClick={handleLoad} disabled={loading}>
               {t("diff.loadButton")}
             </Button>
           </div>

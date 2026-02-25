@@ -23,12 +23,10 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           className={`w-full rounded border bg-bg-primary px-2.5 py-1.5 font-mono text-base text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none ${error ? "border-danger" : "border-border-hover"} ${className}`}
           {...props}
         />
-        {error && (
-          <p className="mt-1 text-sm text-danger">{error}</p>
-        )}
+        {error && <p className="mt-1 text-sm text-danger">{error}</p>}
       </div>
     );
-  },
+  }
 );
 
 TextArea.displayName = "TextArea";

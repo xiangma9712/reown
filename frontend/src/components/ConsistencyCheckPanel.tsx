@@ -21,7 +21,7 @@ export function ConsistencyCheckPanel({
 }: ConsistencyCheckPanelProps) {
   const { t } = useTranslation();
   const [consistency, setConsistency] = useState<ConsistencyResult | null>(
-    null,
+    null
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

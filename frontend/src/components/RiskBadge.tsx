@@ -7,9 +7,16 @@ interface RiskBadgeProps {
   className?: string;
 }
 
-const riskConfig: Record<RiskLevel, { variant: "success" | "warning" | "danger"; emoji: string; labelKey: string }> = {
+const riskConfig: Record<
+  RiskLevel,
+  { variant: "success" | "warning" | "danger"; emoji: string; labelKey: string }
+> = {
   Low: { variant: "success", emoji: "\uD83D\uDFE2", labelKey: "pr.riskLow" },
-  Medium: { variant: "warning", emoji: "\uD83D\uDFE1", labelKey: "pr.riskMedium" },
+  Medium: {
+    variant: "warning",
+    emoji: "\uD83D\uDFE1",
+    labelKey: "pr.riskMedium",
+  },
   High: { variant: "danger", emoji: "\uD83D\uDD34", labelKey: "pr.riskHigh" },
 };
 

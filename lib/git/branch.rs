@@ -17,17 +17,18 @@ pub fn list_branches(repo_path: &str) -> Result<Vec<BranchInfo>> {
     let mut branches = Vec::new();
     for branch_result in repo.branches(Some(BranchType::Local))? {
         let (branch, _) = branch_result?;
-        let name = branch
-            .name()?
-            .unwrap_or("<invalid utf-8>")
-            .to_string();
+        let name = branch.name()?.unwrap_or("<invalid utf-8>").to_string();
         let is_head = branch.is_head();
         let upstream = branch
             .upstream()
             .ok()
             .and_then(|u| u.name().ok().flatten().map(|s| s.to_string()));
 
-        branches.push(BranchInfo { name, is_head, upstream });
+        branches.push(BranchInfo {
+            name,
+            is_head,
+            upstream,
+        });
     }
 
     Ok(branches)

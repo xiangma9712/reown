@@ -140,10 +140,7 @@ struct GhCommitAuthor {
 
 impl From<GhCommit> for CommitInfo {
     fn from(c: GhCommit) -> Self {
-        let author = c
-            .author
-            .map(|u| u.login)
-            .unwrap_or(c.commit.author.name);
+        let author = c.author.map(|u| u.login).unwrap_or(c.commit.author.name);
         Self {
             sha: c.sha,
             message: c.commit.message,
@@ -362,7 +359,12 @@ fn parse_patch(patch: &str) -> Vec<DiffChunk> {
 /// Parse a hunk header like `@@ -1,3 +1,4 @@` to extract (old_start, new_start).
 fn parse_hunk_header(header: &str) -> (u32, u32) {
     // Strip @@ prefix/suffix and split
-    let trimmed = header.trim_start_matches('@').trim().split("@@").next().unwrap_or("");
+    let trimmed = header
+        .trim_start_matches('@')
+        .trim()
+        .split("@@")
+        .next()
+        .unwrap_or("");
     let mut old_start = 1u32;
     let mut new_start = 1u32;
 
@@ -391,11 +393,7 @@ impl GhPullRequestFile {
             _ => FileStatus::Other,
         };
 
-        let chunks = self
-            .patch
-            .as_deref()
-            .map(parse_patch)
-            .unwrap_or_default();
+        let chunks = self.patch.as_deref().map(parse_patch).unwrap_or_default();
 
         let old_path = match &status {
             FileStatus::Added => None,
@@ -488,9 +486,7 @@ pub async fn submit_review(
     token: &str,
 ) -> Result<()> {
     let client = reqwest::Client::new();
-    let url = format!(
-        "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/reviews"
-    );
+    let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/reviews");
 
     let request_body = SubmitReviewRequest {
         event,
@@ -993,7 +989,10 @@ mod tests {
         assert_eq!(parse_hunk_header("@@ -1,3 +1,4 @@"), (1, 1));
         assert_eq!(parse_hunk_header("@@ -10,5 +20,8 @@"), (10, 20));
         assert_eq!(parse_hunk_header("@@ -1 +1 @@"), (1, 1));
-        assert_eq!(parse_hunk_header("@@ -100,3 +200,5 @@ fn main()"), (100, 200));
+        assert_eq!(
+            parse_hunk_header("@@ -100,3 +200,5 @@ fn main()"),
+            (100, 200)
+        );
     }
 
     /// Test GitHub PR file response deserialization.
@@ -1013,7 +1012,10 @@ mod tests {
         ]"#;
 
         let files: Vec<GhPullRequestFile> = serde_json::from_str(json).unwrap();
-        let diffs: Vec<FileDiff> = files.into_iter().map(GhPullRequestFile::into_file_diff).collect();
+        let diffs: Vec<FileDiff> = files
+            .into_iter()
+            .map(GhPullRequestFile::into_file_diff)
+            .collect();
 
         assert_eq!(diffs.len(), 2);
 
@@ -1037,12 +1039,30 @@ mod tests {
             patch: None,
         };
 
-        assert_eq!(make_file("added").into_file_diff().status, FileStatus::Added);
-        assert_eq!(make_file("removed").into_file_diff().status, FileStatus::Deleted);
-        assert_eq!(make_file("modified").into_file_diff().status, FileStatus::Modified);
-        assert_eq!(make_file("changed").into_file_diff().status, FileStatus::Modified);
-        assert_eq!(make_file("renamed").into_file_diff().status, FileStatus::Renamed);
-        assert_eq!(make_file("copied").into_file_diff().status, FileStatus::Other);
+        assert_eq!(
+            make_file("added").into_file_diff().status,
+            FileStatus::Added
+        );
+        assert_eq!(
+            make_file("removed").into_file_diff().status,
+            FileStatus::Deleted
+        );
+        assert_eq!(
+            make_file("modified").into_file_diff().status,
+            FileStatus::Modified
+        );
+        assert_eq!(
+            make_file("changed").into_file_diff().status,
+            FileStatus::Modified
+        );
+        assert_eq!(
+            make_file("renamed").into_file_diff().status,
+            FileStatus::Renamed
+        );
+        assert_eq!(
+            make_file("copied").into_file_diff().status,
+            FileStatus::Other
+        );
     }
 
     /// Test renamed file uses previous_filename for old_path.
@@ -1272,8 +1292,7 @@ mod tests {
     /// Test that the GraphQL mutation for enabling auto-merge is constructed correctly.
     #[test]
     fn test_build_enable_auto_merge_mutation_merge() {
-        let mutation =
-            build_enable_auto_merge_mutation("PR_node_id_123", &MergeMethod::Merge);
+        let mutation = build_enable_auto_merge_mutation("PR_node_id_123", &MergeMethod::Merge);
         let query_str = mutation["query"].as_str().unwrap();
 
         assert!(query_str.contains("enablePullRequestAutoMerge"));
@@ -1286,8 +1305,7 @@ mod tests {
     /// Test that the mutation uses SQUASH merge method.
     #[test]
     fn test_build_enable_auto_merge_mutation_squash() {
-        let mutation =
-            build_enable_auto_merge_mutation("PR_node_id_456", &MergeMethod::Squash);
+        let mutation = build_enable_auto_merge_mutation("PR_node_id_456", &MergeMethod::Squash);
         let query_str = mutation["query"].as_str().unwrap();
 
         assert!(query_str.contains("mergeMethod: SQUASH"));
@@ -1297,8 +1315,7 @@ mod tests {
     /// Test that the mutation uses REBASE merge method.
     #[test]
     fn test_build_enable_auto_merge_mutation_rebase() {
-        let mutation =
-            build_enable_auto_merge_mutation("PR_node_id_789", &MergeMethod::Rebase);
+        let mutation = build_enable_auto_merge_mutation("PR_node_id_789", &MergeMethod::Rebase);
         let query_str = mutation["query"].as_str().unwrap();
 
         assert!(query_str.contains("mergeMethod: REBASE"));
@@ -1317,8 +1334,7 @@ mod tests {
             }
         }"#;
 
-        let response: GhGraphQlResponse<GhPrNodeIdData> =
-            serde_json::from_str(json).unwrap();
+        let response: GhGraphQlResponse<GhPrNodeIdData> = serde_json::from_str(json).unwrap();
         assert!(response.errors.is_none());
         let data = response.data.unwrap();
         assert_eq!(data.repository.pull_request.id, "PR_kwDOTest123");
@@ -1334,8 +1350,7 @@ mod tests {
             ]
         }"#;
 
-        let response: GhGraphQlResponse<GhPrNodeIdData> =
-            serde_json::from_str(json).unwrap();
+        let response: GhGraphQlResponse<GhPrNodeIdData> = serde_json::from_str(json).unwrap();
         assert!(response.data.is_none());
         let errors = response.errors.unwrap();
         assert_eq!(errors.len(), 1);

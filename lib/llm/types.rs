@@ -10,23 +10,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq)]
 pub enum StreamEvent {
     /// `message_start` — メッセージオブジェクトの初期情報
-    MessageStart {
-        message: LlmResponse,
-    },
+    MessageStart { message: LlmResponse },
     /// `content_block_start` — 新しいコンテンツブロックの開始
     ContentBlockStart {
         index: u32,
         content_block: ContentBlock,
     },
     /// `content_block_delta` — コンテンツブロックの差分テキスト
-    ContentBlockDelta {
-        index: u32,
-        delta: TextDelta,
-    },
+    ContentBlockDelta { index: u32, delta: TextDelta },
     /// `content_block_stop` — コンテンツブロックの終了
-    ContentBlockStop {
-        index: u32,
-    },
+    ContentBlockStop { index: u32 },
     /// `message_delta` — メッセージレベルの変更（stop_reason等）
     MessageDelta {
         delta: MessageDeltaBody,
@@ -37,10 +30,7 @@ pub enum StreamEvent {
     /// `ping` — キープアライブ
     Ping,
     /// `error` — ストリーミングエラー
-    Error {
-        error_type: String,
-        message: String,
-    },
+    Error { error_type: String, message: String },
 }
 
 /// `content_block_delta` のテキスト差分

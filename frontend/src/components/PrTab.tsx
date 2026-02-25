@@ -2,7 +2,19 @@ import { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import { useRepository } from "../RepositoryContext";
-import type { PrInfo, CategorizedFileDiff, ChangeCategory, LlmConfig, AutomationConfig, AnalysisResult, HybridAnalysisResult, ReviewEvent, AffectedModule, CommitInfo, FileDiff } from "../types";
+import type {
+  PrInfo,
+  CategorizedFileDiff,
+  ChangeCategory,
+  LlmConfig,
+  AutomationConfig,
+  AnalysisResult,
+  HybridAnalysisResult,
+  ReviewEvent,
+  AffectedModule,
+  CommitInfo,
+  FileDiff,
+} from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -15,7 +27,7 @@ import { AiSummaryPanel } from "./AiSummaryPanel";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 
 function stateVariant(
-  state: string,
+  state: string
 ): "success" | "danger" | "purple" | "default" {
   switch (state) {
     case "open":
@@ -45,7 +57,7 @@ function statusLabel(status: string): string {
 }
 
 function statusVariant(
-  status: string,
+  status: string
 ): "success" | "danger" | "warning" | "info" | "default" {
   switch (status) {
     case "Added":
@@ -62,7 +74,7 @@ function statusVariant(
 }
 
 function getOriginString(
-  origin: "Addition" | "Deletion" | "Context" | { Other: string },
+  origin: "Addition" | "Deletion" | "Context" | { Other: string }
 ): string {
   if (typeof origin === "string") return origin;
   return "Other";
@@ -92,11 +104,24 @@ const categoryLabelKeys: Record<ChangeCategory, string> = {
 
 // カテゴリの表示順序
 const categoryOrder: ChangeCategory[] = [
-  "Logic", "Refactor", "Test", "Config", "Documentation", "CI", "Dependency", "Other",
+  "Logic",
+  "Refactor",
+  "Test",
+  "Config",
+  "Documentation",
+  "CI",
+  "Dependency",
+  "Other",
 ];
 
-function groupByCategory(diffs: CategorizedFileDiff[]): { category: ChangeCategory; files: { diff: CategorizedFileDiff; originalIndex: number }[] }[] {
-  const groups = new Map<ChangeCategory, { diff: CategorizedFileDiff; originalIndex: number }[]>();
+function groupByCategory(diffs: CategorizedFileDiff[]): {
+  category: ChangeCategory;
+  files: { diff: CategorizedFileDiff; originalIndex: number }[];
+}[] {
+  const groups = new Map<
+    ChangeCategory,
+    { diff: CategorizedFileDiff; originalIndex: number }[]
+  >();
   diffs.forEach((diff, index) => {
     const list = groups.get(diff.category) ?? [];
     list.push({ diff, originalIndex: index });
@@ -116,7 +141,12 @@ interface PrTabProps {
 
 type PrStateFilter = "all" | "open" | "closed" | "merged";
 
-export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProps) {
+export function PrTab({
+  prs,
+  setPrs,
+  selectedPrNumber,
+  onPrSelected,
+}: PrTabProps) {
   const { t } = useTranslation();
   const { repoPath } = useRepository();
   const [owner, setOwner] = useState("");
@@ -132,23 +162,44 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
   const [expandedFiles, setExpandedFiles] = useState<Set<number>>(new Set());
   const [diffLoading, setDiffLoading] = useState(false);
   const [diffError, setDiffError] = useState<string | null>(null);
-  const llmConfigRef = useRef<LlmConfig>({ llm_endpoint: "", llm_model: "", llm_api_key_stored: false });
-  const automationConfigRef = useRef<AutomationConfig>({ enabled: false, auto_approve_max_risk: "Low", enable_auto_merge: false, auto_merge_method: "Squash" });
+  const llmConfigRef = useRef<LlmConfig>({
+    llm_endpoint: "",
+    llm_model: "",
+    llm_api_key_stored: false,
+  });
+  const automationConfigRef = useRef<AutomationConfig>({
+    enabled: false,
+    auto_approve_max_risk: "Low",
+    enable_auto_merge: false,
+    auto_merge_method: "Squash",
+  });
 
   // Category accordion state (expanded categories)
-  const [expandedCategories, setExpandedCategories] = useState<Set<ChangeCategory>>(new Set(["Logic"]));
+  const [expandedCategories, setExpandedCategories] = useState<
+    Set<ChangeCategory>
+  >(new Set(["Logic"]));
 
   // Focus filter state
-  const [focusCategoryFilters, setFocusCategoryFilters] = useState<Set<ChangeCategory>>(new Set());
-  const [focusModuleFilter, setFocusModuleFilter] = useState<string | null>(null);
+  const [focusCategoryFilters, setFocusCategoryFilters] = useState<
+    Set<ChangeCategory>
+  >(new Set());
+  const [focusModuleFilter, setFocusModuleFilter] = useState<string | null>(
+    null
+  );
 
   // Analysis state
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [hybridResult, setHybridResult] = useState<HybridAnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null
+  );
+  const [hybridResult, setHybridResult] = useState<HybridAnalysisResult | null>(
+    null
+  );
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   // Per-PR analysis results cache (keyed by PR number)
-  const analysisCache = useRef<Map<number, { analysis: AnalysisResult; hybrid?: HybridAnalysisResult }>>(new Map());
+  const analysisCache = useRef<
+    Map<number, { analysis: AnalysisResult; hybrid?: HybridAnalysisResult }>
+  >(new Map());
 
   // Commit list state
   const [commits, setCommits] = useState<CommitInfo[]>([]);
@@ -161,7 +212,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
   const [commitDiffs, setCommitDiffs] = useState<FileDiff[]>([]);
   const [commitDiffLoading, setCommitDiffLoading] = useState(false);
   const [commitDiffError, setCommitDiffError] = useState<string | null>(null);
-  const [commitExpandedFiles, setCommitExpandedFiles] = useState<Set<number>>(new Set());
+  const [commitExpandedFiles, setCommitExpandedFiles] = useState<Set<number>>(
+    new Set()
+  );
 
   // Background risk analysis state
   const [analyzingPrs, setAnalyzingPrs] = useState<Set<number>>(new Set());
@@ -171,61 +224,76 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
   // Review state
   const [reviewComment, setReviewComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewMessage, setReviewMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [confirmingReview, setConfirmingReview] = useState<ReviewEvent | null>(null);
+  const [reviewMessage, setReviewMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [confirmingReview, setConfirmingReview] = useState<ReviewEvent | null>(
+    null
+  );
 
   useEffect(() => {
-    invoke("load_app_config").then((config) => {
-      if (config.github_token) setToken(config.github_token);
-      if (config.default_owner) setOwner(config.default_owner);
-      if (config.default_repo) setRepo(config.default_repo);
-      llmConfigRef.current = config.llm;
-      automationConfigRef.current = config.automation;
-    }).catch(() => {
-      // 設定ファイルが読み込めない場合は無視する
-    });
+    invoke("load_app_config")
+      .then((config) => {
+        if (config.github_token) setToken(config.github_token);
+        if (config.default_owner) setOwner(config.default_owner);
+        if (config.default_repo) setRepo(config.default_repo);
+        llmConfigRef.current = config.llm;
+        automationConfigRef.current = config.automation;
+      })
+      .catch(() => {
+        // 設定ファイルが読み込めない場合は無視する
+      });
   }, []);
 
   // バックグラウンドで全PRのリスク分析を実行する（同時実行数制限付き）
-  const runBackgroundAnalysis = useCallback(async (
-    prList: PrInfo[],
-    ownerVal: string,
-    repoVal: string,
-    tokenVal: string,
-  ) => {
-    const CONCURRENCY = 3;
-    const queue = prList.filter((pr) => !analysisCache.current.has(pr.number));
-    if (queue.length === 0) return;
+  const runBackgroundAnalysis = useCallback(
+    async (
+      prList: PrInfo[],
+      ownerVal: string,
+      repoVal: string,
+      tokenVal: string
+    ) => {
+      const CONCURRENCY = 3;
+      const queue = prList.filter(
+        (pr) => !analysisCache.current.has(pr.number)
+      );
+      if (queue.length === 0) return;
 
-    let index = 0;
-    async function processNext() {
-      while (index < queue.length) {
-        const pr = queue[index++];
-        setAnalyzingPrs((prev) => new Set(prev).add(pr.number));
-        try {
-          const result = await invoke("analyze_pr_risk", {
-            owner: ownerVal,
-            repo: repoVal,
-            prNumber: pr.number,
-            token: tokenVal,
-          });
-          analysisCache.current.set(pr.number, { analysis: result });
-          setCacheVersion((v) => v + 1);
-        } catch {
-          // 個別のPR分析失敗は無視して次へ進む
-        } finally {
-          setAnalyzingPrs((prev) => {
-            const next = new Set(prev);
-            next.delete(pr.number);
-            return next;
-          });
+      let index = 0;
+      async function processNext() {
+        while (index < queue.length) {
+          const pr = queue[index++];
+          setAnalyzingPrs((prev) => new Set(prev).add(pr.number));
+          try {
+            const result = await invoke("analyze_pr_risk", {
+              owner: ownerVal,
+              repo: repoVal,
+              prNumber: pr.number,
+              token: tokenVal,
+            });
+            analysisCache.current.set(pr.number, { analysis: result });
+            setCacheVersion((v) => v + 1);
+          } catch {
+            // 個別のPR分析失敗は無視して次へ進む
+          } finally {
+            setAnalyzingPrs((prev) => {
+              const next = new Set(prev);
+              next.delete(pr.number);
+              return next;
+            });
+          }
         }
       }
-    }
 
-    const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => processNext());
-    await Promise.all(workers);
-  }, []);
+      const workers = Array.from(
+        { length: Math.min(CONCURRENCY, queue.length) },
+        () => processNext()
+      );
+      await Promise.all(workers);
+    },
+    []
+  );
 
   // バッジクリックによるPR自動選択
   useEffect(() => {
@@ -508,16 +576,17 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
       setReviewMessage({ type: "success", text: t("pr.reviewSuccess") });
       setReviewComment("");
     } catch (err) {
-      setReviewMessage({ type: "error", text: `${t("pr.reviewError")}: ${err}` });
+      setReviewMessage({
+        type: "error",
+        text: `${t("pr.reviewError")}: ${err}`,
+      });
     } finally {
       setReviewLoading(false);
     }
   }
 
   const filteredPrs =
-    stateFilter === "all"
-      ? prs
-      : prs.filter((pr) => pr.state === stateFilter);
+    stateFilter === "all" ? prs : prs.filter((pr) => pr.state === stateFilter);
 
   function toggleFocusCategory(category: ChangeCategory) {
     setFocusCategoryFilters((prev) => {
@@ -536,22 +605,25 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     setFocusModuleFilter(null);
   }
 
-  const isFocusActive = focusCategoryFilters.size > 0 || focusModuleFilter !== null;
+  const isFocusActive =
+    focusCategoryFilters.size > 0 || focusModuleFilter !== null;
 
   // Get affected modules from LLM analysis for module filter
-  const affectedModules: AffectedModule[] = hybridResult?.llm_analysis.affected_modules ?? [];
+  const affectedModules: AffectedModule[] =
+    hybridResult?.llm_analysis.affected_modules ?? [];
 
   // Apply focus filters to diffs
   const filteredDiffs = isFocusActive
     ? diffs.filter((diff) => {
         const categoryMatch =
-          focusCategoryFilters.size === 0 || focusCategoryFilters.has(diff.category);
+          focusCategoryFilters.size === 0 ||
+          focusCategoryFilters.has(diff.category);
         const moduleMatch =
           focusModuleFilter === null ||
           affectedModules.some(
             (m) =>
               m.name === focusModuleFilter &&
-              (diff.new_path ?? diff.old_path ?? "").includes(focusModuleFilter),
+              (diff.new_path ?? diff.old_path ?? "").includes(focusModuleFilter)
           );
         return categoryMatch && moduleMatch;
       })
@@ -575,7 +647,11 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
             {selectedPr.state}
           </Badge>
           {analysisResult && (
-            <RiskBadge level={hybridResult?.combined_risk_level ?? analysisResult.risk.level} />
+            <RiskBadge
+              level={
+                hybridResult?.combined_risk_level ?? analysisResult.risk.level
+              }
+            />
           )}
           <Button
             variant="secondary"
@@ -640,12 +716,16 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                     : t("pr.confirmRequestChanges")}
                 </span>
                 <Button
-                  variant={confirmingReview === "APPROVE" ? "primary" : "destructive"}
+                  variant={
+                    confirmingReview === "APPROVE" ? "primary" : "destructive"
+                  }
                   size="sm"
                   onClick={() => handleSubmitReview(confirmingReview)}
                   disabled={reviewLoading}
                 >
-                  {reviewLoading ? t("pr.reviewSubmitting") : t("common.confirm")}
+                  {reviewLoading
+                    ? t("pr.reviewSubmitting")
+                    : t("common.confirm")}
                 </Button>
                 <Button
                   variant="secondary"
@@ -659,7 +739,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
             )}
           </div>
           {reviewMessage && (
-            <p className={`mt-2 text-[0.85rem] ${reviewMessage.type === "success" ? "text-accent" : "text-danger"}`}>
+            <p
+              className={`mt-2 text-[0.85rem] ${reviewMessage.type === "success" ? "text-accent" : "text-danger"}`}
+            >
               {reviewMessage.text}
             </p>
           )}
@@ -743,7 +825,10 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
             </div>
             {viewMode === "all" && isFocusActive && (
               <span className="text-[0.8rem] text-text-secondary">
-                {t("pr.focusFilterActive", { current: filteredDiffs.length, total: diffs.length })}
+                {t("pr.focusFilterActive", {
+                  current: filteredDiffs.length,
+                  total: diffs.length,
+                })}
               </span>
             )}
             {viewMode === "all" && diffs.length > 0 && (
@@ -751,17 +836,29 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                 <Button variant="secondary" size="sm" onClick={expandAllFiles}>
                   {t("pr.expandAll")}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={collapseAllFiles}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={collapseAllFiles}
+                >
                   {t("pr.collapseAll")}
                 </Button>
               </div>
             )}
             {viewMode === "commit" && commitDiffs.length > 0 && (
               <div className="ml-auto flex gap-2">
-                <Button variant="secondary" size="sm" onClick={expandAllCommitFiles}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={expandAllCommitFiles}
+                >
                   {t("pr.expandAll")}
                 </Button>
-                <Button variant="secondary" size="sm" onClick={collapseAllCommitFiles}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={collapseAllCommitFiles}
+                >
                   {t("pr.collapseAll")}
                 </Button>
               </div>
@@ -795,7 +892,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                   {affectedModules.length > 0 && (
                     <>
                       <span className="text-[0.7rem] text-text-muted">|</span>
-                      <span className="text-[0.7rem] text-text-muted">{t("pr.focusModuleFilter")}:</span>
+                      <span className="text-[0.7rem] text-text-muted">
+                        {t("pr.focusModuleFilter")}:
+                      </span>
                       {affectedModules.map((mod) => {
                         const isSelected = focusModuleFilter === mod.name;
                         return (
@@ -840,14 +939,18 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                   </p>
                 )}
                 {groupedDiffs.map((group) => {
-                  const isCategoryExpanded = expandedCategories.has(group.category);
+                  const isCategoryExpanded = expandedCategories.has(
+                    group.category
+                  );
                   return (
                     <div key={group.category}>
                       <button
                         className="flex w-full cursor-pointer items-center gap-2 border-b border-border bg-bg-primary px-3 py-2 text-left text-[0.8rem] font-semibold text-text-heading transition-colors hover:bg-bg-hover"
                         onClick={() => toggleCategory(group.category)}
                       >
-                        <span className="text-[0.7rem]">{isCategoryExpanded ? "\u25BC" : "\u25B6"}</span>
+                        <span className="text-[0.7rem]">
+                          {isCategoryExpanded ? "\u25BC" : "\u25B6"}
+                        </span>
                         <span>{categoryIcons[group.category]}</span>
                         <span>{t(categoryLabelKeys[group.category])}</span>
                         <span className="ml-auto text-[0.75rem] font-normal text-text-secondary">
@@ -856,14 +959,21 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                       </button>
                       {isCategoryExpanded &&
                         group.files.map(({ diff, originalIndex }) => {
-                          const isFileExpanded = expandedFiles.has(originalIndex);
+                          const isFileExpanded =
+                            expandedFiles.has(originalIndex);
                           return (
-                            <div key={diff.new_path ?? diff.old_path ?? originalIndex}>
+                            <div
+                              key={
+                                diff.new_path ?? diff.old_path ?? originalIndex
+                              }
+                            >
                               <div
                                 className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 pl-7 font-mono text-[0.8rem] transition-colors hover:bg-bg-primary"
                                 onClick={() => toggleFile(originalIndex)}
                               >
-                                <span className="text-[0.65rem] text-text-secondary">{isFileExpanded ? "\u25BC" : "\u25B6"}</span>
+                                <span className="text-[0.65rem] text-text-secondary">
+                                  {isFileExpanded ? "\u25BC" : "\u25B6"}
+                                </span>
                                 <Badge variant={statusVariant(diff.status)}>
                                   {statusLabel(diff.status)}
                                 </Badge>
@@ -871,7 +981,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                                   className="truncate text-text-primary"
                                   title={diff.new_path ?? diff.old_path ?? ""}
                                 >
-                                  {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                                  {diff.new_path ??
+                                    diff.old_path ??
+                                    "(unknown)"}
                                 </span>
                               </div>
                               {isFileExpanded && (
@@ -887,7 +999,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                                         {chunk.header}
                                       </div>
                                       {chunk.lines.map((line, li) => {
-                                        const origin = getOriginString(line.origin);
+                                        const origin = getOriginString(
+                                          line.origin
+                                        );
                                         const lineClass =
                                           origin === "Addition"
                                             ? "diff-line-addition"
@@ -917,7 +1031,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                                             <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
                                               {line.new_lineno ?? ""}
                                             </span>
-                                            <span className={`flex-1 px-2 ${textColor}`}>
+                                            <span
+                                              className={`flex-1 px-2 ${textColor}`}
+                                            >
                                               {prefix}
                                               {line.content}
                                             </span>
@@ -966,11 +1082,13 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                       {t("pr.commitDiffError")}: {commitDiffError}
                     </p>
                   )}
-                  {!commitDiffLoading && !commitDiffError && commitDiffs.length === 0 && (
-                    <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                      {t("pr.commitDiffEmpty")}
-                    </p>
-                  )}
+                  {!commitDiffLoading &&
+                    !commitDiffError &&
+                    commitDiffs.length === 0 && (
+                      <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                        {t("pr.commitDiffEmpty")}
+                      </p>
+                    )}
                   {commitDiffs.map((diff, fileIndex) => {
                     const isFileExpanded = commitExpandedFiles.has(fileIndex);
                     return (
@@ -979,7 +1097,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                           className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors hover:bg-bg-primary"
                           onClick={() => toggleCommitFile(fileIndex)}
                         >
-                          <span className="text-[0.65rem] text-text-secondary">{isFileExpanded ? "\u25BC" : "\u25B6"}</span>
+                          <span className="text-[0.65rem] text-text-secondary">
+                            {isFileExpanded ? "\u25BC" : "\u25B6"}
+                          </span>
                           <Badge variant={statusVariant(diff.status)}>
                             {statusLabel(diff.status)}
                           </Badge>
@@ -1033,7 +1153,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                                       <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
                                         {line.new_lineno ?? ""}
                                       </span>
-                                      <span className={`flex-1 px-2 ${textColor}`}>
+                                      <span
+                                        className={`flex-1 px-2 ${textColor}`}
+                                      >
                                         {prefix}
                                         {line.content}
                                       </span>
@@ -1060,7 +1182,10 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
           </p>
         )}
         {analysisResult && !analysisLoading && (
-          <AnalysisDetailPanel result={analysisResult} hybridResult={hybridResult ?? undefined} />
+          <AnalysisDetailPanel
+            result={analysisResult}
+            hybridResult={hybridResult ?? undefined}
+          />
         )}
       </div>
     );
@@ -1132,7 +1257,9 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                 }`}
                 onClick={() => setStateFilter(filter)}
               >
-                {t(`pr.filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`)}
+                {t(
+                  `pr.filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`
+                )}
               </button>
             ))}
           </div>
@@ -1172,7 +1299,8 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                 {analysisCache.current.get(pr.number) ? (
                   <RiskBadge
                     level={
-                      analysisCache.current.get(pr.number)!.hybrid?.combined_risk_level ??
+                      analysisCache.current.get(pr.number)!.hybrid
+                        ?.combined_risk_level ??
                       analysisCache.current.get(pr.number)!.analysis.risk.level
                     }
                   />

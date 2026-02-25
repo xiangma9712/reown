@@ -32,8 +32,8 @@ pub fn load_review_history(storage_path: &Path) -> Result<Vec<ReviewRecord>> {
     let content = std::fs::read_to_string(storage_path)
         .with_context(|| format!("レビュー履歴の読み込みに失敗: {}", storage_path.display()))?;
 
-    let records: Vec<ReviewRecord> = serde_json::from_str(&content)
-        .with_context(|| "レビュー履歴の JSON パースに失敗")?;
+    let records: Vec<ReviewRecord> =
+        serde_json::from_str(&content).with_context(|| "レビュー履歴の JSON パースに失敗")?;
 
     Ok(records)
 }
@@ -96,10 +96,7 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let storage = tmp.path().join("review_history.json");
 
-        let records = vec![
-            make_record(1, "owner/repo"),
-            make_record(2, "owner/repo"),
-        ];
+        let records = vec![make_record(1, "owner/repo"), make_record(2, "owner/repo")];
 
         save_review_history(&storage, &records).unwrap();
         let loaded = load_review_history(&storage).unwrap();
@@ -123,7 +120,11 @@ mod tests {
     #[test]
     fn test_save_creates_parent_dirs() {
         let tmp = TempDir::new().unwrap();
-        let storage = tmp.path().join("nested").join("dir").join("review_history.json");
+        let storage = tmp
+            .path()
+            .join("nested")
+            .join("dir")
+            .join("review_history.json");
 
         let records = vec![make_record(1, "owner/repo")];
         save_review_history(&storage, &records).unwrap();
@@ -138,7 +139,10 @@ mod tests {
         std::fs::write(&storage, "not valid json").unwrap();
         let result = load_review_history(&storage);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("JSON パースに失敗"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("JSON パースに失敗"));
     }
 
     #[test]

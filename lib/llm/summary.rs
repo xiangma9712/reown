@@ -169,14 +169,9 @@ fn extract_reason(response: &str) -> String {
     for marker in ["なぜ", "理由", "目的", "why", "reason", "purpose"] {
         if let Some(pos) = lower.find(marker) {
             // マーカー位置から次の段落区切りまでを取得
-            let start = response[..pos]
-                .rfind('\n')
-                .map(|p| p + 1)
-                .unwrap_or(pos);
+            let start = response[..pos].rfind('\n').map(|p| p + 1).unwrap_or(pos);
             let remaining = &response[start..];
-            let end = remaining
-                .find("\n\n")
-                .unwrap_or(remaining.len());
+            let end = remaining.find("\n\n").unwrap_or(remaining.len());
             let extracted = remaining[..end].trim();
             if !extracted.is_empty() {
                 return extracted.to_string();
@@ -195,9 +190,8 @@ fn parse_consistency_response(response: &str) -> (bool, Vec<String>) {
     let lower = response.to_lowercase();
 
     // 一致度レーティングの検出
-    let is_consistent = lower.contains("high")
-        && !lower.contains("medium")
-        && !lower.contains("low");
+    let is_consistent =
+        lower.contains("high") && !lower.contains("medium") && !lower.contains("low");
 
     if is_consistent {
         return (true, Vec::new());
@@ -215,10 +209,7 @@ fn parse_consistency_response(response: &str) -> (bool, Vec<String>) {
             if !warning.is_empty() {
                 warnings.push(warning.to_string());
             }
-        } else if trimmed
-            .chars()
-            .next()
-            .is_some_and(|c| c.is_ascii_digit())
+        } else if trimmed.chars().next().is_some_and(|c| c.is_ascii_digit())
             && trimmed.contains('.')
         {
             if let Some(text) = trimmed.split_once('.').map(|(_, t)| t.trim()) {

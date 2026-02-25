@@ -177,10 +177,25 @@ export function App() {
         activeTabId={activeTab}
         onSelectTab={(id) => setActiveTab(id as TabName)}
       >
-        {activeTab === "worktree" && <WorktreeTab prs={prs} onNavigateToPr={navigateToPr} />}
-        {activeTab === "branch" && <BranchTab showConfirm={showConfirm} prs={prs} onNavigateToPr={navigateToPr} />}
+        {activeTab === "worktree" && (
+          <WorktreeTab prs={prs} onNavigateToPr={navigateToPr} />
+        )}
+        {activeTab === "branch" && (
+          <BranchTab
+            showConfirm={showConfirm}
+            prs={prs}
+            onNavigateToPr={navigateToPr}
+          />
+        )}
         {activeTab === "diff" && <DiffTab />}
-        {activeTab === "pr" && <PrTab prs={prs} setPrs={setPrs} selectedPrNumber={selectedPrNumber} onPrSelected={() => setSelectedPrNumber(null)} />}
+        {activeTab === "pr" && (
+          <PrTab
+            prs={prs}
+            setPrs={setPrs}
+            selectedPrNumber={selectedPrNumber}
+            onPrSelected={() => setSelectedPrNumber(null)}
+          />
+        )}
         {activeTab === "todo" && <TodoTab />}
         {activeTab === "settings" && (
           <div className="mx-auto max-w-xl space-y-8">

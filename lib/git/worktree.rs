@@ -21,10 +21,7 @@ pub fn list_worktrees(repo_path: &str) -> Result<Vec<WorktreeInfo>> {
     let mut result = Vec::new();
 
     // Main worktree
-    let main_path = repo
-        .workdir()
-        .unwrap_or_else(|| repo.path())
-        .to_path_buf();
+    let main_path = repo.workdir().unwrap_or_else(|| repo.path()).to_path_buf();
 
     let main_branch = current_branch_name(&repo);
     result.push(WorktreeInfo {

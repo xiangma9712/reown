@@ -43,16 +43,33 @@ function ImpactWarnings({ factors }: { factors: RiskFactor[] }) {
   const warnings: string[] = [];
   for (const factor of factors) {
     if (factor.name === "sensitive_paths") {
-      if (factor.description.includes("DB") || factor.description.includes("migration") || factor.description.includes("database") || factor.description.includes("schema")) {
+      if (
+        factor.description.includes("DB") ||
+        factor.description.includes("migration") ||
+        factor.description.includes("database") ||
+        factor.description.includes("schema")
+      ) {
         warnings.push(t("pr.warningDbLayer"));
       }
-      if (factor.description.includes("auth") || factor.description.includes("security") || factor.description.includes("セキュリティ")) {
+      if (
+        factor.description.includes("auth") ||
+        factor.description.includes("security") ||
+        factor.description.includes("セキュリティ")
+      ) {
         warnings.push(t("pr.warningAuthLayer"));
       }
-      if (factor.description.includes("API") || factor.description.includes("api") || factor.description.includes("endpoint")) {
+      if (
+        factor.description.includes("API") ||
+        factor.description.includes("api") ||
+        factor.description.includes("endpoint")
+      ) {
         warnings.push(t("pr.warningApiLayer"));
       }
-      if (factor.description.includes("deploy") || factor.description.includes("infra") || factor.description.includes("インフラ")) {
+      if (
+        factor.description.includes("deploy") ||
+        factor.description.includes("infra") ||
+        factor.description.includes("インフラ")
+      ) {
         warnings.push(t("pr.warningInfraLayer"));
       }
       // Default warning if no specific match
@@ -93,9 +110,14 @@ function RiskFactorList({ factors }: { factors: RiskFactor[] }) {
   return (
     <div className="space-y-2">
       {factors.map((factor, i) => (
-        <div key={i} className="flex items-center justify-between gap-2 text-[0.8rem]">
+        <div
+          key={i}
+          className="flex items-center justify-between gap-2 text-[0.8rem]"
+        >
           <span className="text-text-primary">{factor.description}</span>
-          <span className="shrink-0 font-mono text-text-secondary">+{factor.score}</span>
+          <span className="shrink-0 font-mono text-text-secondary">
+            +{factor.score}
+          </span>
         </div>
       ))}
     </div>
@@ -111,25 +133,37 @@ function FileAnalysisList({ files }: { files: FileAnalysis[] }) {
         <div key={i} className="flex items-center gap-2 text-[0.8rem]">
           <span>{categoryIcons[file.category]}</span>
           <Badge variant="default">{t(categoryLabelKeys[file.category])}</Badge>
-          <span className="truncate font-mono text-text-primary" title={file.path}>
+          <span
+            className="truncate font-mono text-text-primary"
+            title={file.path}
+          >
             {file.path}
           </span>
-          <span className="ml-auto shrink-0 font-mono text-accent">+{file.additions}</span>
-          <span className="shrink-0 font-mono text-danger">-{file.deletions}</span>
+          <span className="ml-auto shrink-0 font-mono text-accent">
+            +{file.additions}
+          </span>
+          <span className="shrink-0 font-mono text-danger">
+            -{file.deletions}
+          </span>
         </div>
       ))}
     </div>
   );
 }
 
-export function AnalysisDetailPanel({ result, hybridResult }: AnalysisDetailPanelProps) {
+export function AnalysisDetailPanel({
+  result,
+  hybridResult,
+}: AnalysisDetailPanelProps) {
   const { t } = useTranslation();
 
   return (
     <Card className="mt-4 space-y-4">
       {/* Risk Score Overview */}
       <div className="flex items-center gap-4">
-        <RiskBadge level={hybridResult?.combined_risk_level ?? result.risk.level} />
+        <RiskBadge
+          level={hybridResult?.combined_risk_level ?? result.risk.level}
+        />
         <span className="text-[0.85rem] text-text-secondary">
           {t("pr.riskScore", { score: result.risk.score })}
         </span>
@@ -159,47 +193,64 @@ export function AnalysisDetailPanel({ result, hybridResult }: AnalysisDetailPane
       )}
 
       {/* Breaking Changes (if available from LLM) */}
-      {hybridResult && hybridResult.llm_analysis.breaking_changes.length > 0 && (
-        <Panel>
-          <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
-            {t("pr.breakingChanges")}
-          </h3>
-          <div className="space-y-2">
-            {hybridResult.llm_analysis.breaking_changes.map((change, i) => (
-              <div key={i} className="text-[0.8rem]">
-                <div className="flex items-center gap-2">
-                  <Badge variant={change.severity === "Critical" ? "danger" : "warning"}>
-                    {change.severity === "Critical" ? t("pr.severityCritical") : t("pr.severityWarning")}
-                  </Badge>
-                  {change.file_path && (
-                    <span className="font-mono text-text-secondary">{change.file_path}</span>
-                  )}
+      {hybridResult &&
+        hybridResult.llm_analysis.breaking_changes.length > 0 && (
+          <Panel>
+            <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+              {t("pr.breakingChanges")}
+            </h3>
+            <div className="space-y-2">
+              {hybridResult.llm_analysis.breaking_changes.map((change, i) => (
+                <div key={i} className="text-[0.8rem]">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        change.severity === "Critical" ? "danger" : "warning"
+                      }
+                    >
+                      {change.severity === "Critical"
+                        ? t("pr.severityCritical")
+                        : t("pr.severityWarning")}
+                    </Badge>
+                    {change.file_path && (
+                      <span className="font-mono text-text-secondary">
+                        {change.file_path}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-text-primary">
+                    {change.description}
+                  </p>
                 </div>
-                <p className="mt-0.5 text-text-primary">{change.description}</p>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      )}
+              ))}
+            </div>
+          </Panel>
+        )}
 
       {/* Affected Modules (if available from LLM) */}
-      {hybridResult && hybridResult.llm_analysis.affected_modules.length > 0 && (
-        <Panel>
-          <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
-            {t("pr.affectedModules")}
-          </h3>
-          <div className="space-y-1">
-            {hybridResult.llm_analysis.affected_modules.map((mod, i) => (
-              <div key={i} className="text-[0.8rem]">
-                <span className="font-semibold text-text-primary">{mod.name}</span>
-                {mod.description && (
-                  <span className="text-text-secondary"> — {mod.description}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </Panel>
-      )}
+      {hybridResult &&
+        hybridResult.llm_analysis.affected_modules.length > 0 && (
+          <Panel>
+            <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+              {t("pr.affectedModules")}
+            </h3>
+            <div className="space-y-1">
+              {hybridResult.llm_analysis.affected_modules.map((mod, i) => (
+                <div key={i} className="text-[0.8rem]">
+                  <span className="font-semibold text-text-primary">
+                    {mod.name}
+                  </span>
+                  {mod.description && (
+                    <span className="text-text-secondary">
+                      {" "}
+                      — {mod.description}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
 
       {/* Risk Factors Breakdown */}
       <Panel>

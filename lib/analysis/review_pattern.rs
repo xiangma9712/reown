@@ -86,15 +86,14 @@ pub fn analyze_review_patterns(records: &[ReviewRecord]) -> ReviewPatternStats {
 
         // カテゴリ別の集計（1つのレコードが複数カテゴリを持つ）
         for category in &record.categories {
-            let cat_entry =
-                category_stats
-                    .entry(category.clone())
-                    .or_insert(CategoryStat {
-                        total: 0,
-                        approved: 0,
-                        rejected: 0,
-                        reject_rate: 0.0,
-                    });
+            let cat_entry = category_stats
+                .entry(category.clone())
+                .or_insert(CategoryStat {
+                    total: 0,
+                    approved: 0,
+                    rejected: 0,
+                    reject_rate: 0.0,
+                });
             cat_entry.total += 1;
             match record.action {
                 ReviewEvent::Approve => cat_entry.approved += 1,
@@ -517,7 +516,10 @@ mod tests {
         ));
 
         let stats = analyze_review_patterns(&records);
-        let files = vec![make_file_analysis("README.md", ChangeCategory::Documentation)];
+        let files = vec![make_file_analysis(
+            "README.md",
+            ChangeCategory::Documentation,
+        )];
 
         let suggestions = suggest_review_focus(&files, &RiskLevel::High, &stats);
 
@@ -560,8 +562,7 @@ mod tests {
         let high_severity = suggestions
             .iter()
             .filter(|s| {
-                s.severity == SuggestionSeverity::Warning
-                    || s.severity == SuggestionSeverity::Alert
+                s.severity == SuggestionSeverity::Warning || s.severity == SuggestionSeverity::Alert
             })
             .count();
         assert_eq!(high_severity, 0);
@@ -594,8 +595,7 @@ mod tests {
         let high_severity = suggestions
             .iter()
             .filter(|s| {
-                s.severity == SuggestionSeverity::Warning
-                    || s.severity == SuggestionSeverity::Alert
+                s.severity == SuggestionSeverity::Warning || s.severity == SuggestionSeverity::Alert
             })
             .count();
         assert_eq!(high_severity, 0);
