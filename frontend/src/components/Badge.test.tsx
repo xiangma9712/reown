@@ -13,13 +13,17 @@ describe("Badge", () => {
     expect(screen.getByText("Default")).toBeInTheDocument();
   });
 
-  it.each(["success", "warning", "danger", "info", "purple", "default"] as const)(
-    "renders %s variant",
-    (variant) => {
-      render(<Badge variant={variant}>Badge</Badge>);
-      expect(screen.getByText("Badge")).toBeInTheDocument();
-    }
-  );
+  it.each([
+    "success",
+    "warning",
+    "danger",
+    "info",
+    "purple",
+    "default",
+  ] as const)("renders %s variant", (variant) => {
+    render(<Badge variant={variant}>Badge</Badge>);
+    expect(screen.getByText("Badge")).toBeInTheDocument();
+  });
 
   it("applies custom className", () => {
     render(<Badge className="custom-class">Styled</Badge>);
