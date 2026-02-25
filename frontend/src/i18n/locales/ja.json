@@ -165,7 +165,19 @@
     "sortDefault": "更新日時順",
     "sortRiskDesc": "リスク: 高→低",
     "sortRiskAsc": "リスク: 低→高",
-    "sortLabel": "並び替え"
+    "sortLabel": "並び替え",
+    "autoApproveRun": "自動Approve実行",
+    "autoApproveEvaluating": "候補を評価中…",
+    "autoApproveNoCandidates": "自動Approveの対象となるPRはありません。",
+    "autoApproveConfirm": "以下のPRを自動Approveします。よろしいですか？",
+    "autoApproveExecuting": "自動Approveを実行中…",
+    "autoApproveSuccess": "自動Approveが完了しました",
+    "autoApproveError": "自動Approveに失敗しました",
+    "autoApproveResultApproved": "Approve済み",
+    "autoApproveResultFailed": "失敗",
+    "autoApproveMergeEnabled": "Auto Merge: 有効",
+    "autoApproveMergeSkipped": "Auto Merge: スキップ",
+    "autoApproveMergeFailed": "Auto Merge: 失敗"
   },
   "llmSettings": {
     "title": "LLM設定",

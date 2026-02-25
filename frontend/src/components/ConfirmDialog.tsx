@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "./Button";
@@ -5,6 +6,7 @@ import { Button } from "./Button";
 interface Props {
   open: boolean;
   message: string;
+  children?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
   confirmLabel?: string;
@@ -14,6 +16,7 @@ interface Props {
 export function ConfirmDialog({
   open,
   message,
+  children,
   onConfirm,
   onCancel,
   confirmLabel,
@@ -25,11 +28,12 @@ export function ConfirmDialog({
     <Dialog.Root open={open} onOpenChange={(v) => !v && onCancel()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-bg-primary p-6 shadow-lg focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-bg-primary p-6 shadow-lg focus:outline-none">
           <Dialog.Title className="sr-only">{t("common.confirm")}</Dialog.Title>
           <Dialog.Description className="mb-5 text-lg text-text-primary">
             {message}
           </Dialog.Description>
+          {children}
           <div className="flex justify-end gap-2">
             <Dialog.Close asChild>
               <Button variant="secondary" onClick={onCancel}>

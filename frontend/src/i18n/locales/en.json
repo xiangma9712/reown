@@ -165,7 +165,19 @@
     "sortDefault": "Updated",
     "sortRiskDesc": "Risk: High→Low",
     "sortRiskAsc": "Risk: Low→High",
-    "sortLabel": "Sort"
+    "sortLabel": "Sort",
+    "autoApproveRun": "Auto Approve",
+    "autoApproveEvaluating": "Evaluating candidates…",
+    "autoApproveNoCandidates": "No PRs eligible for auto-approve.",
+    "autoApproveConfirm": "The following PRs will be auto-approved. Continue?",
+    "autoApproveExecuting": "Running auto-approve…",
+    "autoApproveSuccess": "Auto-approve completed",
+    "autoApproveError": "Auto-approve failed",
+    "autoApproveResultApproved": "Approved",
+    "autoApproveResultFailed": "Failed",
+    "autoApproveMergeEnabled": "Auto Merge: Enabled",
+    "autoApproveMergeSkipped": "Auto Merge: Skipped",
+    "autoApproveMergeFailed": "Auto Merge: Failed"
   },
   "llmSettings": {
     "title": "LLM Settings",

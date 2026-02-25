@@ -15,6 +15,8 @@ import type {
   CommitInfo,
   FileDiff,
   RiskLevel,
+  AutoApproveCandidate,
+  AutoApproveWithMergeResult,
 } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -27,6 +29,7 @@ import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 import { ChangeSummaryList } from "./ChangeSummaryList";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 import { ReviewSuggestionPanel } from "./ReviewSuggestionPanel";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 function stateVariant(
   state: string
@@ -237,6 +240,17 @@ export function PrTab({
   const [confirmingReview, setConfirmingReview] = useState<ReviewEvent | null>(
     null
   );
+
+  // Auto-approve state
+  const [autoApproveLoading, setAutoApproveLoading] = useState(false);
+  const [autoApproveCandidates, setAutoApproveCandidates] = useState<
+    AutoApproveCandidate[]
+  >([]);
+  const [autoApproveConfirmOpen, setAutoApproveConfirmOpen] = useState(false);
+  const [autoApproveExecuting, setAutoApproveExecuting] = useState(false);
+  const [autoApproveResult, setAutoApproveResult] =
+    useState<AutoApproveWithMergeResult | null>(null);
+  const [autoApproveError, setAutoApproveError] = useState<string | null>(null);
 
   useEffect(() => {
     invoke("load_app_config")
@@ -588,6 +602,49 @@ export function PrTab({
       });
     } finally {
       setReviewLoading(false);
+    }
+  }
+
+  async function handleAutoApproveEvaluate() {
+    setAutoApproveLoading(true);
+    setAutoApproveError(null);
+    setAutoApproveResult(null);
+    try {
+      const candidates = await invoke("evaluate_auto_approve_candidates", {
+        owner: owner.trim(),
+        repo: repo.trim(),
+        token: token.trim(),
+      });
+      setAutoApproveCandidates(candidates);
+      if (candidates.length === 0) {
+        setAutoApproveError(t("pr.autoApproveNoCandidates"));
+      } else {
+        setAutoApproveConfirmOpen(true);
+      }
+    } catch (err) {
+      setAutoApproveError(`${t("pr.autoApproveError")}: ${err}`);
+    } finally {
+      setAutoApproveLoading(false);
+    }
+  }
+
+  async function handleAutoApproveExecute() {
+    setAutoApproveConfirmOpen(false);
+    setAutoApproveExecuting(true);
+    setAutoApproveError(null);
+    try {
+      const result = await invoke("run_auto_approve_with_merge", {
+        owner: owner.trim(),
+        repo: repo.trim(),
+        token: token.trim(),
+        candidates: autoApproveCandidates,
+        automationConfig: automationConfigRef.current,
+      });
+      setAutoApproveResult(result);
+    } catch (err) {
+      setAutoApproveError(`${t("pr.autoApproveError")}: ${err}`);
+    } finally {
+      setAutoApproveExecuting(false);
     }
   }
 
@@ -1344,6 +1401,116 @@ export function PrTab({
             ))}
           </div>
         )}
+        {/* Auto-approve section */}
+        {prs.length > 0 &&
+          automationConfigRef.current.enabled &&
+          automationConfigRef.current.auto_approve_max_risk && (
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleAutoApproveEvaluate}
+                disabled={autoApproveLoading || autoApproveExecuting}
+              >
+                {autoApproveLoading
+                  ? t("pr.autoApproveEvaluating")
+                  : autoApproveExecuting
+                    ? t("pr.autoApproveExecuting")
+                    : t("pr.autoApproveRun")}
+              </Button>
+              {autoApproveError && (
+                <span className="text-[0.85rem] text-danger">
+                  {autoApproveError}
+                </span>
+              )}
+            </div>
+          )}
+        {/* Auto-approve result display */}
+        {autoApproveResult && (
+          <div className="mb-3 rounded-md border border-border bg-bg-primary p-3">
+            <h3 className="mb-2 text-[0.9rem] font-semibold text-text-heading">
+              {t("pr.autoApproveSuccess")}
+            </h3>
+            {autoApproveResult.outcomes.map((outcome) => (
+              <div
+                key={outcome.pr_number}
+                className="flex items-center gap-2 py-1 text-[0.85rem]"
+              >
+                <span className="font-mono text-info">
+                  #{outcome.pr_number}
+                </span>
+                {outcome.approve_success ? (
+                  <span className="text-accent">
+                    {t("pr.autoApproveResultApproved")}
+                  </span>
+                ) : (
+                  <span className="text-danger">
+                    {t("pr.autoApproveResultFailed")}
+                    {outcome.approve_error && `: ${outcome.approve_error}`}
+                  </span>
+                )}
+                {outcome.approve_success &&
+                  (() => {
+                    const status = outcome.auto_merge_status;
+                    if (status === "Enabled")
+                      return (
+                        <span className="text-[0.8rem] text-accent">
+                          ({t("pr.autoApproveMergeEnabled")})
+                        </span>
+                      );
+                    if (
+                      status === "Skipped" ||
+                      status === "SkippedDueToApproveFail"
+                    )
+                      return (
+                        <span className="text-[0.8rem] text-text-secondary">
+                          ({t("pr.autoApproveMergeSkipped")})
+                        </span>
+                      );
+                    if (typeof status === "object" && "Failed" in status)
+                      return (
+                        <span className="text-[0.8rem] text-danger">
+                          ({t("pr.autoApproveMergeFailed")}: {status.Failed})
+                        </span>
+                      );
+                    return null;
+                  })()}
+              </div>
+            ))}
+            <button
+              className="mt-2 text-[0.8rem] text-text-secondary hover:text-text-primary"
+              onClick={() => setAutoApproveResult(null)}
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
+        )}
+        {/* Auto-approve confirm dialog */}
+        <ConfirmDialog
+          open={autoApproveConfirmOpen}
+          message={t("pr.autoApproveConfirm")}
+          onConfirm={handleAutoApproveExecute}
+          onCancel={() => setAutoApproveConfirmOpen(false)}
+          confirmLabel={t("pr.autoApproveRun")}
+          confirmVariant="primary"
+        >
+          <div className="mb-4 max-h-60 overflow-y-auto">
+            {autoApproveCandidates.map((candidate) => (
+              <div
+                key={candidate.pr_number}
+                className="flex items-center gap-2 border-b border-border py-2 last:border-b-0"
+              >
+                <span className="font-mono text-[0.85rem] text-info">
+                  #{candidate.pr_number}
+                </span>
+                <RiskBadge level={candidate.risk_level} />
+                <span className="text-[0.85rem] text-text-secondary">
+                  {candidate.reason}
+                </span>
+              </div>
+            ))}
+          </div>
+        </ConfirmDialog>
         <div className="scrollbar-custom overflow-y-auto">
           {loading && <Loading />}
           {error && (
