@@ -26,7 +26,7 @@ export function App() {
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
-  const [prs, setPrs] = useState<PrInfo[]>([]);
+  const [prs] = useState<PrInfo[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
