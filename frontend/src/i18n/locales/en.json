@@ -17,6 +17,7 @@
     "diff": "Diff",
     "prs": "PRs",
     "todo": "TODO",
+    "review": "Review",
     "settings": "Settings"
   },
   "common": {
@@ -217,6 +218,22 @@
     "saveSuccess": "Automation settings saved successfully",
     "saveError": "Failed to save automation settings: {{message}}",
     "loadError": "Failed to load automation settings: {{message}}"
+  },
+  "review": {
+    "changedFiles": "Changed Files",
+    "loading": "Loading diff…",
+    "error": "Failed to load diff",
+    "empty": "No changes compared to main.",
+    "noBranch": "Please select a branch.",
+    "mainBranch": "Cannot show diff for the main branch. Please select another branch.",
+    "selectFile": "Select a file from the list on the left.",
+    "noDiffContent": "No diff content (possibly a binary file).",
+    "prInfo": "PR Info",
+    "prTitle": "PR #{{number}}: {{title}}",
+    "prAuthor": "Author: {{author}}",
+    "prState": "Status: {{state}}",
+    "prAnalysis": "PR Analysis",
+    "noPr": "No PR associated with this branch."
   },
   "todo": {
     "title": "TODO / FIXME",

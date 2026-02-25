@@ -103,6 +103,31 @@ pub fn diff_commit(repo_path: &str, commit_sha: &str) -> Result<Vec<FileDiff>> {
     collect_diff(&diff)
 }
 
+/// Return the diff between two refs (branches, tags, or commit SHAs).
+///
+/// Compares `base_ref` → `head_ref`, e.g. "main" → "feature/auth".
+pub fn diff_branches(repo_path: &str, base_ref: &str, head_ref: &str) -> Result<Vec<FileDiff>> {
+    let repo = open_repo(repo_path)?;
+
+    let base_tree = repo
+        .revparse_single(base_ref)
+        .with_context(|| format!("Ref '{base_ref}' not found"))?
+        .peel_to_tree()
+        .with_context(|| format!("Failed to peel '{base_ref}' to tree"))?;
+
+    let head_tree = repo
+        .revparse_single(head_ref)
+        .with_context(|| format!("Ref '{head_ref}' not found"))?
+        .peel_to_tree()
+        .with_context(|| format!("Failed to peel '{head_ref}' to tree"))?;
+
+    let diff = repo
+        .diff_tree_to_tree(Some(&base_tree), Some(&head_tree), None)
+        .context("Failed to compute branch diff")?;
+
+    collect_diff(&diff)
+}
+
 // ── internals ────────────────────────────────────────────────────────────────
 
 fn collect_diff(diff: &git2::Diff<'_>) -> Result<Vec<FileDiff>> {
@@ -225,5 +250,51 @@ mod tests {
         assert_eq!(LineOrigin::from('+'), LineOrigin::Addition);
         assert_eq!(LineOrigin::from('-'), LineOrigin::Deletion);
         assert_eq!(LineOrigin::from(' '), LineOrigin::Context);
+    }
+
+    #[test]
+    fn test_diff_branches() {
+        let (dir, repo) = init_repo_with_commit();
+        let sig = Signature::now("Test", "test@test.com").unwrap();
+
+        // Create a branch from HEAD
+        let head = repo.head().unwrap().peel_to_commit().unwrap();
+        repo.branch("feature", &head, false).unwrap();
+
+        // Switch to feature branch and add a file
+        repo.set_head("refs/heads/feature").unwrap();
+        fs::write(dir.path().join("feature.txt"), "feature content\n").unwrap();
+        let mut index = repo.index().unwrap();
+        index
+            .add_path(std::path::Path::new("feature.txt"))
+            .unwrap();
+        index.write().unwrap();
+        let tree_id = index.write_tree().unwrap();
+        let tree = repo.find_tree(tree_id).unwrap();
+        let parent = repo.head().unwrap().peel_to_commit().unwrap();
+        repo.commit(
+            Some("HEAD"),
+            &sig,
+            &sig,
+            "add feature file",
+            &tree,
+            &[&parent],
+        )
+        .unwrap();
+
+        let diffs =
+            diff_branches(dir.path().to_str().unwrap(), "main", "feature").unwrap();
+        assert_eq!(diffs.len(), 1);
+        assert_eq!(diffs[0].new_path.as_deref(), Some("feature.txt"));
+        assert_eq!(diffs[0].status, FileStatus::Added);
+    }
+
+    #[test]
+    fn test_diff_branches_no_changes() {
+        let (dir, _) = init_repo_with_commit();
+        // Comparing a branch to itself should produce no diff
+        let diffs =
+            diff_branches(dir.path().to_str().unwrap(), "main", "main").unwrap();
+        assert!(diffs.is_empty());
     }
 }

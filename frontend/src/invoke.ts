@@ -42,6 +42,10 @@ export type Commands = {
     args: { repoPath: string; commitSha: string };
     ret: FileDiff[];
   };
+  diff_branches: {
+    args: { repoPath: string; baseRef: string; headRef: string };
+    ret: FileDiff[];
+  };
   list_pull_requests: {
     args: { owner: string; repo: string; token: string };
     ret: PrInfo[];
