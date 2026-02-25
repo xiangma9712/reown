@@ -13,7 +13,19 @@ curl https://mise.run | sh
 
 # Node.js をインストール（.mise.toml の設定に従い自動でバージョンが選択される）
 mise install
+
+# pre-commit hook を有効化
+mise run install-hook
 ```
+
+### Pre-commit Hook
+
+`mise run install-hook` を実行すると、`.githooks/pre-commit` が有効化されます。コミット時に以下のチェックが自動実行されます：
+
+- **フロントエンド**: ステージされた変更ファイルに対して Prettier と ESLint をチェック
+- **Rust**: `cargo fmt --check` でフォーマットをチェック
+
+チェックに違反がある場合、コミットは中断されます。
 
 ## ビルド・テスト
 

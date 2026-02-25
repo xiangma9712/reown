@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# pre-commit hook: lint/format チェック
+# インストール: mise run install-hook
+
+errors=0
+
+# --- フロントエンド: 変更ファイルに対して Prettier + ESLint チェック ---
+frontend_files=$(git diff --cached --name-only --diff-filter=ACM -- 'frontend/src/**/*.ts' 'frontend/src/**/*.tsx' 'frontend/src/**/*.css' 'frontend/src/**/*.html' 'frontend/*.js' 'frontend/*.ts' 'frontend/*.json')
+
+if [ -n "$frontend_files" ]; then
+  echo ">>> フロントエンド: Prettier チェック..."
+  # ステージされたファイルからfrontend/プレフィックスを除去してfrontendディレクトリからの相対パスにする
+  prettier_files=$(echo "$frontend_files" | sed 's|^frontend/||')
+  if ! (cd frontend && echo "$prettier_files" | xargs npx prettier --check) ; then
+    echo "Prettier チェック失敗。'cd frontend && npm run format' を実行してください。"
+    errors=1
+  fi
+
+  echo ">>> フロントエンド: ESLint チェック..."
+  eslint_files=$(echo "$frontend_files" | sed 's|^frontend/||' | grep -E '\.(ts|tsx)$' || true)
+  if [ -n "$eslint_files" ]; then
+    if ! (cd frontend && echo "$eslint_files" | xargs npx eslint) ; then
+      echo "ESLint チェック失敗。'cd frontend && npm run lint' で確認してください。"
+      errors=1
+    fi
+  fi
+fi
+
+# --- Rust: cargo fmt チェック ---
+rust_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.rs')
+
+if [ -n "$rust_files" ]; then
+  echo ">>> Rust: cargo fmt チェック..."
+  if ! cargo fmt --check ; then
+    echo "cargo fmt チェック失敗。'cargo fmt' を実行してください。"
+    errors=1
+  fi
+fi
+
+if [ "$errors" -ne 0 ]; then
+  echo ""
+  echo "pre-commit hook に違反があります。修正してから再度コミットしてください。"
+  exit 1
+fi
