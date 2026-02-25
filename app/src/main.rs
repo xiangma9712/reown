@@ -725,7 +725,9 @@ mod tests {
 
     #[test]
     fn test_auto_approve_with_merge_result_serializes() {
-        use reown::automation::{ApproveWithMergeOutcome, AutoApproveWithMergeResult, AutoMergeStatus};
+        use reown::automation::{
+            ApproveWithMergeOutcome, AutoApproveWithMergeResult, AutoMergeStatus,
+        };
         let result = AutoApproveWithMergeResult {
             outcomes: vec![ApproveWithMergeOutcome {
                 pr_number: 1,
