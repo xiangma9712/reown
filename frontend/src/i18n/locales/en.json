@@ -153,7 +153,15 @@
     "selectCommit": "Select a commit to view its diff.",
     "changeSummaryTitle": "Change Summary",
     "viewDiff": "View Diff",
-    "hideDiff": "Hide Diff"
+    "hideDiff": "Hide Diff",
+    "reviewSuggestions": "Review Suggestions",
+    "reviewSuggestionsRun": "Generate",
+    "reviewSuggestionsLoading": "Generating suggestions…",
+    "reviewSuggestionsError": "Failed to generate suggestions",
+    "reviewSuggestionsEmpty": "No suggestions at this time",
+    "severityInfo": "Info",
+    "severityWarning": "Warning",
+    "severityAlert": "Alert"
   },
   "llmSettings": {
     "title": "LLM Settings",
