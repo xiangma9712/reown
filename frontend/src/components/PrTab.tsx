@@ -610,7 +610,9 @@ export function PrTab({
 
   const sortedPrs = (() => {
     const base =
-      stateFilter === "all" ? prs : prs.filter((pr) => pr.state === stateFilter);
+      stateFilter === "all"
+        ? prs
+        : prs.filter((pr) => pr.state === stateFilter);
     if (sortOrder === "default") return base;
     return [...base].sort((a, b) => {
       const riskA = getRiskLevel(a.number);
