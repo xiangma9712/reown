@@ -21,8 +21,8 @@ vi.mock("react-i18next", () => ({
 }));
 
 const navItems = [
-  { id: "worktree", labelKey: "nav.worktree", shortcut: "1" },
-  { id: "branch", labelKey: "nav.branch", shortcut: "2" },
+  { id: "review", labelKey: "nav.review", shortcut: "R" },
+  { id: "next-action", labelKey: "nav.nextAction", shortcut: "N" },
 ];
 
 const defaultProps = {
@@ -32,7 +32,7 @@ const defaultProps = {
   onAddRepo: vi.fn(),
   onRemoveRepo: vi.fn(),
   navItems,
-  activeTabId: "worktree",
+  activeTabId: "review",
   onSelectTab: vi.fn(),
 };
 
@@ -55,8 +55,8 @@ describe("Layout", () => {
         <div>Content</div>
       </Layout>
     );
-    expect(screen.getByText("nav.worktree")).toBeInTheDocument();
-    expect(screen.getByText("nav.branch")).toBeInTheDocument();
+    expect(screen.getByText("nav.review")).toBeInTheDocument();
+    expect(screen.getByText("nav.nextAction")).toBeInTheDocument();
   });
 
   it("shows select prompt when no repo is selected", () => {

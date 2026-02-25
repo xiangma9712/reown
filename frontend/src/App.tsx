@@ -1,12 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
-import { WorktreeTab } from "./components/WorktreeTab";
-import { BranchTab } from "./components/BranchTab";
-import { BranchSelector } from "./components/BranchSelector";
-import { DiffTab } from "./components/DiffTab";
-import { PrTab } from "./components/PrTab";
+import { ReviewTab } from "./components/ReviewTab";
 import { TodoTab } from "./components/TodoTab";
+import { BranchSelector } from "./components/BranchSelector";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { ConfirmDialog } from "./components/ConfirmDialog";
@@ -17,24 +14,20 @@ import type { RepositoryEntry, RepoInfo, PrInfo } from "./types";
 import "./style.css";
 
 const NAV_ITEMS = [
-  { id: "worktree", labelKey: "tabs.worktrees", shortcut: "W" },
-  { id: "branch", labelKey: "tabs.branches", shortcut: "B" },
-  { id: "diff", labelKey: "tabs.diff", shortcut: "D" },
-  { id: "pr", labelKey: "tabs.prs", shortcut: "P" },
-  { id: "todo", labelKey: "tabs.todo", shortcut: "T" },
+  { id: "review", labelKey: "tabs.review", shortcut: "R" },
+  { id: "next-action", labelKey: "tabs.nextAction", shortcut: "N" },
 ] as const;
 
 type TabName = (typeof NAV_ITEMS)[number]["id"];
 
 export function App() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabName>("worktree");
+  const [activeTab, setActiveTab] = useState<TabName>("review");
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
   const [prs, setPrs] = useState<PrInfo[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
-  const [selectedPrNumber, setSelectedPrNumber] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
@@ -78,11 +71,6 @@ export function App() {
     },
     [confirmDialog]
   );
-
-  const navigateToPr = useCallback((prNumber: number) => {
-    setSelectedPrNumber(prNumber);
-    setActiveTab("pr");
-  }, []);
 
   const handleAddRepo = useCallback(async () => {
     const selected = await open({ directory: true, multiple: false });
@@ -135,24 +123,12 @@ export function App() {
       if (confirmDialog) return;
 
       switch (e.key) {
-        case "w":
-          setActiveTab("worktree");
+        case "r":
+          setActiveTab("review");
           setSettingsOpen(false);
           break;
-        case "b":
-          setActiveTab("branch");
-          setSettingsOpen(false);
-          break;
-        case "d":
-          setActiveTab("diff");
-          setSettingsOpen(false);
-          break;
-        case "p":
-          setActiveTab("pr");
-          setSettingsOpen(false);
-          break;
-        case "t":
-          setActiveTab("todo");
+        case "n":
+          setActiveTab("next-action");
           setSettingsOpen(false);
           break;
         case "s":
@@ -205,26 +181,10 @@ export function App() {
           </div>
         ) : (
           <>
-            {activeTab === "worktree" && (
-              <WorktreeTab prs={prs} onNavigateToPr={navigateToPr} />
+            {activeTab === "review" && (
+              <ReviewTab selectedBranch={selectedBranch} prs={prs} />
             )}
-            {activeTab === "branch" && (
-              <BranchTab
-                showConfirm={showConfirm}
-                prs={prs}
-                onNavigateToPr={navigateToPr}
-              />
-            )}
-            {activeTab === "diff" && <DiffTab />}
-            {activeTab === "pr" && (
-              <PrTab
-                prs={prs}
-                setPrs={setPrs}
-                selectedPrNumber={selectedPrNumber}
-                onPrSelected={() => setSelectedPrNumber(null)}
-              />
-            )}
-            {activeTab === "todo" && <TodoTab />}
+            {activeTab === "next-action" && <TodoTab />}
           </>
         )}
 

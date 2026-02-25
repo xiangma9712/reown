@@ -12,12 +12,8 @@
     "empty": "リポジトリが登録されていません。「リポジトリを追加」から追加してください。"
   },
   "tabs": {
-    "worktrees": "Worktrees",
-    "branches": "Branches",
-    "diff": "Diff",
-    "prs": "PRs",
-    "todo": "TODO",
     "review": "Review",
+    "nextAction": "Next Action",
     "settings": "Settings"
   },
   "common": {
@@ -27,31 +23,6 @@
     "delete": "削除",
     "cancel": "キャンセル",
     "confirm": "確認"
-  },
-  "worktree": {
-    "title": "ワークツリー",
-    "empty": "ワークツリーがありません。",
-    "created": "ワークツリーを作成しました。",
-    "createNew": "新規ワークツリー作成",
-    "path": "パス",
-    "branchName": "ブランチ名",
-    "branchLabel": "ブランチ: {{name}}",
-    "pathLabel": "パス: {{path}}",
-    "locked": "locked",
-    "detached": "detached"
-  },
-  "branch": {
-    "title": "ブランチ",
-    "empty": "ブランチがありません。",
-    "created": "ブランチ '{{name}}' を作成しました。",
-    "switched": "ブランチ '{{name}}' に切り替えました。",
-    "deleted": "ブランチ '{{name}}' を削除しました。",
-    "confirmDelete": "ブランチ '{{name}}' を削除しますか？この操作は取り消せません。",
-    "createNew": "新規ブランチ作成",
-    "branchName": "ブランチ名",
-    "switch": "切替",
-    "upstream": "upstream: {{name}}",
-    "actions": "{{name}} のアクション"
   },
   "branchSelector": {
     "placeholder": "ブランチを選択…",
