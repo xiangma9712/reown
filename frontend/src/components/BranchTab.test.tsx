@@ -52,7 +52,10 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 function renderWithProvider(ui: React.ReactElement) {
   return render(
-    <RepositoryProvider repoPath="/Users/dev/project" repoInfo={fixtures.repoInfo}>
+    <RepositoryProvider
+      repoPath="/Users/dev/project"
+      repoInfo={fixtures.repoInfo}
+    >
       {ui}
     </RepositoryProvider>
   );
@@ -97,9 +100,7 @@ describe("BranchTab", () => {
   it("shows upstream info", async () => {
     renderWithProvider(<BranchTab {...defaultProps} />);
     await waitFor(() => {
-      expect(
-        screen.getByText("upstream: origin/main")
-      ).toBeInTheDocument();
+      expect(screen.getByText("upstream: origin/main")).toBeInTheDocument();
     });
   });
 
@@ -109,9 +110,7 @@ describe("BranchTab", () => {
     );
     renderWithProvider(<BranchTab {...defaultProps} />);
     await waitFor(() => {
-      expect(
-        screen.getByText(/エラー:.*fetch failed/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/エラー:.*fetch failed/)).toBeInTheDocument();
     });
   });
 
@@ -122,9 +121,7 @@ describe("BranchTab", () => {
     });
     renderWithProvider(<BranchTab {...defaultProps} />);
     await waitFor(() => {
-      expect(
-        screen.getByText("ブランチがありません")
-      ).toBeInTheDocument();
+      expect(screen.getByText("ブランチがありません")).toBeInTheDocument();
     });
   });
 

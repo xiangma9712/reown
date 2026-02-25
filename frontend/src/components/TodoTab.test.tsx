@@ -37,7 +37,10 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 function renderWithProvider(ui: React.ReactElement) {
   return render(
-    <RepositoryProvider repoPath="/Users/dev/project" repoInfo={fixtures.repoInfo}>
+    <RepositoryProvider
+      repoPath="/Users/dev/project"
+      repoInfo={fixtures.repoInfo}
+    >
       {ui}
     </RepositoryProvider>
   );
@@ -62,9 +65,7 @@ describe("TodoTab", () => {
 
   it("shows empty state before loading", () => {
     renderWithProvider(<TodoTab />);
-    expect(
-      screen.getByText("TODOアイテムがありません")
-    ).toBeInTheDocument();
+    expect(screen.getByText("TODOアイテムがありません")).toBeInTheDocument();
   });
 
   it("shows loading state while fetching", async () => {
@@ -84,12 +85,8 @@ describe("TodoTab", () => {
         screen.getByText("リフレッシュトークンの実装")
       ).toBeInTheDocument();
     });
-    expect(
-      screen.getByText("バリデーションエラーの表示")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("このファイルは削除予定")
-    ).toBeInTheDocument();
+    expect(screen.getByText("バリデーションエラーの表示")).toBeInTheDocument();
+    expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
   });
 
   it("shows file path and line number", async () => {
@@ -141,9 +138,7 @@ describe("TodoTab", () => {
     await waitFor(() => {
       expect(screen.getByText("2件")).toBeInTheDocument();
     });
-    expect(
-      screen.getByText("リフレッシュトークンの実装")
-    ).toBeInTheDocument();
+    expect(screen.getByText("リフレッシュトークンの実装")).toBeInTheDocument();
     expect(
       screen.queryByText("このファイルは削除予定")
     ).not.toBeInTheDocument();
@@ -167,9 +162,7 @@ describe("TodoTab", () => {
     await waitFor(() => {
       expect(screen.getByText("1件")).toBeInTheDocument();
     });
-    expect(
-      screen.getByText("このファイルは削除予定")
-    ).toBeInTheDocument();
+    expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
     expect(
       screen.queryByText("リフレッシュトークンの実装")
     ).not.toBeInTheDocument();
@@ -183,9 +176,7 @@ describe("TodoTab", () => {
     renderWithProvider(<TodoTab />);
     await user.click(screen.getByText("TODOを抽出"));
     await waitFor(() => {
-      expect(
-        screen.getByText(/エラー:.*extract failed/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/エラー:.*extract failed/)).toBeInTheDocument();
     });
   });
 });

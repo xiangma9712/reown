@@ -42,7 +42,10 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 function renderWithProvider(ui: React.ReactElement) {
   return render(
-    <RepositoryProvider repoPath="/Users/dev/project" repoInfo={fixtures.repoInfo}>
+    <RepositoryProvider
+      repoPath="/Users/dev/project"
+      repoInfo={fixtures.repoInfo}
+    >
       {ui}
     </RepositoryProvider>
   );
@@ -126,9 +129,7 @@ describe("WorktreeTab", () => {
     });
     renderWithProvider(<WorktreeTab {...defaultProps} />);
     await waitFor(() => {
-      expect(
-        screen.getByText("ワークツリーがありません")
-      ).toBeInTheDocument();
+      expect(screen.getByText("ワークツリーがありません")).toBeInTheDocument();
     });
   });
 
@@ -143,7 +144,10 @@ describe("WorktreeTab", () => {
     const user = userEvent.setup();
     const onNavigateToPr = vi.fn();
     renderWithProvider(
-      <WorktreeTab prs={fixtures.pullRequests} onNavigateToPr={onNavigateToPr} />
+      <WorktreeTab
+        prs={fixtures.pullRequests}
+        onNavigateToPr={onNavigateToPr}
+      />
     );
     await waitFor(() => {
       expect(screen.getByText("#42 open")).toBeInTheDocument();
@@ -157,7 +161,9 @@ describe("WorktreeTab", () => {
     await waitFor(() => {
       expect(screen.getByText("新しいワークツリーを作成")).toBeInTheDocument();
     });
-    expect(screen.getByPlaceholderText("/path/to/worktree")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("/path/to/worktree")
+    ).toBeInTheDocument();
     expect(screen.getByPlaceholderText("feature-branch")).toBeInTheDocument();
     expect(screen.getByText("作成")).toBeInTheDocument();
   });

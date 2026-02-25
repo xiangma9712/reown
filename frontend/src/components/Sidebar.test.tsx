@@ -31,7 +31,9 @@ const defaultProps = {
 describe("Sidebar", () => {
   it("renders app title", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("reown");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "reown"
+    );
   });
 
   it("renders repository list", () => {
@@ -43,9 +45,7 @@ describe("Sidebar", () => {
 
   it("shows empty message when no repositories", () => {
     render(<Sidebar {...defaultProps} repositories={[]} />);
-    expect(
-      screen.getByText("リポジトリがありません")
-    ).toBeInTheDocument();
+    expect(screen.getByText("リポジトリがありません")).toBeInTheDocument();
   });
 
   it("calls onSelect when repo is clicked", async () => {

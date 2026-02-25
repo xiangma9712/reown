@@ -31,7 +31,10 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 function renderWithProvider(ui: React.ReactElement) {
   return render(
-    <RepositoryProvider repoPath="/Users/dev/project" repoInfo={fixtures.repoInfo}>
+    <RepositoryProvider
+      repoPath="/Users/dev/project"
+      repoInfo={fixtures.repoInfo}
+    >
       {ui}
     </RepositoryProvider>
   );
@@ -50,17 +53,13 @@ describe("DiffTab", () => {
 
   it("renders initial state with load prompt", () => {
     renderWithProvider(<DiffTab />);
-    expect(
-      screen.getByText("差分を読み込んでください")
-    ).toBeInTheDocument();
+    expect(screen.getByText("差分を読み込んでください")).toBeInTheDocument();
     expect(screen.getByText("読み込み")).toBeInTheDocument();
   });
 
   it("shows file select prompt", () => {
     renderWithProvider(<DiffTab />);
-    expect(
-      screen.getByText("ファイルを選択してください")
-    ).toBeInTheDocument();
+    expect(screen.getByText("ファイルを選択してください")).toBeInTheDocument();
   });
 
   it("loads and displays diffs when load button is clicked", async () => {
@@ -69,7 +68,9 @@ describe("DiffTab", () => {
     await user.click(screen.getByText("読み込み"));
     await waitFor(() => {
       // src/auth.ts appears in both file list and header (auto-selected)
-      expect(screen.getAllByText("src/auth.ts").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("src/auth.ts").length).toBeGreaterThanOrEqual(
+        1
+      );
     });
     expect(
       screen.getByText("src/components/LoginForm.tsx")
@@ -92,7 +93,9 @@ describe("DiffTab", () => {
     renderWithProvider(<DiffTab />);
     await user.click(screen.getByText("読み込み"));
     await waitFor(() => {
-      expect(screen.getAllByText("src/auth.ts").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("src/auth.ts").length).toBeGreaterThanOrEqual(
+        1
+      );
     });
     // First file is auto-selected, check diff content
     expect(
@@ -108,9 +111,7 @@ describe("DiffTab", () => {
     renderWithProvider(<DiffTab />);
     await user.click(screen.getByText("読み込み"));
     await waitFor(() => {
-      expect(
-        screen.getByText(/エラー:.*diff failed/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/エラー:.*diff failed/)).toBeInTheDocument();
     });
   });
 
@@ -133,10 +134,10 @@ describe("DiffTab", () => {
     await user.click(screen.getByText("読み込み"));
     await waitFor(() => {
       // src/empty.ts appears in both file list and header (auto-selected)
-      expect(screen.getAllByText("src/empty.ts").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("src/empty.ts").length).toBeGreaterThanOrEqual(
+        1
+      );
     });
-    expect(
-      screen.getByText("差分内容がありません")
-    ).toBeInTheDocument();
+    expect(screen.getByText("差分内容がありません")).toBeInTheDocument();
   });
 });

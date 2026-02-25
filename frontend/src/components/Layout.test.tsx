@@ -43,7 +43,9 @@ describe("Layout", () => {
         <div>Content</div>
       </Layout>
     );
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("reown");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "reown"
+    );
     expect(screen.getByText("Content")).toBeInTheDocument();
   });
 
@@ -71,10 +73,7 @@ describe("Layout", () => {
 
   it("renders branch selector when provided", () => {
     render(
-      <Layout
-        {...defaultProps}
-        branchSelector={<div>Branch Selector</div>}
-      >
+      <Layout {...defaultProps} branchSelector={<div>Branch Selector</div>}>
         <div>Content</div>
       </Layout>
     );
