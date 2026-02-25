@@ -2,16 +2,41 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { invoke } from "../invoke";
-import type { PrSummary } from "../types";
+import type { PrSummary, CategorizedFileDiff, ChangeCategory } from "../types";
 import { Card, Panel } from "./Card";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Spinner } from "./Loading";
 
-interface AiSummaryPanelProps {
+const categoryIcons: Record<ChangeCategory, string> = {
+  Logic: "\u{1F4BB}",
+  Refactor: "\u{1F504}",
+  Test: "\u{1F9EA}",
+  Config: "\u{2699}\uFE0F",
+  Documentation: "\u{1F4DD}",
+  CI: "\u{1F6E0}\uFE0F",
+  Dependency: "\u{1F4E6}",
+  Other: "\u{1F4C4}",
+};
+
+const categoryLabelKeys: Record<ChangeCategory, string> = {
+  Logic: "pr.categoryLogic",
+  Refactor: "pr.categoryRefactor",
+  Test: "pr.categoryTest",
+  Config: "pr.categoryConfig",
+  Documentation: "pr.categoryDocumentation",
+  CI: "pr.categoryCI",
+  Dependency: "pr.categoryDependency",
+  Other: "pr.categoryOther",
+};
+
+interface ChangeSummaryListProps {
   owner: string;
   repo: string;
   prNumber: number;
   token: string;
+  diffs: CategorizedFileDiff[];
+  onViewDiff: (fileIndex: number) => void;
 }
 
 interface StreamingState {
@@ -19,12 +44,29 @@ interface StreamingState {
   done: boolean;
 }
 
-export function AiSummaryPanel({
+function findCategoryForPath(
+  path: string,
+  diffs: CategorizedFileDiff[]
+): ChangeCategory | null {
+  const match = diffs.find((d) => d.new_path === path || d.old_path === path);
+  return match?.category ?? null;
+}
+
+function findDiffIndexForPath(
+  path: string,
+  diffs: CategorizedFileDiff[]
+): number {
+  return diffs.findIndex((d) => d.new_path === path || d.old_path === path);
+}
+
+export function ChangeSummaryList({
   owner,
   repo,
   prNumber,
   token,
-}: AiSummaryPanelProps) {
+  diffs,
+  onViewDiff,
+}: ChangeSummaryListProps) {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<PrSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,7 +78,6 @@ export function AiSummaryPanel({
   const cancelledRef = useRef(false);
   const unlistenRef = useRef<UnlistenFn | null>(null);
 
-  // Cleanup event listeners on unmount
   useEffect(() => {
     return () => {
       if (unlistenRef.current) {
@@ -46,7 +87,6 @@ export function AiSummaryPanel({
     };
   }, []);
 
-  // Reset when PR changes
   useEffect(() => {
     setSummary(null);
     setError(null);
@@ -70,7 +110,6 @@ export function AiSummaryPanel({
     setSummary(null);
     setStreaming({ text: "", done: false });
 
-    // Listen for streaming events
     if (unlistenRef.current) {
       unlistenRef.current();
     }
@@ -87,7 +126,7 @@ export function AiSummaryPanel({
         }
       );
     } catch {
-      // Event listening is optional — backend may not emit events
+      // Event listening is optional
     }
 
     const args = {
@@ -99,9 +138,7 @@ export function AiSummaryPanel({
 
     try {
       const summaryResult = await invoke("summarize_pull_request", args);
-
       if (cancelledRef.current) return;
-
       setSummary(summaryResult);
       setStreaming({ text: "", done: true });
     } catch (err) {
@@ -119,12 +156,14 @@ export function AiSummaryPanel({
     }
   }, [owner, repo, prNumber, token]);
 
-  // Show generate button when no summary yet and not loading
+  // No summary yet and not loading — show generate button
   if (!summary && !loading && !error) {
     return (
       <Card className="mt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg text-text-heading">{t("pr.aiSummary")}</h2>
+          <h2 className="text-lg text-text-heading">
+            {t("pr.changeSummaryTitle")}
+          </h2>
           <Button onClick={handleGenerate}>{t("pr.generateSummary")}</Button>
         </div>
       </Card>
@@ -134,7 +173,9 @@ export function AiSummaryPanel({
   return (
     <Card className="mt-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg text-text-heading">{t("pr.aiSummary")}</h2>
+        <h2 className="text-lg text-text-heading">
+          {t("pr.changeSummaryTitle")}
+        </h2>
         {loading && (
           <Button variant="secondary" size="sm" onClick={handleCancel}>
             {t("pr.cancelGeneration")}
@@ -179,57 +220,73 @@ export function AiSummaryPanel({
         </div>
       )}
 
-      {/* Summary result */}
-      {summary && !loading && <SummaryContent summary={summary} />}
+      {/* Summary content */}
+      {summary && !loading && (
+        <div className="space-y-4">
+          {/* Overall summary */}
+          <Panel>
+            <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+              {t("pr.overallSummary")}
+            </h3>
+            <p className="whitespace-pre-wrap text-[0.85rem] text-text-primary">
+              {summary.overall_summary}
+            </p>
+          </Panel>
+
+          {/* Change reason */}
+          {summary.reason && (
+            <Panel>
+              <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+                {t("pr.changeReason")}
+              </h3>
+              <p className="whitespace-pre-wrap text-[0.85rem] text-text-primary">
+                {summary.reason}
+              </p>
+            </Panel>
+          )}
+
+          {/* File summaries list */}
+          {summary.file_summaries.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-[0.85rem] font-semibold text-text-heading">
+                {t("pr.fileSummaries")}
+              </h3>
+              {summary.file_summaries.map((file, i) => {
+                const category = findCategoryForPath(file.path, diffs);
+                const diffIndex = findDiffIndexForPath(file.path, diffs);
+                return (
+                  <Panel key={i} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-mono text-[0.8rem] font-semibold text-info">
+                        {file.path}
+                      </span>
+                      {category && (
+                        <Badge variant="default" className="shrink-0">
+                          {categoryIcons[category]}{" "}
+                          {t(categoryLabelKeys[category])}
+                        </Badge>
+                      )}
+                      {diffIndex >= 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto shrink-0"
+                          onClick={() => onViewDiff(diffIndex)}
+                        >
+                          {t("pr.viewDiff")}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[0.8rem] text-text-secondary">
+                      {file.summary}
+                    </p>
+                  </Panel>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </Card>
-  );
-}
-
-function SummaryContent({ summary }: { summary: PrSummary }) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="space-y-4">
-      {/* Overall summary */}
-      <Panel>
-        <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
-          {t("pr.overallSummary")}
-        </h3>
-        <p className="whitespace-pre-wrap text-[0.85rem] text-text-primary">
-          {summary.overall_summary}
-        </p>
-      </Panel>
-
-      {/* Change reason */}
-      {summary.reason && (
-        <Panel>
-          <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
-            {t("pr.changeReason")}
-          </h3>
-          <p className="whitespace-pre-wrap text-[0.85rem] text-text-primary">
-            {summary.reason}
-          </p>
-        </Panel>
-      )}
-
-      {/* File summaries */}
-      {summary.file_summaries.length > 0 && (
-        <Panel>
-          <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
-            {t("pr.fileSummaries")}
-          </h3>
-          <div className="space-y-2">
-            {summary.file_summaries.map((file, i) => (
-              <div key={i} className="text-[0.8rem]">
-                <span className="font-mono font-semibold text-info">
-                  {file.path}
-                </span>
-                <p className="mt-0.5 text-text-secondary">{file.summary}</p>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      )}
-    </div>
   );
 }

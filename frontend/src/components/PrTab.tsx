@@ -23,7 +23,7 @@ import { Loading } from "./Loading";
 import { Spinner } from "./Loading";
 import { RiskBadge } from "./RiskBadge";
 import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
-import { AiSummaryPanel } from "./AiSummaryPanel";
+import { ChangeSummaryList } from "./ChangeSummaryList";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 
 function stateVariant(
@@ -663,11 +663,21 @@ export function PrTab({
             {analysisLoading ? t("pr.analyzing") : t("pr.analyze")}
           </Button>
         </div>
-        <AiSummaryPanel
+        <ChangeSummaryList
           owner={owner.trim()}
           repo={repo.trim()}
           prNumber={selectedPr.number}
           token={token.trim()}
+          diffs={diffs}
+          onViewDiff={(fileIndex) => {
+            setViewMode("all");
+            setExpandedFiles((prev) => new Set(prev).add(fileIndex));
+            // Find the category of the file to expand its category group
+            const diff = diffs[fileIndex];
+            if (diff) {
+              setExpandedCategories((prev) => new Set(prev).add(diff.category));
+            }
+          }}
         />
         <ConsistencyCheckPanel
           owner={owner.trim()}
