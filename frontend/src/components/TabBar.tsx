@@ -16,7 +16,7 @@ export function TabBar({ items, activeId, onSelect }: Props) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex border-b border-border bg-bg-primary">
+    <div className="flex bg-bg-primary">
       {items.map((item) => (
         <button
           key={item.id}

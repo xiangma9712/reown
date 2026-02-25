@@ -52,6 +52,15 @@
     "upstream": "upstream: {{name}}",
     "actions": "Actions for {{name}}"
   },
+  "branchSelector": {
+    "placeholder": "Select branch…",
+    "searchPlaceholder": "Search branches…",
+    "empty": "No branches found",
+    "local": "local",
+    "remote": "remote",
+    "worktree": "worktree",
+    "pr": "PR"
+  },
   "diff": {
     "changedFiles": "Changed Files",
     "loadPrompt": "Please load the diff.",

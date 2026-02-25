@@ -2,6 +2,7 @@ import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import type {
   WorktreeInfo,
   BranchInfo,
+  EnrichedBranchInfo,
   FileDiff,
   CategorizedFileDiff,
   PrInfo,
@@ -27,6 +28,10 @@ export type Commands = {
     ret: void;
   };
   list_branches: { args: { repoPath: string }; ret: BranchInfo[] };
+  list_enriched_branches: {
+    args: { repoPath: string; pullRequests: PrInfo[] };
+    ret: EnrichedBranchInfo[];
+  };
   create_branch: { args: { repoPath: string; name: string }; ret: void };
   switch_branch: { args: { repoPath: string; name: string }; ret: void };
   delete_branch: { args: { repoPath: string; name: string }; ret: void };

@@ -52,6 +52,15 @@
     "upstream": "upstream: {{name}}",
     "actions": "{{name}} のアクション"
   },
+  "branchSelector": {
+    "placeholder": "ブランチを選択…",
+    "searchPlaceholder": "ブランチを検索…",
+    "empty": "ブランチが見つかりません",
+    "local": "local",
+    "remote": "remote",
+    "worktree": "worktree",
+    "pr": "PR"
+  },
   "diff": {
     "changedFiles": "変更ファイル",
     "loadPrompt": "Diffを読み込んでください。",
