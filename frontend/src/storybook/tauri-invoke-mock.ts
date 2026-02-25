@@ -23,6 +23,7 @@ const defaultHandlers: CommandHandlers = {
   delete_branch: () => undefined as never,
   diff_workdir: () => fixtures.fileDiffs,
   diff_commit: () => fixtures.fileDiffs,
+  diff_branches: () => fixtures.fileDiffs,
   list_pull_requests: () => fixtures.pullRequests,
   get_pull_request_files: () => fixtures.categorizedFileDiffs,
   list_pr_commits: () => fixtures.commits,
