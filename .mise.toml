@@ -12,3 +12,7 @@ run = "bash agent/loop.sh {{arg(name='args', var=true, required=false)}}"
 [tasks.agent-stop]
 description = "Gracefully stop the agent loop"
 run = "touch .agent-stop && echo 'Stop requested. Agent will exit after current step.'"
+
+[tasks.install-hook]
+description = "Install pre-commit hook"
+run = "git config core.hooksPath .githooks && echo 'pre-commit hook を有効化しました。'"
