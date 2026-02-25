@@ -12,6 +12,18 @@ export interface BranchInfo {
   upstream: string | null;
 }
 
+export interface EnrichedBranchInfo {
+  name: string;
+  is_head: boolean;
+  upstream: string | null;
+  is_local: boolean;
+  is_remote: boolean;
+  has_worktree: boolean;
+  worktree_path: string | null;
+  pr_number: number | null;
+  pr_title: string | null;
+}
+
 export interface DiffLineInfo {
   origin: "Addition" | "Deletion" | "Context" | { Other: string };
   old_lineno: number | null;

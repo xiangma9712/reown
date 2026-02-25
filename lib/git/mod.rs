@@ -5,6 +5,8 @@ pub mod test_utils;
 pub mod todo;
 pub mod worktree;
 
+pub use branch::EnrichedBranchInfo;
+
 use anyhow::{Context, Result};
 use git2::Repository;
 use serde::Serialize;

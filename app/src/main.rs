@@ -28,6 +28,14 @@ fn delete_branch(repo_path: String, name: String) -> Result<(), AppError> {
     reown::git::branch::delete_branch(&repo_path, &name).map_err(AppError::git)
 }
 
+#[tauri::command]
+fn list_enriched_branches(
+    repo_path: String,
+    pull_requests: Vec<reown::github::PrInfo>,
+) -> Result<Vec<reown::git::EnrichedBranchInfo>, AppError> {
+    reown::git::branch::list_enriched_branches(&repo_path, &pull_requests).map_err(AppError::git)
+}
+
 // ── Worktree commands ───────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -493,6 +501,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             list_branches,
+            list_enriched_branches,
             create_branch,
             switch_branch,
             delete_branch,

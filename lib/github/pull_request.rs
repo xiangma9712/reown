@@ -28,7 +28,7 @@ struct SubmitReviewRequest {
 }
 
 /// Information about a GitHub pull request.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PrInfo {
     pub number: u64,
     pub title: String,
