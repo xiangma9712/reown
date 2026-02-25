@@ -40,7 +40,11 @@ pub fn init_repo_with_commit() -> (TempDir, Repository) {
     let mut config = repo.config().unwrap();
     config.set_str("user.name", "Test").unwrap();
     config.set_str("user.email", "test@test.com").unwrap();
+    config.set_str("init.defaultBranch", "main").unwrap();
     drop(config);
+
+    // Ensure the initial branch is named "main" regardless of system git config
+    repo.set_head("refs/heads/main").unwrap();
 
     std::fs::write(dir.path().join("hello.txt"), "hello\n").unwrap();
     let sig = git2::Signature::now("Test", "test@test.com").unwrap();

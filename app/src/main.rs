@@ -63,6 +63,15 @@ fn diff_commit(
     reown::git::diff::diff_commit(&repo_path, &commit_sha).map_err(AppError::git)
 }
 
+#[tauri::command]
+fn diff_branches(
+    repo_path: String,
+    base_ref: String,
+    head_ref: String,
+) -> Result<Vec<reown::git::diff::FileDiff>, AppError> {
+    reown::git::diff::diff_branches(&repo_path, &base_ref, &head_ref).map_err(AppError::git)
+}
+
 // ── GitHub commands ─────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -593,6 +602,7 @@ fn main() {
             add_worktree,
             diff_workdir,
             diff_commit,
+            diff_branches,
             list_pull_requests,
             get_pull_request_files,
             list_pr_commits,

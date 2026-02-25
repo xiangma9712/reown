@@ -17,6 +17,7 @@
     "diff": "Diff",
     "prs": "PRs",
     "todo": "TODO",
+    "review": "Review",
     "settings": "Settings"
   },
   "common": {
@@ -217,6 +218,22 @@
     "saveSuccess": "オートメーション設定を保存しました",
     "saveError": "オートメーション設定の保存に失敗しました: {{message}}",
     "loadError": "オートメーション設定の読み込みに失敗しました: {{message}}"
+  },
+  "review": {
+    "changedFiles": "変更ファイル",
+    "loading": "差分を読み込み中…",
+    "error": "差分の読み込みに失敗しました",
+    "empty": "mainとの差分はありません。",
+    "noBranch": "ブランチを選択してください。",
+    "mainBranch": "mainブランチでは差分を表示できません。他のブランチを選択してください。",
+    "selectFile": "左のファイル一覧からファイルを選択してください。",
+    "noDiffContent": "差分内容がありません（バイナリファイルの可能性）。",
+    "prInfo": "PR情報",
+    "prTitle": "PR #{{number}}: {{title}}",
+    "prAuthor": "作成者: {{author}}",
+    "prState": "ステータス: {{state}}",
+    "prAnalysis": "PR分析",
+    "noPr": "このブランチに関連するPRはありません。"
   },
   "todo": {
     "title": "TODO / FIXME",
