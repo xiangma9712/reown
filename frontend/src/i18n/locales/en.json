@@ -161,7 +161,11 @@
     "reviewSuggestionsEmpty": "No suggestions at this time",
     "severityInfo": "Info",
     "severityWarning": "Warning",
-    "severityAlert": "Alert"
+    "severityAlert": "Alert",
+    "sortDefault": "Updated",
+    "sortRiskDesc": "Risk: High→Low",
+    "sortRiskAsc": "Risk: Low→High",
+    "sortLabel": "Sort"
   },
   "llmSettings": {
     "title": "LLM Settings",

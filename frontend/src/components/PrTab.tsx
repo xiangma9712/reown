@@ -14,6 +14,7 @@ import type {
   AffectedModule,
   CommitInfo,
   FileDiff,
+  RiskLevel,
 } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -141,6 +142,7 @@ interface PrTabProps {
 }
 
 type PrStateFilter = "all" | "open" | "closed" | "merged";
+type PrSortOrder = "default" | "risk-desc" | "risk-asc";
 
 export function PrTab({
   prs,
@@ -157,6 +159,7 @@ export function PrTab({
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [stateFilter, setStateFilter] = useState<PrStateFilter>("open");
+  const [sortOrder, setSortOrder] = useState<PrSortOrder>("default");
 
   const [selectedPr, setSelectedPr] = useState<PrInfo | null>(null);
   const [diffs, setDiffs] = useState<CategorizedFileDiff[]>([]);
@@ -588,8 +591,40 @@ export function PrTab({
     }
   }
 
-  const filteredPrs =
-    stateFilter === "all" ? prs : prs.filter((pr) => pr.state === stateFilter);
+  const riskLevelValue = (level: RiskLevel): number => {
+    switch (level) {
+      case "High":
+        return 3;
+      case "Medium":
+        return 2;
+      case "Low":
+        return 1;
+    }
+  };
+
+  const getRiskLevel = (prNumber: number): RiskLevel | null => {
+    const cached = analysisCache.current.get(prNumber);
+    if (!cached) return null;
+    return cached.hybrid?.combined_risk_level ?? cached.analysis.risk.level;
+  };
+
+  const sortedPrs = (() => {
+    const base =
+      stateFilter === "all" ? prs : prs.filter((pr) => pr.state === stateFilter);
+    if (sortOrder === "default") return base;
+    return [...base].sort((a, b) => {
+      const riskA = getRiskLevel(a.number);
+      const riskB = getRiskLevel(b.number);
+      // 未分析のPRは末尾に配置
+      if (riskA === null && riskB === null) return 0;
+      if (riskA === null) return 1;
+      if (riskB === null) return -1;
+      const diff = riskLevelValue(riskA) - riskLevelValue(riskB);
+      return sortOrder === "risk-desc" ? -diff : diff;
+    });
+  })();
+
+  const filteredPrs = sortedPrs;
 
   function toggleFocusCategory(category: ChangeCategory) {
     setFocusCategoryFilters((prev) => {
@@ -1270,7 +1305,7 @@ export function PrTab({
           )}
         </div>
         {prs.length > 0 && (
-          <div className="mb-3 flex gap-1">
+          <div className="mb-3 flex items-center gap-1">
             {(["all", "open", "closed", "merged"] as const).map((filter) => (
               <button
                 key={filter}
@@ -1283,6 +1318,25 @@ export function PrTab({
               >
                 {t(
                   `pr.filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`
+                )}
+              </button>
+            ))}
+            <span className="mx-2 text-[0.7rem] text-text-muted">|</span>
+            <span className="text-[0.75rem] text-text-secondary">
+              {t("pr.sortLabel")}:
+            </span>
+            {(["default", "risk-desc", "risk-asc"] as const).map((sort) => (
+              <button
+                key={sort}
+                className={`rounded-md px-3 py-1 text-[0.8rem] font-medium transition-colors ${
+                  sortOrder === sort
+                    ? "bg-accent text-white"
+                    : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                }`}
+                onClick={() => setSortOrder(sort)}
+              >
+                {t(
+                  `pr.sort${sort === "default" ? "Default" : sort === "risk-desc" ? "RiskDesc" : "RiskAsc"}`
                 )}
               </button>
             ))}
