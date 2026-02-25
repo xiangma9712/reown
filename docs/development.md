@@ -49,6 +49,73 @@ npm run typecheck       # TypeScript 型チェック
 npm run format          # Prettier フォーマット
 ```
 
+### Visual Regression Test
+
+[Playwright](https://playwright.dev/) と [Storybook](https://storybook.js.org/) を使ったビジュアルリグレッションテストを実施しています。UIコンポーネントのスクリーンショットを比較し、意図しない見た目の変更を検知します。
+
+#### テスト実行
+
+```sh
+cd frontend
+
+# Playwright ブラウザのインストール（初回のみ）
+npx playwright install --with-deps chromium
+
+# テスト実行（Storybook が自動起動します）
+npm run test:vrt
+```
+
+#### スナップショットの更新
+
+UIを意図的に変更した場合は、スナップショットを更新してください。
+
+```sh
+cd frontend
+npm run test:vrt -- --update-snapshots
+```
+
+更新された `frontend/e2e/vrt/__snapshots__/` 内の PNG ファイルをコミットに含めてください。
+
+#### 新しいコンポーネントにストーリーを追加する
+
+1. `frontend/src/components/` にストーリーファイルを作成する（例: `MyComponent.stories.tsx`）
+   ```tsx
+   import type { Meta, StoryObj } from "@storybook/react";
+   import { MyComponent } from "./MyComponent";
+
+   const meta: Meta<typeof MyComponent> = {
+     component: MyComponent,
+   };
+   export default meta;
+
+   type Story = StoryObj<typeof MyComponent>;
+
+   export const Default: Story = {};
+   ```
+2. `frontend/e2e/vrt/` に VRT スペックファイルを作成する（例: `my-component.spec.ts`）
+   ```ts
+   import { test, expect } from "@playwright/test";
+
+   test.describe("MyComponent", () => {
+     test("default", async ({ page }) => {
+       await page.goto(
+         "/iframe.html?id=mycomponent--default&viewMode=story",
+       );
+       await expect(page).toHaveScreenshot();
+     });
+   });
+   ```
+3. スナップショットを生成する
+   ```sh
+   cd frontend
+   npm run test:vrt -- --update-snapshots
+   ```
+4. 生成された PNG ファイルをコミットに含める
+
+#### CI での実行
+
+PRを作成すると、GitHub Actions で自動的にビジュアルリグレッションテストが実行されます。差分が検出された場合は CI が失敗し、差分画像が `vrt-diff` アーティファクトとしてダウンロードできます。
+
 ### Tauri アプリ
 
 ```sh
