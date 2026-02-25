@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, FormEvent } from "react";
+import { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import { useRepository } from "../RepositoryContext";
@@ -8,6 +8,7 @@ import { Button } from "./Button";
 import { Card } from "./Card";
 import { Input } from "./Input";
 import { Loading } from "./Loading";
+import { Spinner } from "./Loading";
 import { RiskBadge } from "./RiskBadge";
 import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 import { AiSummaryPanel } from "./AiSummaryPanel";
@@ -162,6 +163,11 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
   const [commitDiffError, setCommitDiffError] = useState<string | null>(null);
   const [commitExpandedFiles, setCommitExpandedFiles] = useState<Set<number>>(new Set());
 
+  // Background risk analysis state
+  const [analyzingPrs, setAnalyzingPrs] = useState<Set<number>>(new Set());
+  // Counter to force re-render when analysisCache is updated in background
+  const [, setCacheVersion] = useState(0);
+
   // Review state
   const [reviewComment, setReviewComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -178,6 +184,47 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
     }).catch(() => {
       // 設定ファイルが読み込めない場合は無視する
     });
+  }, []);
+
+  // バックグラウンドで全PRのリスク分析を実行する（同時実行数制限付き）
+  const runBackgroundAnalysis = useCallback(async (
+    prList: PrInfo[],
+    ownerVal: string,
+    repoVal: string,
+    tokenVal: string,
+  ) => {
+    const CONCURRENCY = 3;
+    const queue = prList.filter((pr) => !analysisCache.current.has(pr.number));
+    if (queue.length === 0) return;
+
+    let index = 0;
+    async function processNext() {
+      while (index < queue.length) {
+        const pr = queue[index++];
+        setAnalyzingPrs((prev) => new Set(prev).add(pr.number));
+        try {
+          const result = await invoke("analyze_pr_risk", {
+            owner: ownerVal,
+            repo: repoVal,
+            prNumber: pr.number,
+            token: tokenVal,
+          });
+          analysisCache.current.set(pr.number, { analysis: result });
+          setCacheVersion((v) => v + 1);
+        } catch {
+          // 個別のPR分析失敗は無視して次へ進む
+        } finally {
+          setAnalyzingPrs((prev) => {
+            const next = new Set(prev);
+            next.delete(pr.number);
+            return next;
+          });
+        }
+      }
+    }
+
+    const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => processNext());
+    await Promise.all(workers);
   }, []);
 
   // バッジクリックによるPR自動選択
@@ -210,6 +257,8 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
         token: token.trim(),
       });
       setPrs(result);
+      // バックグラウンドで全PRのリスク分析を開始
+      runBackgroundAnalysis(result, owner.trim(), repo.trim(), token.trim());
       // 成功時に設定を自動保存
       invoke("save_app_config", {
         config: {
@@ -1120,14 +1169,16 @@ export function PrTab({ prs, setPrs, selectedPrNumber, onPrSelected }: PrTabProp
                   {pr.title}
                 </span>
                 <Badge variant={stateVariant(pr.state)}>{pr.state}</Badge>
-                {analysisCache.current.get(pr.number) && (
+                {analysisCache.current.get(pr.number) ? (
                   <RiskBadge
                     level={
                       analysisCache.current.get(pr.number)!.hybrid?.combined_risk_level ??
                       analysisCache.current.get(pr.number)!.analysis.risk.level
                     }
                   />
-                )}
+                ) : analyzingPrs.has(pr.number) ? (
+                  <Spinner size="sm" />
+                ) : null}
               </div>
               <div className="mt-0.5 flex gap-4 text-xs text-text-secondary">
                 <span>@{pr.author}</span>
