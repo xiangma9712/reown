@@ -130,9 +130,7 @@ export function BranchSelector({ prs, selectedBranch, onSelectBranch }: Props) {
                       </Badge>
                     )}
                     {b.is_remote && (
-                      <Badge variant="info">
-                        {t("branchSelector.remote")}
-                      </Badge>
+                      <Badge variant="info">{t("branchSelector.remote")}</Badge>
                     )}
                     {b.has_worktree && (
                       <Badge variant="warning">
