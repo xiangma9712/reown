@@ -101,6 +101,20 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Visual Regression Test
+        run: npm run test:vrt
+
+      - name: Upload VRT diff artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vrt-diff
+          path: frontend/e2e/vrt/test-results/
+          retention-days: 30
+
   # Status check that always passes — use this for branch protection rules
   # so PRs with only non-Rust changes (docs, configs) aren't blocked
   ci-status:

@@ -1,0 +1,2 @@
+# Visual regression test snapshots — binary diff
+frontend/e2e/vrt/__snapshots__/**/*.png binary
