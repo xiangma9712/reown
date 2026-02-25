@@ -73,8 +73,9 @@ export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
     null
   );
-  const [hybridResult, setHybridResult] =
-    useState<HybridAnalysisResult | null>(null);
+  const [hybridResult, setHybridResult] = useState<HybridAnalysisResult | null>(
+    null
+  );
   const [prDiffs, setPrDiffs] = useState<CategorizedFileDiff[]>([]);
 
   // Find matching PR for the selected branch

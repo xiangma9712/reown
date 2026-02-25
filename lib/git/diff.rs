@@ -265,9 +265,7 @@ mod tests {
         repo.set_head("refs/heads/feature").unwrap();
         fs::write(dir.path().join("feature.txt"), "feature content\n").unwrap();
         let mut index = repo.index().unwrap();
-        index
-            .add_path(std::path::Path::new("feature.txt"))
-            .unwrap();
+        index.add_path(std::path::Path::new("feature.txt")).unwrap();
         index.write().unwrap();
         let tree_id = index.write_tree().unwrap();
         let tree = repo.find_tree(tree_id).unwrap();
@@ -282,8 +280,7 @@ mod tests {
         )
         .unwrap();
 
-        let diffs =
-            diff_branches(dir.path().to_str().unwrap(), "main", "feature").unwrap();
+        let diffs = diff_branches(dir.path().to_str().unwrap(), "main", "feature").unwrap();
         assert_eq!(diffs.len(), 1);
         assert_eq!(diffs[0].new_path.as_deref(), Some("feature.txt"));
         assert_eq!(diffs[0].status, FileStatus::Added);
@@ -293,8 +290,7 @@ mod tests {
     fn test_diff_branches_no_changes() {
         let (dir, _) = init_repo_with_commit();
         // Comparing a branch to itself should produce no diff
-        let diffs =
-            diff_branches(dir.path().to_str().unwrap(), "main", "main").unwrap();
+        let diffs = diff_branches(dir.path().to_str().unwrap(), "main", "main").unwrap();
         assert!(diffs.is_empty());
     }
 }
