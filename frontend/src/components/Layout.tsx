@@ -19,6 +19,8 @@ interface Props {
   navItems: NavItem[];
   activeTabId: string;
   onSelectTab: (id: string) => void;
+  settingsOpen?: boolean;
+  onToggleSettings?: () => void;
   branchSelector?: ReactNode;
   children: ReactNode;
 }
@@ -32,6 +34,8 @@ export function Layout({
   navItems,
   activeTabId,
   onSelectTab,
+  settingsOpen,
+  onToggleSettings,
   branchSelector,
   children,
 }: Props) {
@@ -45,6 +49,8 @@ export function Layout({
         onSelect={onSelectRepo}
         onAdd={onAddRepo}
         onRemove={onRemoveRepo}
+        settingsOpen={settingsOpen}
+        onToggleSettings={onToggleSettings}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         {selectedRepoPath ? (

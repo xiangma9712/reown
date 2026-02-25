@@ -22,7 +22,6 @@ const NAV_ITEMS = [
   { id: "diff", labelKey: "tabs.diff", shortcut: "D" },
   { id: "pr", labelKey: "tabs.prs", shortcut: "P" },
   { id: "todo", labelKey: "tabs.todo", shortcut: "T" },
-  { id: "settings", labelKey: "tabs.settings", shortcut: "S" },
 ] as const;
 
 type TabName = (typeof NAV_ITEMS)[number]["id"];
@@ -36,6 +35,7 @@ export function App() {
   const [prs, setPrs] = useState<PrInfo[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [selectedPrNumber, setSelectedPrNumber] = useState<number | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     message: string;
     resolve: (value: boolean) => void;
@@ -137,24 +137,30 @@ export function App() {
       switch (e.key) {
         case "w":
           setActiveTab("worktree");
+          setSettingsOpen(false);
           break;
         case "b":
           setActiveTab("branch");
+          setSettingsOpen(false);
           break;
         case "d":
           setActiveTab("diff");
+          setSettingsOpen(false);
           break;
         case "p":
           setActiveTab("pr");
+          setSettingsOpen(false);
           break;
         case "t":
           setActiveTab("todo");
+          setSettingsOpen(false);
           break;
         case "s":
-          setActiveTab("settings");
+          setSettingsOpen((prev) => !prev);
           break;
         case "Tab":
           e.preventDefault();
+          setSettingsOpen(false);
           setActiveTab((prev) => {
             const ids = NAV_ITEMS.map((item) => item.id);
             const idx = ids.indexOf(prev);
@@ -178,7 +184,12 @@ export function App() {
         onRemoveRepo={handleRemoveRepo}
         navItems={[...NAV_ITEMS]}
         activeTabId={activeTab}
-        onSelectTab={(id) => setActiveTab(id as TabName)}
+        onSelectTab={(id) => {
+          setActiveTab(id as TabName);
+          setSettingsOpen(false);
+        }}
+        settingsOpen={settingsOpen}
+        onToggleSettings={() => setSettingsOpen((prev) => !prev)}
         branchSelector={
           <BranchSelector
             prs={prs}
@@ -187,31 +198,34 @@ export function App() {
           />
         }
       >
-        {activeTab === "worktree" && (
-          <WorktreeTab prs={prs} onNavigateToPr={navigateToPr} />
-        )}
-        {activeTab === "branch" && (
-          <BranchTab
-            showConfirm={showConfirm}
-            prs={prs}
-            onNavigateToPr={navigateToPr}
-          />
-        )}
-        {activeTab === "diff" && <DiffTab />}
-        {activeTab === "pr" && (
-          <PrTab
-            prs={prs}
-            setPrs={setPrs}
-            selectedPrNumber={selectedPrNumber}
-            onPrSelected={() => setSelectedPrNumber(null)}
-          />
-        )}
-        {activeTab === "todo" && <TodoTab />}
-        {activeTab === "settings" && (
+        {settingsOpen ? (
           <div className="mx-auto max-w-xl space-y-8">
             <LlmSettingsTab />
             <AutomationSettingsTab />
           </div>
+        ) : (
+          <>
+            {activeTab === "worktree" && (
+              <WorktreeTab prs={prs} onNavigateToPr={navigateToPr} />
+            )}
+            {activeTab === "branch" && (
+              <BranchTab
+                showConfirm={showConfirm}
+                prs={prs}
+                onNavigateToPr={navigateToPr}
+              />
+            )}
+            {activeTab === "diff" && <DiffTab />}
+            {activeTab === "pr" && (
+              <PrTab
+                prs={prs}
+                setPrs={setPrs}
+                selectedPrNumber={selectedPrNumber}
+                onPrSelected={() => setSelectedPrNumber(null)}
+              />
+            )}
+            {activeTab === "todo" && <TodoTab />}
+          </>
         )}
 
         <ConfirmDialog
