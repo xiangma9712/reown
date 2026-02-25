@@ -124,8 +124,8 @@ pub fn list_enriched_branches(
     if let Ok(remote_branches) = repo.branches(Some(BranchType::Remote)) {
         for (branch, _) in remote_branches.flatten() {
             if let Ok(Some(name)) = branch.name() {
-                // "origin/feature" → "feature"
-                if let Some(short) = name.split('/').nth(1) {
+                // "origin/feature/foo" → "feature/foo"
+                if let Some((_, short)) = name.split_once('/') {
                     remote_branch_names.insert(short.to_string());
                 }
             }
