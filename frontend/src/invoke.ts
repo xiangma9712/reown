@@ -20,7 +20,7 @@ import type {
   ReviewSuggestion,
 } from "./types";
 
-type Commands = {
+export type Commands = {
   list_worktrees: { args: { repoPath: string }; ret: WorktreeInfo[] };
   add_worktree: {
     args: { repoPath: string; worktreePath: string; branch: string };
