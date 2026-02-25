@@ -206,8 +206,10 @@ export function PrTab({
   const [commitsLoading, setCommitsLoading] = useState(false);
   const [commitsError, setCommitsError] = useState<string | null>(null);
 
-  // View mode: "all" shows all PR files, "commit" shows per-commit diff
-  const [viewMode, setViewMode] = useState<"all" | "commit">("all");
+  // View mode: "summary" shows AI summary first, "all" shows all PR files, "commit" shows per-commit diff
+  const [viewMode, setViewMode] = useState<"summary" | "all" | "commit">(
+    "summary"
+  );
   const [selectedCommit, setSelectedCommit] = useState<CommitInfo | null>(null);
   const [commitDiffs, setCommitDiffs] = useState<FileDiff[]>([]);
   const [commitDiffLoading, setCommitDiffLoading] = useState(false);
@@ -362,7 +364,7 @@ export function PrTab({
     // Reset commit state
     setCommits([]);
     setCommitsError(null);
-    setViewMode("all");
+    setViewMode("summary");
     setSelectedCommit(null);
     setCommitDiffs([]);
     setCommitDiffError(null);
@@ -487,7 +489,7 @@ export function PrTab({
     setConfirmingReview(null);
     setCommits([]);
     setCommitsError(null);
-    setViewMode("all");
+    setViewMode("summary");
     setSelectedCommit(null);
     setCommitDiffs([]);
     setCommitDiffError(null);
@@ -663,13 +665,6 @@ export function PrTab({
             {analysisLoading ? t("pr.analyzing") : t("pr.analyze")}
           </Button>
         </div>
-        <ChangeSummaryList
-          owner={owner.trim()}
-          repo={repo.trim()}
-          prNumber={selectedPr.number}
-          token={token.trim()}
-          diffs={diffs}
-        />
         <ConsistencyCheckPanel
           owner={owner.trim()}
           repo={repo.trim()}
@@ -805,6 +800,16 @@ export function PrTab({
             <div className="flex gap-1">
               <button
                 className={`rounded-md px-3 py-1 text-[0.8rem] font-medium transition-colors ${
+                  viewMode === "summary"
+                    ? "bg-accent text-white"
+                    : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
+                }`}
+                onClick={() => setViewMode("summary")}
+              >
+                {t("pr.viewSummary")}
+              </button>
+              <button
+                className={`rounded-md px-3 py-1 text-[0.8rem] font-medium transition-colors ${
                   viewMode === "all"
                     ? "bg-accent text-white"
                     : "bg-bg-primary text-text-secondary hover:bg-bg-hover"
@@ -865,6 +870,17 @@ export function PrTab({
               </div>
             )}
           </div>
+          {/* Summary view */}
+          {viewMode === "summary" && (
+            <ChangeSummaryList
+              owner={owner.trim()}
+              repo={repo.trim()}
+              prNumber={selectedPr.number}
+              token={token.trim()}
+              diffs={diffs}
+              autoGenerate={llmConfigRef.current.llm_api_key_stored}
+            />
+          )}
           {/* All files view */}
           {viewMode === "all" && (
             <>

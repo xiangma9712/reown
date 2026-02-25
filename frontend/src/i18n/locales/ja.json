@@ -135,6 +135,7 @@
     "commitsLoading": "コミット一覧を取得中…",
     "commitsError": "コミット一覧の取得に失敗しました",
     "commitsEmpty": "コミットがありません。",
+    "viewSummary": "要約",
     "viewAllFiles": "全ファイル",
     "viewByCommit": "コミット別",
     "commitDiffLoading": "コミットの差分を取得中…",

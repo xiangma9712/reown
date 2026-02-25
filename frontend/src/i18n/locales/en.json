@@ -135,6 +135,7 @@
     "commitsLoading": "Loading commits…",
     "commitsError": "Failed to load commits",
     "commitsEmpty": "No commits found.",
+    "viewSummary": "Summary",
     "viewAllFiles": "All Files",
     "viewByCommit": "By Commit",
     "commitDiffLoading": "Loading commit diff…",
