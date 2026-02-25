@@ -76,7 +76,9 @@ export function ReviewSuggestionPanel({
           className="flex items-center gap-2 text-lg text-text-heading"
           onClick={() => setCollapsed((prev) => !prev)}
         >
-          <span className="text-[0.7rem]">{collapsed ? "\u25B6" : "\u25BC"}</span>
+          <span className="text-[0.7rem]">
+            {collapsed ? "\u25B6" : "\u25BC"}
+          </span>
           {t("pr.reviewSuggestions")}
         </button>
         <Button
