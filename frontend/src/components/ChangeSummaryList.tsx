@@ -233,6 +233,18 @@ export function ChangeSummaryList({
             </p>
           </Panel>
 
+          {/* Change reason */}
+          {summary.reason && (
+            <Panel>
+              <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+                {t("pr.changeReason")}
+              </h3>
+              <p className="whitespace-pre-wrap text-[0.85rem] text-text-primary">
+                {summary.reason}
+              </p>
+            </Panel>
+          )}
+
           {/* File summaries list */}
           {summary.file_summaries.length > 0 && (
             <div className="space-y-2">
