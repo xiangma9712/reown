@@ -107,7 +107,8 @@ mod tests {
 
     #[test]
     fn test_parse_github_remote_https() {
-        let (owner, repo) = parse_github_remote("https://github.com/octocat/hello-world.git").unwrap();
+        let (owner, repo) =
+            parse_github_remote("https://github.com/octocat/hello-world.git").unwrap();
         assert_eq!(owner, "octocat");
         assert_eq!(repo, "hello-world");
     }
@@ -167,7 +168,10 @@ mod tests {
         repo.remote("origin", "https://github.com/testowner/testrepo.git")
             .unwrap();
         let info = get_repo_info(dir.path().to_str().unwrap()).unwrap();
-        assert_eq!(info.remote_url.as_deref(), Some("https://github.com/testowner/testrepo.git"));
+        assert_eq!(
+            info.remote_url.as_deref(),
+            Some("https://github.com/testowner/testrepo.git")
+        );
         assert_eq!(info.github_owner.as_deref(), Some("testowner"));
         assert_eq!(info.github_repo.as_deref(), Some("testrepo"));
     }

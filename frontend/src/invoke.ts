@@ -1,5 +1,24 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
-import type { WorktreeInfo, BranchInfo, FileDiff, CategorizedFileDiff, PrInfo, CommitInfo, RepositoryEntry, AppConfig, LlmConfig, AutomationConfig, RepoInfo, PrSummary, ConsistencyResult, AnalysisResult, HybridAnalysisResult, ReviewEvent, TodoItem, ReviewSuggestion } from "./types";
+import type {
+  WorktreeInfo,
+  BranchInfo,
+  FileDiff,
+  CategorizedFileDiff,
+  PrInfo,
+  CommitInfo,
+  RepositoryEntry,
+  AppConfig,
+  LlmConfig,
+  AutomationConfig,
+  RepoInfo,
+  PrSummary,
+  ConsistencyResult,
+  AnalysisResult,
+  HybridAnalysisResult,
+  ReviewEvent,
+  TodoItem,
+  ReviewSuggestion,
+} from "./types";
 
 type Commands = {
   list_worktrees: { args: { repoPath: string }; ret: WorktreeInfo[] };
@@ -12,7 +31,10 @@ type Commands = {
   switch_branch: { args: { repoPath: string; name: string }; ret: void };
   delete_branch: { args: { repoPath: string; name: string }; ret: void };
   diff_workdir: { args: { repoPath: string }; ret: FileDiff[] };
-  diff_commit: { args: { repoPath: string; commitSha: string }; ret: FileDiff[] };
+  diff_commit: {
+    args: { repoPath: string; commitSha: string };
+    ret: FileDiff[];
+  };
   list_pull_requests: {
     args: { owner: string; repo: string; token: string };
     ret: PrInfo[];
@@ -26,7 +48,14 @@ type Commands = {
     ret: CommitInfo[];
   };
   submit_pr_review: {
-    args: { owner: string; repo: string; prNumber: number; event: ReviewEvent; body: string; token: string };
+    args: {
+      owner: string;
+      repo: string;
+      prNumber: number;
+      event: ReviewEvent;
+      body: string;
+      token: string;
+    };
     ret: void;
   };
   get_repo_info: {
@@ -81,7 +110,10 @@ type Commands = {
     args: { automationConfig: AutomationConfig };
     ret: void;
   };
-  load_automation_config: { args?: Record<string, unknown>; ret: AutomationConfig };
+  load_automation_config: {
+    args?: Record<string, unknown>;
+    ret: AutomationConfig;
+  };
   extract_todos: { args: { repoPath: string }; ret: TodoItem[] };
   suggest_review_comments: {
     args: { owner: string; repo: string; prNumber: number; token: string };

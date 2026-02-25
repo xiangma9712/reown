@@ -393,7 +393,11 @@ fn file_summary_template(diff: &FileDiff, diff_text: &str, lang: Language) -> St
 
 /// FileDiff のリストをテキスト形式に変換する
 fn format_diffs(diffs: &[FileDiff]) -> String {
-    diffs.iter().map(format_single_diff).collect::<Vec<_>>().join("\n")
+    diffs
+        .iter()
+        .map(format_single_diff)
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// 単一の FileDiff をテキスト形式に変換する

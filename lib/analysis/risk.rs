@@ -1,7 +1,7 @@
 use crate::git::diff::FileDiff;
 use crate::github::PrInfo;
 
-use super::classify::{ChangeCategory, classify_file_change, count_changes, effective_path};
+use super::classify::{classify_file_change, count_changes, effective_path, ChangeCategory};
 
 /// リスクレベル
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
@@ -111,7 +111,10 @@ fn build_summary(files: &[FileAnalysis]) -> AnalysisSummary {
     // カテゴリごとのカウント
     let mut category_counts: Vec<(ChangeCategory, usize)> = Vec::new();
     for file in files {
-        if let Some(entry) = category_counts.iter_mut().find(|(c, _)| *c == file.category) {
+        if let Some(entry) = category_counts
+            .iter_mut()
+            .find(|(c, _)| *c == file.category)
+        {
             entry.1 += 1;
         } else {
             category_counts.push((file.category.clone(), 1));
@@ -188,9 +191,7 @@ fn calculate_risk_score(
     }
 
     // 要素4: テストファイルの有無
-    let logic_changes = files
-        .iter()
-        .any(|f| f.category == ChangeCategory::Logic);
+    let logic_changes = files.iter().any(|f| f.category == ChangeCategory::Logic);
     if logic_changes && !summary.has_test_changes {
         let test_score = 15;
         factors.push(RiskFactor {
@@ -435,11 +436,7 @@ mod tests {
         let diffs = vec![make_diff("src/main.rs", 20, 0)];
         let result = analyze_pr_risk(&pr, &diffs);
 
-        let has_no_test_factor = result
-            .risk
-            .factors
-            .iter()
-            .any(|f| f.name == "no_tests");
+        let has_no_test_factor = result.risk.factors.iter().any(|f| f.name == "no_tests");
         assert!(has_no_test_factor);
     }
 
@@ -450,11 +447,7 @@ mod tests {
         let diffs = vec![make_diff("README.md", 50, 10)];
         let result = analyze_pr_risk(&pr, &diffs);
 
-        let has_no_test_factor = result
-            .risk
-            .factors
-            .iter()
-            .any(|f| f.name == "no_tests");
+        let has_no_test_factor = result.risk.factors.iter().any(|f| f.name == "no_tests");
         assert!(!has_no_test_factor);
     }
 

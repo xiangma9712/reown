@@ -37,8 +37,7 @@ fn list_worktrees(repo_path: String) -> Result<Vec<reown::git::worktree::Worktre
 
 #[tauri::command]
 fn add_worktree(repo_path: String, worktree_path: String, branch: String) -> Result<(), AppError> {
-    reown::git::worktree::add_worktree(&repo_path, &worktree_path, &branch)
-        .map_err(AppError::git)
+    reown::git::worktree::add_worktree(&repo_path, &worktree_path, &branch).map_err(AppError::git)
 }
 
 // ── Diff commands ───────────────────────────────────────────────────────────
@@ -104,11 +103,9 @@ async fn submit_pr_review(
     body: String,
     token: String,
 ) -> Result<(), AppError> {
-    reown::github::pull_request::submit_review(
-        &owner, &repo, pr_number, event, &body, &token,
-    )
-    .await
-    .map_err(AppError::github)
+    reown::github::pull_request::submit_review(&owner, &repo, pr_number, event, &body, &token)
+        .await
+        .map_err(AppError::github)
 }
 
 #[tauri::command]
@@ -119,11 +116,9 @@ async fn enable_pr_auto_merge(
     merge_method: reown::github::MergeMethod,
     token: String,
 ) -> Result<(), AppError> {
-    reown::github::pull_request::enable_auto_merge(
-        &token, &owner, &repo, pr_number, merge_method,
-    )
-    .await
-    .map_err(AppError::github)
+    reown::github::pull_request::enable_auto_merge(&token, &owner, &repo, pr_number, merge_method)
+        .await
+        .map_err(AppError::github)
 }
 
 // ── Git info commands ──────────────────────────────────────────────────────
@@ -161,10 +156,7 @@ fn list_repositories(
 }
 
 #[tauri::command]
-fn remove_repository(
-    app_handle: tauri::AppHandle,
-    path: String,
-) -> Result<(), AppError> {
+fn remove_repository(app_handle: tauri::AppHandle, path: String) -> Result<(), AppError> {
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
@@ -189,9 +181,7 @@ async fn analyze_pr_risk(
     let pr = prs
         .into_iter()
         .find(|p| p.number == pr_number)
-        .ok_or_else(|| {
-            AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found"))
-        })?;
+        .ok_or_else(|| AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found")))?;
 
     let diffs =
         reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
@@ -233,7 +223,9 @@ async fn analyze_pr_risk_with_llm(
 // ── LLM helpers ─────────────────────────────────────────────────────────────
 
 /// 保存済みの設定からLlmClientを構築する
-fn build_llm_client(app_handle: &tauri::AppHandle) -> Result<reown::llm::client::LlmClient, AppError> {
+fn build_llm_client(
+    app_handle: &tauri::AppHandle,
+) -> Result<reown::llm::client::LlmClient, AppError> {
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
@@ -336,9 +328,7 @@ fn save_app_config(
 }
 
 #[tauri::command]
-fn load_app_config(
-    app_handle: tauri::AppHandle,
-) -> Result<reown::config::AppConfig, AppError> {
+fn load_app_config(app_handle: tauri::AppHandle) -> Result<reown::config::AppConfig, AppError> {
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
@@ -365,9 +355,7 @@ fn save_llm_config(
 }
 
 #[tauri::command]
-fn load_llm_config(
-    app_handle: tauri::AppHandle,
-) -> Result<reown::config::LlmConfig, AppError> {
+fn load_llm_config(app_handle: tauri::AppHandle) -> Result<reown::config::LlmConfig, AppError> {
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
@@ -680,10 +668,7 @@ mod tests {
 
     #[test]
     fn test_app_error_kind_variants_serialize() {
-        for (kind, expected) in [
-            (ErrorKind::Git, "git"),
-            (ErrorKind::GitHub, "github"),
-        ] {
+        for (kind, expected) in [(ErrorKind::Git, "git"), (ErrorKind::GitHub, "github")] {
             let json = serde_json::to_value(&kind).unwrap();
             assert_eq!(json, expected);
         }
@@ -697,8 +682,8 @@ mod tests {
 
     #[test]
     fn test_app_error_preserves_context_chain() {
-        let inner = anyhow::anyhow!("disk I/O error")
-            .context("Failed to open repository at /tmp/test");
+        let inner =
+            anyhow::anyhow!("disk I/O error").context("Failed to open repository at /tmp/test");
         let err = AppError::git(inner);
         // anyhow の {:#} フォーマットでコンテキストチェーンが保持される
         assert!(err.message.contains("Failed to open repository"));

@@ -10,14 +10,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary:
-    "bg-accent text-white font-semibold hover:bg-accent-hover",
-  secondary:
-    "bg-btn-secondary text-text-primary hover:bg-btn-secondary-hover",
-  destructive:
-    "bg-danger text-white font-semibold hover:bg-danger-hover",
-  ghost:
-    "bg-transparent text-text-primary hover:bg-bg-hover",
+  primary: "bg-accent text-white font-semibold hover:bg-accent-hover",
+  secondary: "bg-btn-secondary text-text-primary hover:bg-btn-secondary-hover",
+  destructive: "bg-danger text-white font-semibold hover:bg-danger-hover",
+  ghost: "bg-transparent text-text-primary hover:bg-bg-hover",
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -37,7 +33,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       ...props
     },
-    ref,
+    ref
   ) => {
     return (
       <button
@@ -49,7 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </button>
     );
-  },
+  }
 );
 
 Button.displayName = "Button";

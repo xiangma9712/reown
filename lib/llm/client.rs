@@ -170,8 +170,8 @@ impl LlmClient {
         let url = format!("{}/v1/messages", self.api_base);
 
         // リクエストボディに stream: true を付与
-        let body = serde_json::to_value(request)
-            .context("LlmRequestのシリアライズに失敗しました")?;
+        let body =
+            serde_json::to_value(request).context("LlmRequestのシリアライズに失敗しました")?;
         let mut stream_body = body.clone();
         stream_body["stream"] = serde_json::Value::Bool(true);
 
@@ -450,9 +450,7 @@ mod tests {
         assert!(is_retryable_status(StatusCode::INTERNAL_SERVER_ERROR)); // 500
         assert!(is_retryable_status(StatusCode::BAD_GATEWAY)); // 502
         assert!(is_retryable_status(StatusCode::SERVICE_UNAVAILABLE)); // 503
-        assert!(is_retryable_status(
-            StatusCode::from_u16(529).unwrap()
-        )); // 529
+        assert!(is_retryable_status(StatusCode::from_u16(529).unwrap())); // 529
 
         // リトライ対象外
         assert!(!is_retryable_status(StatusCode::OK)); // 200
@@ -464,13 +462,12 @@ mod tests {
 
     #[test]
     fn test_with_retry_config() {
-        let client = LlmClient::new(None, "test-model".to_string()).with_retry_config(
-            RetryConfig {
+        let client =
+            LlmClient::new(None, "test-model".to_string()).with_retry_config(RetryConfig {
                 max_retries: 5,
                 initial_backoff_secs: 2,
                 backoff_multiplier: 3,
-            },
-        );
+            });
         assert_eq!(client.retry_config.max_retries, 5);
         assert_eq!(client.retry_config.initial_backoff_secs, 2);
         assert_eq!(client.retry_config.backoff_multiplier, 3);
@@ -497,10 +494,7 @@ mod tests {
 
     #[test]
     fn test_parse_retry_after_missing() {
-        let response = http::Response::builder()
-            .status(429)
-            .body("")
-            .unwrap();
+        let response = http::Response::builder().status(429).body("").unwrap();
         let reqwest_response = reqwest::Response::from(response);
         assert_eq!(parse_retry_after(&reqwest_response), None);
     }

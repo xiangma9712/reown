@@ -10,7 +10,7 @@ import { Input } from "./Input";
 import { Loading } from "./Loading";
 
 function prStateVariant(
-  state: string,
+  state: string
 ): "success" | "danger" | "purple" | "default" {
   switch (state) {
     case "open":
@@ -118,54 +118,50 @@ export function WorktreeTab({ prs, onNavigateToPr }: Props) {
           {worktrees.map((wt, index) => {
             const pr = wt.branch ? prByBranch.get(wt.branch) : undefined;
             return (
-            <div
-              key={wt.path}
-              className={`cursor-pointer border-b border-border px-3 py-2.5 font-mono text-[0.85rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                selectedIndex === index
-                  ? "border-l-2 border-l-accent bg-bg-hover"
-                  : ""
-              }`}
-              onClick={() => setSelectedIndex(index)}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`font-bold ${wt.is_main ? "text-accent" : "text-text-primary"}`}
-                >
-                  {wt.name}
-                </span>
-                {wt.is_locked && (
-                  <Badge variant="danger">
-                    {t("worktree.locked")}
-                  </Badge>
-                )}
-                {!wt.branch && (
-                  <Badge variant="warning">
-                    {t("worktree.detached")}
-                  </Badge>
-                )}
-                {pr && (
-                  <button
-                    className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onNavigateToPr(pr.number);
-                    }}
+              <div
+                key={wt.path}
+                className={`cursor-pointer border-b border-border px-3 py-2.5 font-mono text-[0.85rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                  selectedIndex === index
+                    ? "border-l-2 border-l-accent bg-bg-hover"
+                    : ""
+                }`}
+                onClick={() => setSelectedIndex(index)}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-bold ${wt.is_main ? "text-accent" : "text-text-primary"}`}
                   >
-                    <Badge variant={prStateVariant(pr.state)}>
-                      #{pr.number} {pr.state}
-                    </Badge>
-                  </button>
-                )}
+                    {wt.name}
+                  </span>
+                  {wt.is_locked && (
+                    <Badge variant="danger">{t("worktree.locked")}</Badge>
+                  )}
+                  {!wt.branch && (
+                    <Badge variant="warning">{t("worktree.detached")}</Badge>
+                  )}
+                  {pr && (
+                    <button
+                      className="inline-flex cursor-pointer items-center gap-1 border-none bg-transparent p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigateToPr(pr.number);
+                      }}
+                    >
+                      <Badge variant={prStateVariant(pr.state)}>
+                        #{pr.number} {pr.state}
+                      </Badge>
+                    </button>
+                  )}
+                </div>
+                <div className="mt-0.5 text-[0.8rem] text-text-secondary">
+                  {t("worktree.branchLabel", {
+                    name: wt.branch ?? "(detached)",
+                  })}
+                </div>
+                <div className="mt-0.5 text-[0.8rem] text-text-secondary">
+                  {t("worktree.pathLabel", { path: wt.path })}
+                </div>
               </div>
-              <div className="mt-0.5 text-[0.8rem] text-text-secondary">
-                {t("worktree.branchLabel", {
-                  name: wt.branch ?? "(detached)",
-                })}
-              </div>
-              <div className="mt-0.5 text-[0.8rem] text-text-secondary">
-                {t("worktree.pathLabel", { path: wt.path })}
-              </div>
-            </div>
             );
           })}
         </div>

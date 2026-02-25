@@ -26,9 +26,7 @@ export function ConfirmDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[90%] max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-bg-primary p-6 shadow-lg focus:outline-none">
-          <Dialog.Title className="sr-only">
-            {t("common.confirm")}
-          </Dialog.Title>
+          <Dialog.Title className="sr-only">{t("common.confirm")}</Dialog.Title>
           <Dialog.Description className="mb-5 text-lg text-text-primary">
             {message}
           </Dialog.Description>

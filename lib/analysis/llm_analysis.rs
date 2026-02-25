@@ -90,10 +90,8 @@ pub fn merge_analysis(
     static_analysis: AnalysisResult,
     llm_analysis: LlmAnalysisResult,
 ) -> HybridAnalysisResult {
-    let combined_risk_level = higher_risk_level(
-        &static_analysis.risk.level,
-        &llm_analysis.llm_risk_level,
-    );
+    let combined_risk_level =
+        higher_risk_level(&static_analysis.risk.level, &llm_analysis.llm_risk_level);
 
     HybridAnalysisResult {
         static_analysis,
@@ -141,7 +139,10 @@ fn extract_affected_modules(response: &str) -> Vec<AffectedModule> {
     for line in response.lines() {
         let trimmed = line.trim();
 
-        if is_specific_section_header(trimmed, &["影響モジュール", "AFFECTED_MODULES", "affected module"]) {
+        if is_specific_section_header(
+            trimmed,
+            &["影響モジュール", "AFFECTED_MODULES", "affected module"],
+        ) {
             in_section = true;
             continue;
         }
@@ -178,7 +179,10 @@ fn extract_breaking_changes(response: &str) -> Vec<BreakingChange> {
     for line in response.lines() {
         let trimmed = line.trim();
 
-        if is_specific_section_header(trimmed, &["破壊的変更", "BREAKING_CHANGES", "breaking change"]) {
+        if is_specific_section_header(
+            trimmed,
+            &["破壊的変更", "BREAKING_CHANGES", "breaking change"],
+        ) {
             in_section = true;
             continue;
         }
@@ -189,13 +193,14 @@ fn extract_breaking_changes(response: &str) -> Vec<BreakingChange> {
 
         if in_section && is_list_item(trimmed) {
             let text = strip_list_prefix(trimmed);
-            if text.is_empty() || text.to_lowercase().contains("なし") || text.to_lowercase() == "none" {
+            if text.is_empty()
+                || text.to_lowercase().contains("なし")
+                || text.to_lowercase() == "none"
+            {
                 continue;
             }
 
-            let severity = if text.contains("重大")
-                || text.to_lowercase().contains("critical")
-            {
+            let severity = if text.contains("重大") || text.to_lowercase().contains("critical") {
                 BreakingChangeSeverity::Critical
             } else {
                 BreakingChangeSeverity::Warning
@@ -255,7 +260,10 @@ fn is_risk_section_header(line: &str) -> bool {
     if trimmed.starts_with('#') {
         let header_text = trimmed.trim_start_matches('#').trim();
         // "リスクレベル" は別セクションなので除外
-        if header_text.contains("リスクレベル") || header_text.contains("risk_level") || header_text.contains("risk level") {
+        if header_text.contains("リスクレベル")
+            || header_text.contains("risk_level")
+            || header_text.contains("risk level")
+        {
             return false;
         }
         return header_text.contains("リスク")
@@ -266,7 +274,9 @@ fn is_risk_section_header(line: &str) -> bool {
 
     // "リスク:" や "注意点:" のようなラベル行
     if (trimmed.ends_with(':') || trimmed.ends_with('：'))
-        && (trimmed.contains("リスク") || trimmed.contains("RISK_WARNINGS") || trimmed.contains("注意"))
+        && (trimmed.contains("リスク")
+            || trimmed.contains("RISK_WARNINGS")
+            || trimmed.contains("注意"))
         && !trimmed.contains("リスクレベル")
     {
         return true;
@@ -282,7 +292,10 @@ fn extract_risk_level(response: &str) -> RiskLevel {
     // 明示的なリスクレベル表記を探す
     for line in lower.lines() {
         let trimmed = line.trim();
-        if trimmed.contains("リスクレベル") || trimmed.contains("risk_level") || trimmed.contains("risk level") {
+        if trimmed.contains("リスクレベル")
+            || trimmed.contains("risk_level")
+            || trimmed.contains("risk level")
+        {
             if trimmed.contains("high") || trimmed.contains("高") {
                 return RiskLevel::High;
             }
@@ -356,13 +369,13 @@ fn is_specific_section_header(line: &str, keywords: &[&str]) -> bool {
     // "# ..." 形式のヘッダー
     if trimmed.starts_with('#') {
         let header_text = trimmed.trim_start_matches('#').trim().to_lowercase();
-        return keywords.iter().any(|kw| header_text.contains(&kw.to_lowercase()));
+        return keywords
+            .iter()
+            .any(|kw| header_text.contains(&kw.to_lowercase()));
     }
 
     // "keyword:" 形式のラベル行（リスト項目ではない）
-    if !is_list_item(trimmed)
-        && (trimmed.ends_with(':') || trimmed.ends_with('：'))
-    {
+    if !is_list_item(trimmed) && (trimmed.ends_with(':') || trimmed.ends_with('：')) {
         let lower = trimmed.to_lowercase();
         return keywords.iter().any(|kw| lower.contains(&kw.to_lowercase()));
     }
@@ -378,24 +391,14 @@ fn is_list_item(line: &str) -> bool {
     line.starts_with('-')
         || line.starts_with('•')
         || line.starts_with('*')
-        || line
-            .chars()
-            .next()
-            .is_some_and(|c| c.is_ascii_digit())
-            && line.contains('.')
+        || line.chars().next().is_some_and(|c| c.is_ascii_digit()) && line.contains('.')
 }
 
 fn strip_list_prefix(line: &str) -> String {
-    let stripped = line
-        .trim_start_matches(['-', '•', '*', ' '])
-        .trim();
+    let stripped = line.trim_start_matches(['-', '•', '*', ' ']).trim();
 
     // 番号付きリストの場合
-    if stripped
-        .chars()
-        .next()
-        .is_some_and(|c| c.is_ascii_digit())
-    {
+    if stripped.chars().next().is_some_and(|c| c.is_ascii_digit()) {
         if let Some((_, rest)) = stripped.split_once('.') {
             return rest.trim().to_string();
         }
@@ -519,7 +522,10 @@ mod tests {
         assert_eq!(result.affected_modules[0].name, "auth");
         assert_eq!(result.affected_modules[1].name, "api");
         assert_eq!(result.breaking_changes.len(), 1);
-        assert_eq!(result.breaking_changes[0].severity, BreakingChangeSeverity::Critical);
+        assert_eq!(
+            result.breaking_changes[0].severity,
+            BreakingChangeSeverity::Critical
+        );
         assert_eq!(result.breaking_changes[0].file_path, "src/auth/login.rs");
         assert_eq!(result.risk_warnings.len(), 2);
         assert_eq!(result.llm_risk_level, RiskLevel::High);
@@ -561,14 +567,8 @@ mod tests {
 
     #[test]
     fn test_extract_risk_level_high() {
-        assert_eq!(
-            extract_risk_level("リスクレベル: High"),
-            RiskLevel::High
-        );
-        assert_eq!(
-            extract_risk_level("リスクレベル: 高"),
-            RiskLevel::High
-        );
+        assert_eq!(extract_risk_level("リスクレベル: High"), RiskLevel::High);
+        assert_eq!(extract_risk_level("リスクレベル: 高"), RiskLevel::High);
         assert_eq!(
             extract_risk_level("This is a high risk change"),
             RiskLevel::High
@@ -581,18 +581,12 @@ mod tests {
             extract_risk_level("リスクレベル: Medium"),
             RiskLevel::Medium
         );
-        assert_eq!(
-            extract_risk_level("中リスクの変更です"),
-            RiskLevel::Medium
-        );
+        assert_eq!(extract_risk_level("中リスクの変更です"), RiskLevel::Medium);
     }
 
     #[test]
     fn test_extract_risk_level_low_default() {
-        assert_eq!(
-            extract_risk_level("特に問題なし"),
-            RiskLevel::Low
-        );
+        assert_eq!(extract_risk_level("特に問題なし"), RiskLevel::Low);
     }
 
     #[test]
@@ -670,12 +664,30 @@ mod tests {
 
     #[test]
     fn test_higher_risk_level() {
-        assert_eq!(higher_risk_level(&RiskLevel::Low, &RiskLevel::Low), RiskLevel::Low);
-        assert_eq!(higher_risk_level(&RiskLevel::Low, &RiskLevel::Medium), RiskLevel::Medium);
-        assert_eq!(higher_risk_level(&RiskLevel::Low, &RiskLevel::High), RiskLevel::High);
-        assert_eq!(higher_risk_level(&RiskLevel::Medium, &RiskLevel::Low), RiskLevel::Medium);
-        assert_eq!(higher_risk_level(&RiskLevel::High, &RiskLevel::Low), RiskLevel::High);
-        assert_eq!(higher_risk_level(&RiskLevel::High, &RiskLevel::High), RiskLevel::High);
+        assert_eq!(
+            higher_risk_level(&RiskLevel::Low, &RiskLevel::Low),
+            RiskLevel::Low
+        );
+        assert_eq!(
+            higher_risk_level(&RiskLevel::Low, &RiskLevel::Medium),
+            RiskLevel::Medium
+        );
+        assert_eq!(
+            higher_risk_level(&RiskLevel::Low, &RiskLevel::High),
+            RiskLevel::High
+        );
+        assert_eq!(
+            higher_risk_level(&RiskLevel::Medium, &RiskLevel::Low),
+            RiskLevel::Medium
+        );
+        assert_eq!(
+            higher_risk_level(&RiskLevel::High, &RiskLevel::Low),
+            RiskLevel::High
+        );
+        assert_eq!(
+            higher_risk_level(&RiskLevel::High, &RiskLevel::High),
+            RiskLevel::High
+        );
     }
 
     #[test]
@@ -731,10 +743,7 @@ mod tests {
             extract_file_path_from_text("`src/main.rs` の変更"),
             "src/main.rs"
         );
-        assert_eq!(
-            extract_file_path_from_text("変更なし"),
-            ""
-        );
+        assert_eq!(extract_file_path_from_text("変更なし"), "");
     }
 
     #[test]

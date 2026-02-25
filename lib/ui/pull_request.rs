@@ -15,12 +15,7 @@ fn render_pr_line(pr: &PrInfo) -> String {
     };
     format!(
         "#{} {} (@{}) [{state_display}] \x1b[32m+{}\x1b[0m \x1b[31m-{}\x1b[0m {} files",
-        pr.number,
-        pr.title,
-        pr.author,
-        pr.additions,
-        pr.deletions,
-        pr.changed_files,
+        pr.number, pr.title, pr.author, pr.additions, pr.deletions, pr.changed_files,
     )
 }
 

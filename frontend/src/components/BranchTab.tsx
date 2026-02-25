@@ -10,7 +10,7 @@ import { Card } from "./Card";
 import { Input } from "./Input";
 
 function prStateVariant(
-  state: string,
+  state: string
 ): "success" | "danger" | "purple" | "default" {
   switch (state) {
     case "open":
@@ -114,9 +114,7 @@ export function BranchTab({ showConfirm, prs, onNavigateToPr }: Props) {
 
   async function handleDelete(name: string) {
     if (!repoPath) return;
-    const confirmed = await showConfirm(
-      t("branch.confirmDelete", { name })
-    );
+    const confirmed = await showConfirm(t("branch.confirmDelete", { name }));
     if (!confirmed) return;
 
     setFormMessage(null);
@@ -168,7 +166,9 @@ export function BranchTab({ showConfirm, prs, onNavigateToPr }: Props) {
                   <div className="flex items-center gap-2">
                     <span
                       className={
-                        b.is_head ? "font-bold text-accent" : "text-text-primary"
+                        b.is_head
+                          ? "font-bold text-accent"
+                          : "text-text-primary"
                       }
                     >
                       {b.is_head ? `* ${b.name}` : b.name}

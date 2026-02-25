@@ -3,13 +3,15 @@ pub mod llm_analysis;
 pub mod review_pattern;
 mod risk;
 
-pub use classify::{CategorizedFileDiff, ChangeCategory, categorize_diffs, classify_file_change};
+pub use classify::{categorize_diffs, classify_file_change, CategorizedFileDiff, ChangeCategory};
 pub use llm_analysis::{
-    AffectedModule, BreakingChange, BreakingChangeSeverity, HybridAnalysisResult,
-    LlmAnalysisResult, analyze_pr_with_llm, merge_analysis,
+    analyze_pr_with_llm, merge_analysis, AffectedModule, BreakingChange, BreakingChangeSeverity,
+    HybridAnalysisResult, LlmAnalysisResult,
 };
 pub use review_pattern::{
-    CategoryStat, RejectPathPattern, ReviewPatternStats, ReviewSuggestion, RiskStat,
-    SuggestionSeverity, analyze_review_patterns, suggest_review_focus,
+    analyze_review_patterns, suggest_review_focus, CategoryStat, RejectPathPattern,
+    ReviewPatternStats, ReviewSuggestion, RiskStat, SuggestionSeverity,
 };
-pub use risk::{AnalysisResult, AnalysisSummary, FileAnalysis, RiskLevel, RiskScore, analyze_pr_risk};
+pub use risk::{
+    analyze_pr_risk, AnalysisResult, AnalysisSummary, FileAnalysis, RiskLevel, RiskScore,
+};

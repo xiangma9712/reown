@@ -94,11 +94,7 @@ pub fn diff_commit(repo_path: &str, commit_sha: &str) -> Result<Vec<FileDiff>> {
     let commit = repo.find_commit(oid)?;
     let commit_tree = commit.tree()?;
 
-    let parent_tree = commit
-        .parent(0)
-        .ok()
-        .map(|p| p.tree())
-        .transpose()?;
+    let parent_tree = commit.parent(0).ok().map(|p| p.tree()).transpose()?;
 
     let diff = repo
         .diff_tree_to_tree(parent_tree.as_ref(), Some(&commit_tree), None)
@@ -126,8 +122,8 @@ fn collect_diff(diff: &git2::Diff<'_>) -> Result<Vec<FileDiff>> {
             chunks: Vec::new(),
         };
 
-        let patch = git2::Patch::from_diff(diff, idx)
-            .context("Failed to create patch from diff")?;
+        let patch =
+            git2::Patch::from_diff(diff, idx).context("Failed to create patch from diff")?;
         let patch = match patch {
             Some(p) => p,
             None => {

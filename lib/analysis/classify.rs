@@ -117,7 +117,10 @@ fn is_ci_file(path: &str) -> bool {
 fn is_doc_file(path: &str) -> bool {
     let lower = path.to_lowercase();
     let ext = file_extension(&lower);
-    ext == "md" || ext == "txt" || ext == "rst" || ext == "adoc"
+    ext == "md"
+        || ext == "txt"
+        || ext == "rst"
+        || ext == "adoc"
         || lower.starts_with("docs/")
         || lower.starts_with("doc/")
         || lower == "license"
@@ -166,8 +169,21 @@ fn is_source_file(path: &str) -> bool {
     let ext = file_extension(path);
     matches!(
         ext,
-        "rs" | "ts" | "tsx" | "js" | "jsx" | "py" | "go" | "java"
-            | "c" | "cpp" | "h" | "hpp" | "cs" | "rb" | "swift" | "kt"
+        "rs" | "ts"
+            | "tsx"
+            | "js"
+            | "jsx"
+            | "py"
+            | "go"
+            | "java"
+            | "c"
+            | "cpp"
+            | "h"
+            | "hpp"
+            | "cs"
+            | "rb"
+            | "swift"
+            | "kt"
     )
 }
 

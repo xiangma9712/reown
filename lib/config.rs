@@ -105,8 +105,8 @@ pub fn load_config(config_path: &Path) -> Result<AppConfig> {
     let content = std::fs::read_to_string(config_path)
         .with_context(|| format!("設定ファイルの読み込みに失敗: {}", config_path.display()))?;
 
-    let config: AppConfig = serde_json::from_str(&content)
-        .with_context(|| "設定ファイルの JSON パースに失敗")?;
+    let config: AppConfig =
+        serde_json::from_str(&content).with_context(|| "設定ファイルの JSON パースに失敗")?;
 
     Ok(config)
 }
@@ -118,8 +118,8 @@ pub fn save_config(config_path: &Path, config: &AppConfig) -> Result<()> {
             .with_context(|| format!("ディレクトリの作成に失敗: {}", parent.display()))?;
     }
 
-    let content = serde_json::to_string_pretty(config)
-        .with_context(|| "設定の JSON シリアライズに失敗")?;
+    let content =
+        serde_json::to_string_pretty(config).with_context(|| "設定の JSON シリアライズに失敗")?;
 
     std::fs::write(config_path, content)
         .with_context(|| format!("設定ファイルの保存に失敗: {}", config_path.display()))?;
@@ -250,7 +250,10 @@ mod tests {
         std::fs::write(&config_path, "not valid json").unwrap();
         let result = load_config(&config_path);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("JSON パースに失敗"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("JSON パースに失敗"));
     }
 
     #[test]
@@ -365,7 +368,10 @@ mod tests {
         let loaded = load_config(&config_path).unwrap();
         assert_eq!(loaded, config);
         assert!(loaded.automation.enabled);
-        assert_eq!(loaded.automation.auto_approve_max_risk, AutoApproveMaxRisk::Medium);
+        assert_eq!(
+            loaded.automation.auto_approve_max_risk,
+            AutoApproveMaxRisk::Medium
+        );
         assert!(loaded.automation.enable_auto_merge);
         assert_eq!(loaded.automation.auto_merge_method, MergeMethod::Squash);
     }

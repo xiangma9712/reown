@@ -14,10 +14,7 @@ pub struct RepositoryEntry {
 /// 指定パスが有効な Git リポジトリかどうかを検証し、RepositoryEntry を返す
 pub fn validate_repository(path: &str) -> Result<RepositoryEntry> {
     let repo_path = Path::new(path);
-    anyhow::ensure!(
-        repo_path.exists(),
-        "ディレクトリが存在しません: {path}"
-    );
+    anyhow::ensure!(repo_path.exists(), "ディレクトリが存在しません: {path}");
 
     // git2 で有効なリポジトリかどうかを検証
     git2::Repository::discover(path)
@@ -43,8 +40,8 @@ pub fn load_repositories(storage_path: &Path) -> Result<Vec<RepositoryEntry>> {
     let content = std::fs::read_to_string(storage_path)
         .with_context(|| format!("リポジトリ一覧の読み込みに失敗: {}", storage_path.display()))?;
 
-    let repos: Vec<RepositoryEntry> = serde_json::from_str(&content)
-        .with_context(|| "リポジトリ一覧の JSON パースに失敗")?;
+    let repos: Vec<RepositoryEntry> =
+        serde_json::from_str(&content).with_context(|| "リポジトリ一覧の JSON パースに失敗")?;
 
     Ok(repos)
 }
@@ -123,7 +120,10 @@ mod tests {
     fn test_validate_repository_not_exists() {
         let result = validate_repository("/nonexistent/path/to/repo");
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("ディレクトリが存在しません"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("ディレクトリが存在しません"));
     }
 
     #[test]
@@ -132,7 +132,10 @@ mod tests {
         // ディレクトリだけで .git なし
         let result = validate_repository(tmp.path().to_str().unwrap());
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("有効な Git リポジトリではありません"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("有効な Git リポジトリではありません"));
     }
 
     #[test]
@@ -193,7 +196,10 @@ mod tests {
         add_repository(&storage, path).unwrap();
         let result = add_repository(&storage, path);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("すでに登録されています"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("すでに登録されています"));
     }
 
     #[test]
@@ -219,7 +225,10 @@ mod tests {
 
         let result = remove_repository(&storage, "/nonexistent/repo");
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("リポジトリが見つかりません"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("リポジトリが見つかりません"));
     }
 
     #[test]

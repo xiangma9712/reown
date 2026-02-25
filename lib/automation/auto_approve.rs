@@ -235,14 +235,32 @@ mod tests {
     #[test]
     fn test_risk_within_threshold() {
         // Low threshold
-        assert!(risk_within_threshold(&RiskLevel::Low, &AutoApproveMaxRisk::Low));
-        assert!(!risk_within_threshold(&RiskLevel::Medium, &AutoApproveMaxRisk::Low));
-        assert!(!risk_within_threshold(&RiskLevel::High, &AutoApproveMaxRisk::Low));
+        assert!(risk_within_threshold(
+            &RiskLevel::Low,
+            &AutoApproveMaxRisk::Low
+        ));
+        assert!(!risk_within_threshold(
+            &RiskLevel::Medium,
+            &AutoApproveMaxRisk::Low
+        ));
+        assert!(!risk_within_threshold(
+            &RiskLevel::High,
+            &AutoApproveMaxRisk::Low
+        ));
 
         // Medium threshold
-        assert!(risk_within_threshold(&RiskLevel::Low, &AutoApproveMaxRisk::Medium));
-        assert!(risk_within_threshold(&RiskLevel::Medium, &AutoApproveMaxRisk::Medium));
-        assert!(!risk_within_threshold(&RiskLevel::High, &AutoApproveMaxRisk::Medium));
+        assert!(risk_within_threshold(
+            &RiskLevel::Low,
+            &AutoApproveMaxRisk::Medium
+        ));
+        assert!(risk_within_threshold(
+            &RiskLevel::Medium,
+            &AutoApproveMaxRisk::Medium
+        ));
+        assert!(!risk_within_threshold(
+            &RiskLevel::High,
+            &AutoApproveMaxRisk::Medium
+        ));
     }
 
     #[test]

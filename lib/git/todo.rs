@@ -35,7 +35,11 @@ pub fn extract_todos(repo_path: &str) -> Result<Vec<TodoItem>> {
 
     let mut items = Vec::new();
     walk_directory(&repo, workdir, workdir, &mut items)?;
-    items.sort_by(|a, b| a.file_path.cmp(&b.file_path).then(a.line_number.cmp(&b.line_number)));
+    items.sort_by(|a, b| {
+        a.file_path
+            .cmp(&b.file_path)
+            .then(a.line_number.cmp(&b.line_number))
+    });
     Ok(items)
 }
 
@@ -58,9 +62,7 @@ fn walk_directory(
             continue;
         }
 
-        let relative = path
-            .strip_prefix(root)
-            .unwrap_or(&path);
+        let relative = path.strip_prefix(root).unwrap_or(&path);
 
         // .gitignoreによるフィルタリング
         if repo.status_should_ignore(relative).unwrap_or(false) {
@@ -121,8 +123,7 @@ fn parse_todo_line(line: &str, file_path: &str, line_number: usize) -> Option<To
             // 後の文字が英数字またはアンダースコアならスキップ（単語の一部）
             let end = pos + keyword.len();
             let after_ok = end >= line.len()
-                || !line.as_bytes()[end].is_ascii_alphanumeric()
-                    && line.as_bytes()[end] != b'_';
+                || !line.as_bytes()[end].is_ascii_alphanumeric() && line.as_bytes()[end] != b'_';
 
             if before_ok && after_ok {
                 // キーワード後の内容を抽出
@@ -158,7 +159,6 @@ mod tests {
     use super::*;
     use crate::git::test_utils::init_test_repo;
     use std::fs;
-
 
     #[test]
     fn test_parse_todo_line_todo() {
@@ -291,16 +291,8 @@ mod tests {
         let (dir, _repo) = init_test_repo();
 
         fs::create_dir(dir.path().join("src")).unwrap();
-        fs::write(
-            dir.path().join("src").join("a.rs"),
-            "// TODO: task A\n",
-        )
-        .unwrap();
-        fs::write(
-            dir.path().join("src").join("b.rs"),
-            "// FIXME: bug B\n",
-        )
-        .unwrap();
+        fs::write(dir.path().join("src").join("a.rs"), "// TODO: task A\n").unwrap();
+        fs::write(dir.path().join("src").join("b.rs"), "// FIXME: bug B\n").unwrap();
 
         let items = extract_todos(dir.path().to_str().unwrap()).unwrap();
         assert_eq!(items.len(), 2);

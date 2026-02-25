@@ -84,7 +84,7 @@ export function AiSummaryPanel({
               done: false,
             }));
           }
-        },
+        }
       );
     } catch {
       // Event listening is optional — backend may not emit events

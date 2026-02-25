@@ -3,9 +3,7 @@ use std::pin::Pin;
 use anyhow::Result;
 use futures::stream::{Stream, StreamExt};
 
-use super::types::{
-    DeltaUsage, LlmResponse, MessageDeltaBody, StreamEvent, TextDelta,
-};
+use super::types::{DeltaUsage, LlmResponse, MessageDeltaBody, StreamEvent, TextDelta};
 
 /// SSEの1イベント（パース済み）
 #[derive(Debug, Clone, Default)]
@@ -88,7 +86,9 @@ impl SseParserState {
                     self.buffer.push_str(&text);
                 }
                 Some(Err(e)) => {
-                    return Some(Err(anyhow::Error::new(e).context("SSEストリームの読み取りに失敗")));
+                    return Some(Err(
+                        anyhow::Error::new(e).context("SSEストリームの読み取りに失敗")
+                    ));
                 }
                 None => {
                     // ストリーム終端 — 残りバッファに未送出イベントがあれば返す
@@ -139,9 +139,10 @@ fn parse_raw_event(raw: &SseRawEvent) -> Option<Result<StreamEvent>> {
                         serde_json::from_value(v["message"].clone());
                     match message {
                         Ok(msg) => Some(Ok(StreamEvent::MessageStart { message: msg })),
-                        Err(e) => Some(Err(
-                            anyhow::Error::new(e).context("message_startイベントのパースに失敗")
-                        )),
+                        Err(e) => {
+                            Some(Err(anyhow::Error::new(e)
+                                .context("message_startイベントのパースに失敗")))
+                        }
                     }
                 }
                 Err(e) => Some(Err(
@@ -164,8 +165,10 @@ fn parse_raw_event(raw: &SseRawEvent) -> Option<Result<StreamEvent>> {
                             .context("content_block_startイベントのパースに失敗"))),
                     }
                 }
-                Err(e) => Some(Err(anyhow::Error::new(e)
-                    .context("content_block_startイベントのJSONパースに失敗"))),
+                Err(e) => {
+                    Some(Err(anyhow::Error::new(e)
+                        .context("content_block_startイベントのJSONパースに失敗")))
+                }
             }
         }
         "content_block_delta" => {
@@ -180,8 +183,10 @@ fn parse_raw_event(raw: &SseRawEvent) -> Option<Result<StreamEvent>> {
                             .context("content_block_deltaイベントのパースに失敗"))),
                     }
                 }
-                Err(e) => Some(Err(anyhow::Error::new(e)
-                    .context("content_block_deltaイベントのJSONパースに失敗"))),
+                Err(e) => {
+                    Some(Err(anyhow::Error::new(e)
+                        .context("content_block_deltaイベントのJSONパースに失敗")))
+                }
             }
         }
         "content_block_stop" => {
@@ -191,8 +196,10 @@ fn parse_raw_event(raw: &SseRawEvent) -> Option<Result<StreamEvent>> {
                     let index = v["index"].as_u64().unwrap_or(0) as u32;
                     Some(Ok(StreamEvent::ContentBlockStop { index }))
                 }
-                Err(e) => Some(Err(anyhow::Error::new(e)
-                    .context("content_block_stopイベントのJSONパースに失敗"))),
+                Err(e) => {
+                    Some(Err(anyhow::Error::new(e)
+                        .context("content_block_stopイベントのJSONパースに失敗")))
+                }
             }
         }
         "message_delta" => {
@@ -201,15 +208,15 @@ fn parse_raw_event(raw: &SseRawEvent) -> Option<Result<StreamEvent>> {
                 Ok(v) => {
                     let delta: Result<MessageDeltaBody, _> =
                         serde_json::from_value(v["delta"].clone());
-                    let usage: Result<DeltaUsage, _> =
-                        serde_json::from_value(v["usage"].clone());
+                    let usage: Result<DeltaUsage, _> = serde_json::from_value(v["usage"].clone());
                     match (delta, usage) {
                         (Ok(d), Ok(u)) => {
                             Some(Ok(StreamEvent::MessageDelta { delta: d, usage: u }))
                         }
-                        (Err(e), _) | (_, Err(e)) => Some(Err(
-                            anyhow::Error::new(e).context("message_deltaイベントのパースに失敗")
-                        )),
+                        (Err(e), _) | (_, Err(e)) => {
+                            Some(Err(anyhow::Error::new(e)
+                                .context("message_deltaイベントのパースに失敗")))
+                        }
                     }
                 }
                 Err(e) => Some(Err(
@@ -223,10 +230,7 @@ fn parse_raw_event(raw: &SseRawEvent) -> Option<Result<StreamEvent>> {
             let parsed: Result<serde_json::Value, _> = serde_json::from_str(&raw.data);
             match parsed {
                 Ok(v) => {
-                    let error_type = v["error"]["type"]
-                        .as_str()
-                        .unwrap_or("unknown")
-                        .to_string();
+                    let error_type = v["error"]["type"].as_str().unwrap_or("unknown").to_string();
                     let message = v["error"]["message"]
                         .as_str()
                         .unwrap_or("unknown error")
@@ -280,8 +284,7 @@ mod tests {
     fn bytes_stream_from_str(
         s: &str,
     ) -> impl Stream<Item = reqwest::Result<Bytes>> + Send + 'static {
-        let chunks: Vec<reqwest::Result<Bytes>> =
-            vec![Ok(Bytes::from(s.to_string()))];
+        let chunks: Vec<reqwest::Result<Bytes>> = vec![Ok(Bytes::from(s.to_string()))];
         stream::iter(chunks)
     }
 
