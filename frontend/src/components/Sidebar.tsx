@@ -30,7 +30,7 @@ export function Sidebar({
           {t("repository.title")}
         </span>
       </div>
-      <nav className="scrollbar-custom flex-1 overflow-y-auto py-1">
+      <nav className="scrollbar-custom flex-1 overflow-y-auto py-2">
         {repositories.length === 0 ? (
           <p className="px-4 py-3 text-sm text-text-muted">
             {t("repository.empty")}
@@ -66,7 +66,7 @@ export function Sidebar({
           ))
         )}
       </nav>
-      <div className="border-t border-border px-3 py-2">
+      <div className="border-t border-border px-4 py-3">
         <button
           onClick={onAdd}
           className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent"

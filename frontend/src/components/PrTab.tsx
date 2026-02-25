@@ -731,8 +731,8 @@ export function PrTab({
   // PR diff view
   if (selectedPr) {
     return (
-      <div>
-        <div className="mb-4 flex items-center gap-3">
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
           <Button onClick={handleBackToList}>{t("pr.backToList")}</Button>
           <span className="font-mono text-[0.8rem] font-semibold text-info">
             #{selectedPr.number}
@@ -773,7 +773,7 @@ export function PrTab({
           token={token.trim()}
         />
         {/* Review action section */}
-        <Card className="mt-4">
+        <Card>
           <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
             Review
           </h2>
@@ -1312,7 +1312,7 @@ export function PrTab({
   // PR list view
   return (
     <div>
-      <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-5">
+      <section className="flex flex-col rounded-lg border border-border bg-bg-secondary p-6">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
           {t("pr.title")}
         </h2>

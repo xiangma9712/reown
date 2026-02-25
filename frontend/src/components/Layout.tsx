@@ -51,7 +51,7 @@ export function Layout({
           <>
             <div className="flex items-center border-b border-border bg-bg-primary">
               {branchSelector && (
-                <div className="shrink-0 border-r border-border px-3 py-1.5">
+                <div className="shrink-0 border-r border-border px-4 py-2">
                   {branchSelector}
                 </div>
               )}
@@ -61,7 +61,7 @@ export function Layout({
                 onSelect={onSelectTab}
               />
             </div>
-            <main className="scrollbar-custom flex-1 overflow-y-auto p-6">
+            <main className="scrollbar-custom flex-1 overflow-y-auto p-8">
               {children}
             </main>
           </>
