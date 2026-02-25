@@ -219,6 +219,32 @@ export interface HybridAnalysisResult {
   combined_risk_level: RiskLevel;
 }
 
+// ── Auto-Approve / Merge Types ───────────────────────────────────────────────
+
+export interface AutoApproveCandidate {
+  pr_number: number;
+  risk_level: RiskLevel;
+  reason: string;
+}
+
+export type AutoMergeStatus =
+  | "Enabled"
+  | "Skipped"
+  | "SkippedDueToApproveFail"
+  | { Failed: string };
+
+export interface ApproveWithMergeOutcome {
+  pr_number: number;
+  approve_success: boolean;
+  approve_error: string | null;
+  auto_merge_status: AutoMergeStatus;
+}
+
+export interface AutoApproveWithMergeResult {
+  outcomes: ApproveWithMergeOutcome[];
+  merge_method: ConfigMergeMethod;
+}
+
 // ── Review Pattern Types ────────────────────────────────────────────────────
 
 export interface CategoryStat {
