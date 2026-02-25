@@ -1,0 +1,85 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi } from "vitest";
+import { Sidebar } from "./Sidebar";
+import { fixtures } from "../storybook/fixtures";
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        "app.title": "reown",
+        "app.tagline": "tagline",
+        "repository.title": "Repositories",
+        "repository.empty": "リポジトリがありません",
+        "repository.add": "リポジトリを追加",
+        "repository.remove": "削除",
+      };
+      return translations[key] ?? key;
+    },
+  }),
+}));
+
+const defaultProps = {
+  repositories: fixtures.repositories,
+  selectedPath: null as string | null,
+  onSelect: vi.fn(),
+  onAdd: vi.fn(),
+  onRemove: vi.fn(),
+};
+
+describe("Sidebar", () => {
+  it("renders app title", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "reown"
+    );
+  });
+
+  it("renders repository list", () => {
+    render(<Sidebar {...defaultProps} />);
+    // Repo names are rendered as buttons (not headings)
+    expect(screen.getByTitle("/Users/dev/project")).toBeInTheDocument();
+    expect(screen.getByText("other-project")).toBeInTheDocument();
+  });
+
+  it("shows empty message when no repositories", () => {
+    render(<Sidebar {...defaultProps} repositories={[]} />);
+    expect(screen.getByText("リポジトリがありません")).toBeInTheDocument();
+  });
+
+  it("calls onSelect when repo is clicked", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(<Sidebar {...defaultProps} onSelect={onSelect} />);
+    await user.click(screen.getByText("other-project"));
+    expect(onSelect).toHaveBeenCalledWith("/Users/dev/other-project");
+  });
+
+  it("calls onAdd when add button is clicked", async () => {
+    const user = userEvent.setup();
+    const onAdd = vi.fn();
+    render(<Sidebar {...defaultProps} onAdd={onAdd} />);
+    await user.click(
+      screen.getByText((content) => content.includes("リポジトリを追加"))
+    );
+    expect(onAdd).toHaveBeenCalled();
+  });
+
+  it("calls onRemove when remove button is clicked", async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    render(<Sidebar {...defaultProps} onRemove={onRemove} />);
+    const removeButtons = screen.getAllByTitle("削除");
+    await user.click(removeButtons[0]);
+    expect(onRemove).toHaveBeenCalledWith("/Users/dev/project");
+  });
+
+  it("highlights selected repository", () => {
+    const { container } = render(
+      <Sidebar {...defaultProps} selectedPath="/Users/dev/project" />
+    );
+    const selectedItem = container.querySelector(".border-l-accent");
+    expect(selectedItem).toBeInTheDocument();
+  });
+});
