@@ -161,7 +161,11 @@
     "reviewSuggestionsEmpty": "サジェストはありません",
     "severityInfo": "情報",
     "severityWarning": "注意",
-    "severityAlert": "警告"
+    "severityAlert": "警告",
+    "sortDefault": "更新日時順",
+    "sortRiskDesc": "リスク: 高→低",
+    "sortRiskAsc": "リスク: 低→高",
+    "sortLabel": "並び替え"
   },
   "llmSettings": {
     "title": "LLM設定",
