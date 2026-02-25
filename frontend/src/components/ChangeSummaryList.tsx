@@ -2,7 +2,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { invoke } from "../invoke";
-import type { PrSummary, CategorizedFileDiff, ChangeCategory } from "../types";
+import type {
+  PrSummary,
+  CategorizedFileDiff,
+  ChangeCategory,
+  DiffChunk,
+} from "../types";
 import { Card, Panel } from "./Card";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -36,7 +41,6 @@ interface ChangeSummaryListProps {
   prNumber: number;
   token: string;
   diffs: CategorizedFileDiff[];
-  onViewDiff: (fileIndex: number) => void;
 }
 
 interface StreamingState {
@@ -59,13 +63,79 @@ function findDiffIndexForPath(
   return diffs.findIndex((d) => d.new_path === path || d.old_path === path);
 }
 
+function getOriginString(
+  origin: "Addition" | "Deletion" | "Context" | { Other: string }
+): string {
+  if (typeof origin === "string") return origin;
+  return "Other";
+}
+
+function InlineDiffView({ chunks }: { chunks: DiffChunk[] }) {
+  const { t } = useTranslation();
+  if (chunks.length === 0) {
+    return (
+      <p className="p-2 text-[0.9rem] italic text-text-secondary">
+        {t("diff.noDiffContent")}
+      </p>
+    );
+  }
+  return (
+    <>
+      {chunks.map((chunk, ci) => (
+        <div key={ci}>
+          <div className="border-y border-border bg-diff-header-bg px-3 py-1 text-xs text-info">
+            {chunk.header}
+          </div>
+          {chunk.lines.map((line, li) => {
+            const origin = getOriginString(line.origin);
+            const lineClass =
+              origin === "Addition"
+                ? "diff-line-addition"
+                : origin === "Deletion"
+                  ? "diff-line-deletion"
+                  : "";
+            const prefix =
+              origin === "Addition"
+                ? "+"
+                : origin === "Deletion"
+                  ? "-"
+                  : " ";
+            const textColor =
+              origin === "Addition"
+                ? "text-accent"
+                : origin === "Deletion"
+                  ? "text-danger"
+                  : "text-text-secondary";
+            return (
+              <div
+                key={li}
+                className={`flex whitespace-pre ${lineClass}`}
+              >
+                <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                  {line.old_lineno ?? ""}
+                </span>
+                <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
+                  {line.new_lineno ?? ""}
+                </span>
+                <span className={`flex-1 px-2 ${textColor}`}>
+                  {prefix}
+                  {line.content}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </>
+  );
+}
+
 export function ChangeSummaryList({
   owner,
   repo,
   prNumber,
   token,
   diffs,
-  onViewDiff,
 }: ChangeSummaryListProps) {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<PrSummary | null>(null);
@@ -75,6 +145,7 @@ export function ChangeSummaryList({
     text: "",
     done: false,
   });
+  const [expandedDiffs, setExpandedDiffs] = useState<Set<number>>(new Set());
   const cancelledRef = useRef(false);
   const unlistenRef = useRef<UnlistenFn | null>(null);
 
@@ -92,6 +163,7 @@ export function ChangeSummaryList({
     setError(null);
     setLoading(false);
     setStreaming({ text: "", done: false });
+    setExpandedDiffs(new Set());
   }, [prNumber]);
 
   const handleCancel = useCallback(() => {
@@ -254,6 +326,9 @@ export function ChangeSummaryList({
               {summary.file_summaries.map((file, i) => {
                 const category = findCategoryForPath(file.path, diffs);
                 const diffIndex = findDiffIndexForPath(file.path, diffs);
+                const isDiffExpanded = expandedDiffs.has(i);
+                const fileDiff =
+                  diffIndex >= 0 ? diffs[diffIndex] : undefined;
                 return (
                   <Panel key={i} className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -271,15 +346,32 @@ export function ChangeSummaryList({
                           variant="ghost"
                           size="sm"
                           className="ml-auto shrink-0"
-                          onClick={() => onViewDiff(diffIndex)}
+                          onClick={() => {
+                            setExpandedDiffs((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(i)) {
+                                next.delete(i);
+                              } else {
+                                next.add(i);
+                              }
+                              return next;
+                            });
+                          }}
                         >
-                          {t("pr.viewDiff")}
+                          {isDiffExpanded
+                            ? t("pr.hideDiff")
+                            : t("pr.viewDiff")}
                         </Button>
                       )}
                     </div>
                     <p className="text-[0.8rem] text-text-secondary">
                       {file.summary}
                     </p>
+                    {isDiffExpanded && fileDiff && (
+                      <div className="mt-2 overflow-x-auto rounded border border-border bg-bg-secondary font-mono text-[0.8rem] leading-relaxed">
+                        <InlineDiffView chunks={fileDiff.chunks} />
+                      </div>
+                    )}
                   </Panel>
                 );
               })}

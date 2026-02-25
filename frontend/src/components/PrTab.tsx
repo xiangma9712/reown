@@ -669,15 +669,6 @@ export function PrTab({
           prNumber={selectedPr.number}
           token={token.trim()}
           diffs={diffs}
-          onViewDiff={(fileIndex) => {
-            setViewMode("all");
-            setExpandedFiles((prev) => new Set(prev).add(fileIndex));
-            // Find the category of the file to expand its category group
-            const diff = diffs[fileIndex];
-            if (diff) {
-              setExpandedCategories((prev) => new Set(prev).add(diff.category));
-            }
-          }}
         />
         <ConsistencyCheckPanel
           owner={owner.trim()}

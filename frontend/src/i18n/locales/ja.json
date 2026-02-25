@@ -142,7 +142,8 @@
     "commitDiffEmpty": "このコミットには差分がありません。",
     "selectCommit": "コミットを選択してください。",
     "changeSummaryTitle": "変更要約",
-    "viewDiff": "diffを見る"
+    "viewDiff": "diffを見る",
+    "hideDiff": "diffを閉じる"
   },
   "llmSettings": {
     "title": "LLM設定",
