@@ -435,14 +435,10 @@ async fn evaluate_auto_approve_candidates(
 
     let mut analyses = Vec::new();
     for pr in &prs {
-        let diffs = reown::github::pull_request::get_pull_request_files(
-            &owner,
-            &repo,
-            pr.number,
-            &token,
-        )
-        .await
-        .map_err(AppError::github)?;
+        let diffs =
+            reown::github::pull_request::get_pull_request_files(&owner, &repo, pr.number, &token)
+                .await
+                .map_err(AppError::github)?;
         analyses.push(reown::analysis::analyze_pr_risk(pr, &diffs));
     }
 
@@ -472,14 +468,10 @@ async fn run_auto_approve(
 
     let mut analyses = Vec::new();
     for pr in &prs {
-        let diffs = reown::github::pull_request::get_pull_request_files(
-            &owner,
-            &repo,
-            pr.number,
-            &token,
-        )
-        .await
-        .map_err(AppError::github)?;
+        let diffs =
+            reown::github::pull_request::get_pull_request_files(&owner, &repo, pr.number, &token)
+                .await
+                .map_err(AppError::github)?;
         analyses.push(reown::analysis::analyze_pr_risk(pr, &diffs));
     }
 
