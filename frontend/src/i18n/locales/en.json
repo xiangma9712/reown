@@ -140,7 +140,9 @@
     "commitDiffLoading": "Loading commit diff…",
     "commitDiffError": "Failed to load commit diff",
     "commitDiffEmpty": "No changes in this commit.",
-    "selectCommit": "Select a commit to view its diff."
+    "selectCommit": "Select a commit to view its diff.",
+    "changeSummaryTitle": "Change Summary",
+    "viewDiff": "View Diff"
   },
   "llmSettings": {
     "title": "LLM Settings",

@@ -140,7 +140,9 @@
     "commitDiffLoading": "コミットの差分を取得中…",
     "commitDiffError": "コミットの差分の取得に失敗しました",
     "commitDiffEmpty": "このコミットには差分がありません。",
-    "selectCommit": "コミットを選択してください。"
+    "selectCommit": "コミットを選択してください。",
+    "changeSummaryTitle": "変更要約",
+    "viewDiff": "diffを見る"
   },
   "llmSettings": {
     "title": "LLM設定",
