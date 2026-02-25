@@ -122,7 +122,10 @@ export const HighRiskWithBreakingChanges: Story = {
       static_analysis: {} as AnalysisResult, // replaced by result prop
       llm_analysis: {
         affected_modules: [
-          { name: "データベース", description: "スキーマ変更とマイグレーション" },
+          {
+            name: "データベース",
+            description: "スキーマ変更とマイグレーション",
+          },
           {
             name: "認証システム",
             description: "OAuth2フローの全面的な書き換え",
