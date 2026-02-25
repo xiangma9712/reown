@@ -22,6 +22,7 @@ import type {
   HybridAnalysisResult,
   TodoItem,
   ReviewSuggestion,
+  AutoApproveWithMergeResult,
 } from "../types";
 
 const worktrees: WorktreeInfo[] = [
@@ -428,6 +429,18 @@ const reviewSuggestions: ReviewSuggestion[] = [
   },
 ];
 
+const autoApproveWithMergeResult: AutoApproveWithMergeResult = {
+  outcomes: [
+    {
+      pr_number: 1,
+      approve_success: true,
+      approve_error: null,
+      auto_merge_status: "Enabled",
+    },
+  ],
+  merge_method: "Squash",
+};
+
 export const fixtures = {
   worktrees,
   branches,
@@ -447,4 +460,5 @@ export const fixtures = {
   hybridAnalysisResult,
   todoItems,
   reviewSuggestions,
+  autoApproveWithMergeResult,
 };

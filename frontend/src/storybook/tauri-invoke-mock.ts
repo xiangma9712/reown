@@ -46,6 +46,7 @@ const defaultHandlers: CommandHandlers = {
   load_automation_config: () => fixtures.automationConfig,
   extract_todos: () => fixtures.todoItems,
   suggest_review_comments: () => fixtures.reviewSuggestions,
+  run_auto_approve_with_merge: () => fixtures.autoApproveWithMergeResult,
 };
 
 let currentOverrides: Partial<CommandHandlers> = {};

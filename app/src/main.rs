@@ -413,6 +413,26 @@ fn load_automation_config(
     Ok(config.automation)
 }
 
+// ── Automation commands ───────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn run_auto_approve_with_merge(
+    owner: String,
+    repo: String,
+    token: String,
+    candidates: Vec<reown::automation::AutoApproveCandidate>,
+    automation_config: reown::config::AutomationConfig,
+) -> Result<reown::automation::AutoApproveWithMergeResult, AppError> {
+    Ok(reown::automation::execute_auto_approve_with_merge(
+        &candidates,
+        &owner,
+        &repo,
+        &token,
+        &automation_config,
+    )
+    .await)
+}
+
 // ── TODO extraction commands ─────────────────────────────────────────────────
 
 #[tauri::command]
@@ -531,6 +551,7 @@ fn main() {
             test_llm_connection,
             save_automation_config,
             load_automation_config,
+            run_auto_approve_with_merge,
             extract_todos,
             suggest_review_comments,
             list_review_history,
@@ -687,6 +708,40 @@ mod tests {
     fn test_app_error_display() {
         let err = AppError::git(anyhow::anyhow!("something went wrong"));
         assert_eq!(err.to_string(), "something went wrong");
+    }
+
+    #[test]
+    fn test_auto_approve_candidate_deserializes() {
+        let json = serde_json::json!({
+            "pr_number": 42,
+            "risk_level": "Low",
+            "reason": "リスクが低い"
+        });
+        let candidate: reown::automation::AutoApproveCandidate =
+            serde_json::from_value(json).unwrap();
+        assert_eq!(candidate.pr_number, 42);
+        assert_eq!(candidate.reason, "リスクが低い");
+    }
+
+    #[test]
+    fn test_auto_approve_with_merge_result_serializes() {
+        use reown::automation::{
+            ApproveWithMergeOutcome, AutoApproveWithMergeResult, AutoMergeStatus,
+        };
+        let result = AutoApproveWithMergeResult {
+            outcomes: vec![ApproveWithMergeOutcome {
+                pr_number: 1,
+                approve_success: true,
+                approve_error: None,
+                auto_merge_status: AutoMergeStatus::Enabled,
+            }],
+            merge_method: reown::config::MergeMethod::Squash,
+        };
+        let json = serde_json::to_value(&result).unwrap();
+        assert_eq!(json["outcomes"][0]["pr_number"], 1);
+        assert_eq!(json["outcomes"][0]["approve_success"], true);
+        assert_eq!(json["outcomes"][0]["auto_merge_status"], "Enabled");
+        assert_eq!(json["merge_method"], "Squash");
     }
 
     #[test]

@@ -19,6 +19,8 @@ import type {
   ReviewEvent,
   TodoItem,
   ReviewSuggestion,
+  AutoApproveCandidate,
+  AutoApproveWithMergeResult,
 } from "./types";
 
 export type Commands = {
@@ -118,6 +120,16 @@ export type Commands = {
   load_automation_config: {
     args?: Record<string, unknown>;
     ret: AutomationConfig;
+  };
+  run_auto_approve_with_merge: {
+    args: {
+      owner: string;
+      repo: string;
+      token: string;
+      candidates: AutoApproveCandidate[];
+      automationConfig: AutomationConfig;
+    };
+    ret: AutoApproveWithMergeResult;
   };
   extract_todos: { args: { repoPath: string }; ret: TodoItem[] };
   suggest_review_comments: {

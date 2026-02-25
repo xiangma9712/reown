@@ -1,11 +1,11 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::analysis::{AnalysisResult, RiskLevel};
 use crate::config::{AutoApproveMaxRisk, AutomationConfig};
 use crate::github::pull_request::{submit_review, ReviewEvent};
 
 /// approve対象PRの候補
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoApproveCandidate {
     /// PR番号
     pub pr_number: u64,
