@@ -12,12 +12,8 @@
     "empty": "No repositories registered. Click \"Add Repository\" to get started."
   },
   "tabs": {
-    "worktrees": "Worktrees",
-    "branches": "Branches",
-    "diff": "Diff",
-    "prs": "PRs",
-    "todo": "TODO",
     "review": "Review",
+    "nextAction": "Next Action",
     "settings": "Settings"
   },
   "common": {
@@ -27,31 +23,6 @@
     "delete": "Delete",
     "cancel": "Cancel",
     "confirm": "Confirm"
-  },
-  "worktree": {
-    "title": "Worktrees",
-    "empty": "No worktrees found.",
-    "created": "Worktree created.",
-    "createNew": "Create New Worktree",
-    "path": "Path",
-    "branchName": "Branch name",
-    "branchLabel": "Branch: {{name}}",
-    "pathLabel": "Path: {{path}}",
-    "locked": "locked",
-    "detached": "detached"
-  },
-  "branch": {
-    "title": "Branches",
-    "empty": "No branches found.",
-    "created": "Branch '{{name}}' created.",
-    "switched": "Switched to branch '{{name}}'.",
-    "deleted": "Branch '{{name}}' deleted.",
-    "confirmDelete": "Delete branch '{{name}}'? This action cannot be undone.",
-    "createNew": "Create New Branch",
-    "branchName": "Branch name",
-    "switch": "Switch",
-    "upstream": "upstream: {{name}}",
-    "actions": "Actions for {{name}}"
   },
   "branchSelector": {
     "placeholder": "Select branch…",
