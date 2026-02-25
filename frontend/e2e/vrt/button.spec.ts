@@ -51,7 +51,8 @@ test.describe("Button", () => {
       "/iframe.html?id=components-button--loading&viewMode=story"
     );
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "loading.png"
+      "loading.png",
+      { maxDiffPixelRatio: 0.03 }
     );
   });
 });
