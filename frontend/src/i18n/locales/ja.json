@@ -153,7 +153,15 @@
     "selectCommit": "コミットを選択してください。",
     "changeSummaryTitle": "変更要約",
     "viewDiff": "diffを見る",
-    "hideDiff": "diffを閉じる"
+    "hideDiff": "diffを閉じる",
+    "reviewSuggestions": "レビューサジェスト",
+    "reviewSuggestionsRun": "サジェスト生成",
+    "reviewSuggestionsLoading": "サジェスト生成中…",
+    "reviewSuggestionsError": "サジェストの生成に失敗しました",
+    "reviewSuggestionsEmpty": "サジェストはありません",
+    "severityInfo": "情報",
+    "severityWarning": "注意",
+    "severityAlert": "警告"
   },
   "llmSettings": {
     "title": "LLM設定",

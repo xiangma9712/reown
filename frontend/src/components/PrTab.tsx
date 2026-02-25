@@ -25,6 +25,7 @@ import { RiskBadge } from "./RiskBadge";
 import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 import { ChangeSummaryList } from "./ChangeSummaryList";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
+import { ReviewSuggestionPanel } from "./ReviewSuggestionPanel";
 
 function stateVariant(
   state: string
@@ -666,6 +667,12 @@ export function PrTab({
           </Button>
         </div>
         <ConsistencyCheckPanel
+          owner={owner.trim()}
+          repo={repo.trim()}
+          prNumber={selectedPr.number}
+          token={token.trim()}
+        />
+        <ReviewSuggestionPanel
           owner={owner.trim()}
           repo={repo.trim()}
           prNumber={selectedPr.number}
