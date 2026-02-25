@@ -57,14 +57,8 @@ pub async fn execute_auto_approve_with_merge(
     let mut outcomes = Vec::new();
 
     for approve_outcome in &approve_result.outcomes {
-        let auto_merge_status = determine_and_execute_merge(
-            approve_outcome,
-            config,
-            owner,
-            repo,
-            token,
-        )
-        .await;
+        let auto_merge_status =
+            determine_and_execute_merge(approve_outcome, config, owner, repo, token).await;
 
         outcomes.push(ApproveWithMergeOutcome {
             pr_number: approve_outcome.pr_number,
@@ -102,15 +96,7 @@ async fn determine_and_execute_merge(
         crate::config::MergeMethod::Rebase => MergeMethod::Rebase,
     };
 
-    match enable_auto_merge(
-        token,
-        owner,
-        repo,
-        approve_outcome.pr_number,
-        merge_method,
-    )
-    .await
-    {
+    match enable_auto_merge(token, owner, repo, approve_outcome.pr_number, merge_method).await {
         Ok(()) => AutoMergeStatus::Enabled,
         Err(e) => AutoMergeStatus::Failed(e.to_string()),
     }
