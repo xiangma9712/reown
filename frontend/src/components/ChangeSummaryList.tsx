@@ -95,11 +95,7 @@ function InlineDiffView({ chunks }: { chunks: DiffChunk[] }) {
                   ? "diff-line-deletion"
                   : "";
             const prefix =
-              origin === "Addition"
-                ? "+"
-                : origin === "Deletion"
-                  ? "-"
-                  : " ";
+              origin === "Addition" ? "+" : origin === "Deletion" ? "-" : " ";
             const textColor =
               origin === "Addition"
                 ? "text-accent"
@@ -107,10 +103,7 @@ function InlineDiffView({ chunks }: { chunks: DiffChunk[] }) {
                   ? "text-danger"
                   : "text-text-secondary";
             return (
-              <div
-                key={li}
-                className={`flex whitespace-pre ${lineClass}`}
-              >
+              <div key={li} className={`flex whitespace-pre ${lineClass}`}>
                 <span className="inline-block min-w-[3.5em] shrink-0 select-none px-2 text-right text-text-muted">
                   {line.old_lineno ?? ""}
                 </span>
@@ -327,8 +320,7 @@ export function ChangeSummaryList({
                 const category = findCategoryForPath(file.path, diffs);
                 const diffIndex = findDiffIndexForPath(file.path, diffs);
                 const isDiffExpanded = expandedDiffs.has(i);
-                const fileDiff =
-                  diffIndex >= 0 ? diffs[diffIndex] : undefined;
+                const fileDiff = diffIndex >= 0 ? diffs[diffIndex] : undefined;
                 return (
                   <Panel key={i} className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -358,9 +350,7 @@ export function ChangeSummaryList({
                             });
                           }}
                         >
-                          {isDiffExpanded
-                            ? t("pr.hideDiff")
-                            : t("pr.viewDiff")}
+                          {isDiffExpanded ? t("pr.hideDiff") : t("pr.viewDiff")}
                         </Button>
                       )}
                     </div>
