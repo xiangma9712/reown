@@ -416,6 +416,78 @@ fn load_automation_config(
 // ── Automation commands ───────────────────────────────────────────────────────
 
 #[tauri::command]
+async fn evaluate_auto_approve_candidates(
+    owner: String,
+    repo: String,
+    token: String,
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<reown::automation::AutoApproveCandidate>, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+
+    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+        .await
+        .map_err(AppError::github)?;
+
+    let mut analyses = Vec::new();
+    for pr in &prs {
+        let diffs = reown::github::pull_request::get_pull_request_files(
+            &owner,
+            &repo,
+            pr.number,
+            &token,
+        )
+        .await
+        .map_err(AppError::github)?;
+        analyses.push(reown::analysis::analyze_pr_risk(pr, &diffs));
+    }
+
+    Ok(reown::automation::evaluate_auto_approve(
+        &analyses,
+        &config.automation,
+    ))
+}
+
+#[tauri::command]
+async fn run_auto_approve(
+    owner: String,
+    repo: String,
+    token: String,
+    app_handle: tauri::AppHandle,
+) -> Result<reown::automation::AutoApproveResult, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+
+    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+        .await
+        .map_err(AppError::github)?;
+
+    let mut analyses = Vec::new();
+    for pr in &prs {
+        let diffs = reown::github::pull_request::get_pull_request_files(
+            &owner,
+            &repo,
+            pr.number,
+            &token,
+        )
+        .await
+        .map_err(AppError::github)?;
+        analyses.push(reown::analysis::analyze_pr_risk(pr, &diffs));
+    }
+
+    let candidates = reown::automation::evaluate_auto_approve(&analyses, &config.automation);
+    Ok(reown::automation::execute_auto_approve(&candidates, &owner, &repo, &token).await)
+}
+
+#[tauri::command]
 async fn run_auto_approve_with_merge(
     owner: String,
     repo: String,
@@ -551,6 +623,8 @@ fn main() {
             test_llm_connection,
             save_automation_config,
             load_automation_config,
+            evaluate_auto_approve_candidates,
+            run_auto_approve,
             run_auto_approve_with_merge,
             extract_todos,
             suggest_review_comments,
