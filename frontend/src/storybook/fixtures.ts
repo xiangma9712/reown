@@ -52,7 +52,11 @@ const branches: BranchInfo[] = [
   { name: "main", is_head: true, upstream: "origin/main" },
   { name: "feature/auth", is_head: false, upstream: "origin/feature/auth" },
   { name: "feature/dashboard", is_head: false, upstream: null },
-  { name: "hotfix/login-fix", is_head: false, upstream: "origin/hotfix/login-fix" },
+  {
+    name: "hotfix/login-fix",
+    is_head: false,
+    upstream: "origin/hotfix/login-fix",
+  },
   { name: "release/v1.0", is_head: false, upstream: "origin/release/v1.0" },
 ];
 
@@ -112,13 +116,48 @@ const fileDiffs: FileDiff[] = [
       {
         header: "@@ -10,6 +10,12 @@ export function authenticate()",
         lines: [
-          { origin: "Context", old_lineno: 10, new_lineno: 10, content: "  const token = getToken();" },
-          { origin: "Context", old_lineno: 11, new_lineno: 11, content: "  if (!token) {" },
-          { origin: "Deletion", old_lineno: 12, new_lineno: null, content: "    return false;" },
-          { origin: "Addition", old_lineno: null, new_lineno: 12, content: "    throw new AuthError('Token not found');" },
-          { origin: "Addition", old_lineno: null, new_lineno: 13, content: "  }" },
-          { origin: "Addition", old_lineno: null, new_lineno: 14, content: "  if (isExpired(token)) {" },
-          { origin: "Addition", old_lineno: null, new_lineno: 15, content: "    throw new AuthError('Token expired');" },
+          {
+            origin: "Context",
+            old_lineno: 10,
+            new_lineno: 10,
+            content: "  const token = getToken();",
+          },
+          {
+            origin: "Context",
+            old_lineno: 11,
+            new_lineno: 11,
+            content: "  if (!token) {",
+          },
+          {
+            origin: "Deletion",
+            old_lineno: 12,
+            new_lineno: null,
+            content: "    return false;",
+          },
+          {
+            origin: "Addition",
+            old_lineno: null,
+            new_lineno: 12,
+            content: "    throw new AuthError('Token not found');",
+          },
+          {
+            origin: "Addition",
+            old_lineno: null,
+            new_lineno: 13,
+            content: "  }",
+          },
+          {
+            origin: "Addition",
+            old_lineno: null,
+            new_lineno: 14,
+            content: "  if (isExpired(token)) {",
+          },
+          {
+            origin: "Addition",
+            old_lineno: null,
+            new_lineno: 15,
+            content: "    throw new AuthError('Token expired');",
+          },
           { origin: "Context", old_lineno: 13, new_lineno: 16, content: "  }" },
         ],
       },
@@ -132,10 +171,25 @@ const fileDiffs: FileDiff[] = [
       {
         header: "@@ -0,0 +1,20 @@",
         lines: [
-          { origin: "Addition", old_lineno: null, new_lineno: 1, content: 'import React from "react";' },
+          {
+            origin: "Addition",
+            old_lineno: null,
+            new_lineno: 1,
+            content: 'import React from "react";',
+          },
           { origin: "Addition", old_lineno: null, new_lineno: 2, content: "" },
-          { origin: "Addition", old_lineno: null, new_lineno: 3, content: "export function LoginForm() {" },
-          { origin: "Addition", old_lineno: null, new_lineno: 4, content: '  return <form className="login-form">...</form>;' },
+          {
+            origin: "Addition",
+            old_lineno: null,
+            new_lineno: 3,
+            content: "export function LoginForm() {",
+          },
+          {
+            origin: "Addition",
+            old_lineno: null,
+            new_lineno: 4,
+            content: '  return <form className="login-form">...</form>;',
+          },
           { origin: "Addition", old_lineno: null, new_lineno: 5, content: "}" },
         ],
       },
@@ -261,11 +315,17 @@ const appConfig: AppConfig = {
 const prSummary: PrSummary = {
   overall_summary:
     "認証機能を追加するPRです。JWTトークンによる認証基盤の実装と、ログインフォームUIの追加を含みます。",
-  reason:
-    "ユーザー認証が未実装であり、セキュアなアクセス制御が必要なため。",
+  reason: "ユーザー認証が未実装であり、セキュアなアクセス制御が必要なため。",
   file_summaries: [
-    { path: "src/auth.ts", summary: "JWT認証のコアロジックを実装。トークンの検証とエラーハンドリングを追加。" },
-    { path: "src/components/LoginForm.tsx", summary: "ログインフォームのReactコンポーネントを新規作成。" },
+    {
+      path: "src/auth.ts",
+      summary:
+        "JWT認証のコアロジックを実装。トークンの検証とエラーハンドリングを追加。",
+    },
+    {
+      path: "src/components/LoginForm.tsx",
+      summary: "ログインフォームのReactコンポーネントを新規作成。",
+    },
   ],
 };
 
@@ -280,13 +340,26 @@ const analysisResult: AnalysisResult = {
     score: 35,
     level: "Medium",
     factors: [
-      { name: "ファイル変更数", score: 15, description: "8ファイルが変更されています" },
-      { name: "ロジック変更", score: 20, description: "認証ロジックの新規追加" },
+      {
+        name: "ファイル変更数",
+        score: 15,
+        description: "8ファイルが変更されています",
+      },
+      {
+        name: "ロジック変更",
+        score: 20,
+        description: "認証ロジックの新規追加",
+      },
     ],
   },
   files: [
     { path: "src/auth.ts", category: "Logic", additions: 50, deletions: 10 },
-    { path: "src/components/LoginForm.tsx", category: "Logic", additions: 100, deletions: 0 },
+    {
+      path: "src/components/LoginForm.tsx",
+      category: "Logic",
+      additions: 100,
+      deletions: 0,
+    },
   ],
   summary: {
     total_files: 8,
@@ -309,27 +382,47 @@ const hybridAnalysisResult: HybridAnalysisResult = {
       { name: "UIコンポーネント", description: "ログインフォームの追加" },
     ],
     breaking_changes: [],
-    risk_warnings: ["認証ロジックの変更はセキュリティに影響する可能性があります"],
+    risk_warnings: [
+      "認証ロジックの変更はセキュリティに影響する可能性があります",
+    ],
     llm_risk_level: "Medium",
-    summary: "認証機能の追加PR。JWTベースの認証を実装し、ログインUIを追加。テストも含まれており、品質は担保されている。",
+    summary:
+      "認証機能の追加PR。JWTベースの認証を実装し、ログインUIを追加。テストも含まれており、品質は担保されている。",
   },
   combined_risk_level: "Medium",
 };
 
 const todoItems: TodoItem[] = [
-  { file_path: "src/auth.ts", line_number: 25, kind: "Todo", content: "リフレッシュトークンの実装" },
-  { file_path: "src/components/LoginForm.tsx", line_number: 10, kind: "Todo", content: "バリデーションエラーの表示" },
-  { file_path: "src/legacy/old-auth.ts", line_number: 1, kind: "Fixme", content: "このファイルは削除予定" },
+  {
+    file_path: "src/auth.ts",
+    line_number: 25,
+    kind: "Todo",
+    content: "リフレッシュトークンの実装",
+  },
+  {
+    file_path: "src/components/LoginForm.tsx",
+    line_number: 10,
+    kind: "Todo",
+    content: "バリデーションエラーの表示",
+  },
+  {
+    file_path: "src/legacy/old-auth.ts",
+    line_number: 1,
+    kind: "Fixme",
+    content: "このファイルは削除予定",
+  },
 ];
 
 const reviewSuggestions: ReviewSuggestion[] = [
   {
-    message: "認証トークンの有効期限チェックが追加されていますが、リフレッシュトークンのフローも検討してください。",
+    message:
+      "認証トークンの有効期限チェックが追加されていますが、リフレッシュトークンのフローも検討してください。",
     severity: "Info",
     source: "pattern-based",
   },
   {
-    message: "エラーメッセージにスタックトレースが含まれる可能性があります。本番環境では非表示にしてください。",
+    message:
+      "エラーメッセージにスタックトレースが含まれる可能性があります。本番環境では非表示にしてください。",
     severity: "Warning",
     source: "llm-based",
   },
