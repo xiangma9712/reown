@@ -1458,7 +1458,10 @@ export function PrTab({
                           ({t("pr.autoApproveMergeEnabled")})
                         </span>
                       );
-                    if (status === "Skipped" || status === "SkippedDueToApproveFail")
+                    if (
+                      status === "Skipped" ||
+                      status === "SkippedDueToApproveFail"
+                    )
                       return (
                         <span className="text-[0.8rem] text-text-secondary">
                           ({t("pr.autoApproveMergeSkipped")})
