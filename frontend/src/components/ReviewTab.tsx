@@ -80,7 +80,6 @@ export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
 
   // Find matching PR for the selected branch
   const matchedPr = prs.find((pr) => pr.head_branch === selectedBranch) ?? null;
-  const token = ""; // Token is loaded from app config by analysis components
 
   const loadDiff = useCallback(async () => {
     if (!repoPath || !selectedBranch) return;
