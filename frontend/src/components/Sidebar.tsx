@@ -222,7 +222,10 @@ export function Sidebar({
                   aria-busy={adding}
                 >
                   {adding ? (
-                    <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" role="status">
+                    <span
+                      className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
+                      role="status"
+                    >
                       <span className="sr-only">{t("repository.adding")}</span>
                     </span>
                   ) : (
@@ -253,7 +256,10 @@ export function Sidebar({
             >
               {adding ? (
                 <>
-                  <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" role="status">
+                  <span
+                    className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
+                    role="status"
+                  >
                     <span className="sr-only">{t("repository.adding")}</span>
                   </span>
                   {t("repository.adding")}
