@@ -108,4 +108,14 @@ describe("Sidebar", () => {
     const selectedItem = container.querySelector(".border-l-accent");
     expect(selectedItem).toBeInTheDocument();
   });
+
+  it("sets aria-current on selected repository", () => {
+    const { container } = render(
+      <Sidebar {...defaultProps} selectedPath="/Users/dev/project" />
+    );
+    const currentItem = container.querySelector('[aria-current="true"]');
+    expect(currentItem).toBeInTheDocument();
+    const nonSelectedItems = container.querySelectorAll("[aria-current]");
+    expect(nonSelectedItems).toHaveLength(1);
+  });
 });
