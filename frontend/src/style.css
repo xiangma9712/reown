@@ -125,6 +125,21 @@ html.dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-text-muted);
 }
 
+/* ── Sidebar fade animation ────────────────────────────────────── */
+
+@keyframes sidebar-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sidebar-fade-text {
+  animation: sidebar-fade-in 200ms ease-in-out;
+}
+
 /* ── Diff line backgrounds (need rgba, not in theme tokens) ──── */
 
 .diff-line-addition {

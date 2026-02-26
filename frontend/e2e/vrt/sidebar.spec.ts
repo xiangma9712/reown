@@ -113,6 +113,34 @@ test.describe("Sidebar", () => {
     );
   });
 
+  test("collapsed adding state", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--collapsed-adding&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "collapsed-adding.png",
+      { maxDiffPixelRatio: 0.08 }
+    );
+  });
+
+  test("collapsed empty state", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--collapsed-empty&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "collapsed-empty.png"
+    );
+  });
+
+  test("collapsed settings open", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--collapsed-settings-open&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "collapsed-settings-open.png"
+    );
+  });
+
   // ── Theme toggle ───────────────────────────────────────────
 
   test("theme toggle light", async ({ page }) => {
