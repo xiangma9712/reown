@@ -64,3 +64,12 @@ export const MobileNoRepo: Story = {
     },
   },
 };
+
+export const SidebarCollapsed: Story = {
+  decorators: [
+    (Story) => {
+      localStorage.setItem("reown-sidebar-collapsed", "true");
+      return <Story />;
+    },
+  ],
+};

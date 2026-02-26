@@ -57,4 +57,13 @@ test.describe("Layout", () => {
       "mobile-no-repo.png"
     );
   });
+
+  test("sidebar collapsed", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--sidebar-collapsed&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "sidebar-collapsed.png"
+    );
+  });
 });

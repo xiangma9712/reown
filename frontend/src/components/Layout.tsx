@@ -4,6 +4,8 @@ import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
 import type { RepositoryEntry } from "../types";
 
+const STORAGE_KEY = "reown-sidebar-collapsed";
+
 interface NavItem {
   id: string;
   labelKey: string;
@@ -41,9 +43,28 @@ export function Layout({
 }: Props) {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
 
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
+  const toggleCollapse = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_KEY, String(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }, []);
 
   const handleSelectRepo = useCallback(
     (path: string) => {
@@ -54,15 +75,29 @@ export function Layout({
   );
 
   useEffect(() => {
-    if (!drawerOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (drawerOpen && e.key === "Escape") {
         setDrawerOpen(false);
+        return;
+      }
+      // Toggle sidebar collapse with "[" key (desktop only, not in inputs)
+      if (
+        e.key === "[" &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !(
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          (e.target instanceof HTMLElement && e.target.isContentEditable)
+        )
+      ) {
+        toggleCollapse();
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [drawerOpen]);
+  }, [drawerOpen, toggleCollapse]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg-primary">
@@ -76,6 +111,8 @@ export function Layout({
           onRemove={onRemoveRepo}
           settingsOpen={settingsOpen}
           onToggleSettings={onToggleSettings}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapse}
         />
       </div>
 
