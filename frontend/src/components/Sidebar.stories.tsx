@@ -93,3 +93,17 @@ export const CollapsedAdding: Story = {
     adding: true,
   },
 };
+
+export const Loading: Story = {
+  args: {
+    loading: true,
+  },
+};
+
+export const CollapsedLoading: Story = {
+  args: {
+    collapsed: true,
+    onToggleCollapse: fn(),
+    loading: true,
+  },
+};

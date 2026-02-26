@@ -75,4 +75,14 @@ test.describe("Layout", () => {
       "sidebar-resized.png"
     );
   });
+
+  test("loading repositories", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--loading&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "loading.png",
+      { maxDiffPixelRatio: 0.08 }
+    );
+  });
 });

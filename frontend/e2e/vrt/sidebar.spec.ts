@@ -92,4 +92,24 @@ test.describe("Sidebar", () => {
       "expanded-with-toggle.png"
     );
   });
+
+  test("loading state", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--loading&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "loading.png",
+      { maxDiffPixelRatio: 0.08 }
+    );
+  });
+
+  test("collapsed loading state", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--collapsed-loading&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "collapsed-loading.png",
+      { maxDiffPixelRatio: 0.08 }
+    );
+  });
 });
