@@ -149,7 +149,11 @@ export function Sidebar({
         >
           {loading ? (
             collapsed ? (
-              <div className="flex flex-col items-center gap-2 px-2 py-1">
+              <div
+                role="status"
+                aria-label={t("common.loading")}
+                className="flex flex-col items-center gap-2 px-2 py-1"
+              >
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}

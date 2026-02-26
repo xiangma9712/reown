@@ -25,6 +25,7 @@ vi.mock("react-i18next", () => ({
         "common.confirm": "確認",
         "common.cancel": "キャンセル",
         "common.delete": "削除",
+        "common.loading": "読み込み中",
         "theme.label": "テーマ切替",
         "theme.light": "Light",
         "theme.dark": "Dark",
@@ -289,6 +290,20 @@ describe("Sidebar", () => {
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.queryByText("reown")).toBeInTheDocument();
     expect(screen.queryByLabelText("reown を選択")).not.toBeInTheDocument();
+  });
+
+  it("shows skeleton placeholders with role=status when collapsed and loading", () => {
+    render(
+      <Sidebar
+        {...defaultProps}
+        loading={true}
+        collapsed={true}
+        onToggleCollapse={vi.fn()}
+      />
+    );
+    const status = screen.getByRole("status");
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveAttribute("aria-label", "読み込み中");
   });
 
   it("sets aria-busy on nav when loading", () => {
