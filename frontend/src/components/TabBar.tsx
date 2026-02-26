@@ -25,7 +25,7 @@ export function TabBar({ items, activeId, onSelect }: Props) {
           aria-controls={`tabpanel-${item.id}`}
           id={`tab-${item.id}`}
           onClick={() => onSelect(item.id)}
-          className={`cursor-pointer border-none px-5 py-2.5 text-base transition-colors ${
+          className={`cursor-pointer border-none px-5 py-2.5 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
             activeId === item.id
               ? "border-b-2 border-b-accent bg-transparent text-accent"
               : "border-b-2 border-b-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
