@@ -1,0 +1,40 @@
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
+import { Sidebar } from "./Sidebar";
+import { fixtures } from "../storybook/fixtures";
+
+const meta = {
+  title: "Components/Sidebar",
+  component: Sidebar,
+  args: {
+    repositories: fixtures.repositories,
+    selectedPath: null,
+    onSelect: fn(),
+    onAdd: fn(),
+    onRemove: fn(),
+    onToggleSettings: fn(),
+  },
+} satisfies Meta<typeof Sidebar>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {};
+
+export const Empty: Story = {
+  args: {
+    repositories: [],
+  },
+};
+
+export const Selected: Story = {
+  args: {
+    selectedPath: fixtures.repositories[0].path,
+  },
+};
+
+export const SettingsOpen: Story = {
+  args: {
+    settingsOpen: true,
+  },
+};
