@@ -30,9 +30,13 @@ export function TabBar({ items, activeId, onSelect }: Props) {
               ? "border-b-2 border-b-accent bg-transparent text-accent"
               : "border-b-2 border-b-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
           }`}
+          aria-keyshortcuts={item.shortcut}
         >
           <span>{t(item.labelKey)}</span>
-          <kbd className="ml-2 rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted">
+          <kbd
+            aria-hidden="true"
+            className="ml-2 rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted"
+          >
             {item.shortcut}
           </kbd>
         </button>

@@ -72,4 +72,21 @@ describe("TabBar", () => {
     expect(tabs[1]).toHaveAttribute("id", "tab-next-action");
     expect(tabs[1]).toHaveAttribute("aria-controls", "tabpanel-next-action");
   });
+
+  it("has aria-keyshortcuts on each tab", () => {
+    render(<TabBar items={items} activeId="review" onSelect={vi.fn()} />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("aria-keyshortcuts", "R");
+    expect(tabs[1]).toHaveAttribute("aria-keyshortcuts", "N");
+  });
+
+  it("hides kbd shortcuts from screen readers", () => {
+    const { container } = render(
+      <TabBar items={items} activeId="review" onSelect={vi.fn()} />
+    );
+    const kbds = container.querySelectorAll("kbd");
+    kbds.forEach((kbd) => {
+      expect(kbd).toHaveAttribute("aria-hidden", "true");
+    });
+  });
 });
