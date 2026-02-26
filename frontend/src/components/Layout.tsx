@@ -18,6 +18,9 @@ interface Props {
   onSelectRepo: (path: string) => void;
   onAddRepo: () => void;
   onRemoveRepo: (path: string) => void;
+  addingRepo?: boolean;
+  addRepoError?: string | null;
+  onDismissAddRepoError?: () => void;
   navItems: NavItem[];
   activeTabId: string;
   onSelectTab: (id: string) => void;
@@ -33,6 +36,9 @@ export function Layout({
   onSelectRepo,
   onAddRepo,
   onRemoveRepo,
+  addingRepo,
+  addRepoError,
+  onDismissAddRepoError,
   navItems,
   activeTabId,
   onSelectTab,
@@ -110,6 +116,9 @@ export function Layout({
           onSelect={onSelectRepo}
           onAdd={onAddRepo}
           onRemove={onRemoveRepo}
+          adding={addingRepo}
+          addError={addRepoError}
+          onDismissAddError={onDismissAddRepoError}
           settingsOpen={settingsOpen}
           onToggleSettings={onToggleSettings}
           collapsed={collapsed}
@@ -132,6 +141,9 @@ export function Layout({
               onSelect={handleSelectRepo}
               onAdd={onAddRepo}
               onRemove={onRemoveRepo}
+              adding={addingRepo}
+              addError={addRepoError}
+              onDismissAddError={onDismissAddRepoError}
               settingsOpen={settingsOpen}
               onToggleSettings={onToggleSettings}
               onClose={closeDrawer}

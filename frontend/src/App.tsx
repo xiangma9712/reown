@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ReviewTab } from "./components/ReviewTab";
 import { TodoTab } from "./components/TodoTab";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
 type TabName = (typeof NAV_ITEMS)[number]["id"];
 
 export function App() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabName>("review");
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
@@ -27,6 +29,11 @@ export function App() {
   const [prs] = useState<PrInfo[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [addingRepo, setAddingRepo] = useState(false);
+  const [addRepoError, setAddRepoError] = useState<string | null>(null);
+  const addErrorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (!selectedRepoPath) {
@@ -53,15 +60,30 @@ export function App() {
   }, [loadRepositories]);
 
   const handleAddRepo = useCallback(async () => {
+    setAddRepoError(null);
+    clearTimeout(addErrorTimerRef.current);
     const selected = await open({ directory: true, multiple: false });
     if (!selected) return;
+    setAddingRepo(true);
     try {
       const entry = await invoke("add_repository", { path: selected });
       setRepositories((prev) => [...prev, entry]);
       setSelectedRepoPath(entry.path);
     } catch {
-      // add_repository may fail if path is not a git repo
+      setAddRepoError(t("repository.addError"));
+      addErrorTimerRef.current = setTimeout(() => setAddRepoError(null), 5000);
+    } finally {
+      setAddingRepo(false);
     }
+  }, [t]);
+
+  const dismissAddRepoError = useCallback(() => {
+    setAddRepoError(null);
+    clearTimeout(addErrorTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    return () => clearTimeout(addErrorTimerRef.current);
   }, []);
 
   const handleRemoveRepo = useCallback(
@@ -131,6 +153,9 @@ export function App() {
           onSelectRepo={setSelectedRepoPath}
           onAddRepo={handleAddRepo}
           onRemoveRepo={handleRemoveRepo}
+          addingRepo={addingRepo}
+          addRepoError={addRepoError}
+          onDismissAddRepoError={dismissAddRepoError}
           navItems={[...NAV_ITEMS]}
           activeTabId={activeTab}
           onSelectTab={(id) => {
