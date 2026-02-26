@@ -86,6 +86,7 @@ export function Layout({
         !e.ctrlKey &&
         !e.metaKey &&
         !e.altKey &&
+        window.matchMedia("(min-width: 768px)").matches &&
         !(
           e.target instanceof HTMLInputElement ||
           e.target instanceof HTMLTextAreaElement ||
