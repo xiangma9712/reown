@@ -76,8 +76,7 @@ export const WithSummary: Story = {
 export const Error: Story = {
   play: async ({ canvasElement }) => {
     overrideInvoke({
-      summarize_pull_request: () =>
-        Promise.reject("LLM API connection failed"),
+      summarize_pull_request: () => Promise.reject("LLM API connection failed"),
     });
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button", { name: "AI要約を生成" });
