@@ -82,17 +82,13 @@ describe("Sidebar", () => {
   it("has aria-label on remove buttons", () => {
     render(<Sidebar {...defaultProps} />);
     expect(screen.getByLabelText("reown を削除")).toBeInTheDocument();
-    expect(
-      screen.getByLabelText("other-project を削除")
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("other-project を削除")).toBeInTheDocument();
   });
 
   it("has aria-label on repository select buttons", () => {
     render(<Sidebar {...defaultProps} />);
     expect(screen.getByLabelText("reown を選択")).toBeInTheDocument();
-    expect(
-      screen.getByLabelText("other-project を選択")
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("other-project を選択")).toBeInTheDocument();
   });
 
   it("has aria-label on add repository button", () => {

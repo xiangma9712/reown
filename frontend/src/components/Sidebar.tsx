@@ -53,7 +53,9 @@ export function Sidebar({
                 className="flex-1 cursor-pointer truncate border-none bg-transparent text-left text-inherit"
                 onClick={() => onSelect(repo.path)}
                 title={repo.path}
-                aria-label={t("repository.selectAriaLabel", { name: repo.name })}
+                aria-label={t("repository.selectAriaLabel", {
+                  name: repo.name,
+                })}
               >
                 {repo.name}
               </button>
@@ -64,7 +66,9 @@ export function Sidebar({
                   onRemove(repo.path);
                 }}
                 title={t("repository.remove")}
-                aria-label={t("repository.removeAriaLabel", { name: repo.name })}
+                aria-label={t("repository.removeAriaLabel", {
+                  name: repo.name,
+                })}
               >
                 ✕
               </button>
