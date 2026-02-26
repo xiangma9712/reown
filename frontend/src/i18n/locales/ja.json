@@ -211,6 +211,11 @@
     "saveError": "オートメーション設定の保存に失敗しました: {{message}}",
     "loadError": "オートメーション設定の読み込みに失敗しました: {{message}}"
   },
+  "automationPanel": {
+    "title": "オートメーション実行",
+    "description": "自動承認候補のPRを評価し、一括でApprove・Mergeを実行します。",
+    "resultSummary": "Approve: {{approved}}件 / 失敗: {{failed}}件"
+  },
   "review": {
     "changedFiles": "変更ファイル",
     "loading": "差分を読み込み中…",

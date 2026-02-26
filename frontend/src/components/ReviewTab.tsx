@@ -20,6 +20,7 @@ import { CommitListPanel } from "./CommitListPanel";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 import { ReviewSuggestionPanel } from "./ReviewSuggestionPanel";
 import { ReviewSubmit } from "./ReviewSubmit";
+import { AutomationPanel } from "./AutomationPanel";
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -490,6 +491,11 @@ function PrAnalysisSection({
           analysisResult={analysisResult}
           prDiffs={prDiffs}
         />
+      )}
+
+      {/* Automation panel */}
+      {token && (
+        <AutomationPanel owner={owner} repo={repo} token={token} />
       )}
     </div>
   );
