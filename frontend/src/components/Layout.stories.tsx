@@ -73,3 +73,13 @@ export const SidebarCollapsed: Story = {
     },
   ],
 };
+
+export const SidebarResized: Story = {
+  decorators: [
+    (Story) => {
+      localStorage.setItem("reown-sidebar-width", "360");
+      localStorage.removeItem("reown-sidebar-collapsed");
+      return <Story />;
+    },
+  ],
+};

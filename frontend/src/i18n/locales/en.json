@@ -21,7 +21,8 @@
     "open": "Open sidebar",
     "close": "Close sidebar",
     "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar"
+    "expand": "Expand sidebar",
+    "resizeHandle": "Resize sidebar width"
   },
   "tabs": {
     "review": "Review",

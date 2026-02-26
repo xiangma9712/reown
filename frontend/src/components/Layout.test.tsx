@@ -20,6 +20,9 @@ vi.mock("react-i18next", () => ({
         "tabs.settingsAriaLabel": "設定を開く",
         "sidebar.open": "サイドバーを開く",
         "sidebar.close": "サイドバーを閉じる",
+        "sidebar.resizeHandle": "サイドバーの幅を調整",
+        "sidebar.collapse": "サイドバーを折りたたむ",
+        "sidebar.expand": "サイドバーを展開する",
       };
       if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;
       if (key === "repository.selectAriaLabel") return `${opts?.name} を選択`;
@@ -170,5 +173,29 @@ describe("Layout", () => {
     );
     const hamburgerButtons = screen.getAllByLabelText("サイドバーを開く");
     expect(hamburgerButtons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders resize handle for desktop sidebar", () => {
+    render(
+      <Layout {...defaultProps}>
+        <div>Content</div>
+      </Layout>
+    );
+    expect(
+      screen.getByRole("separator", { name: "サイドバーの幅を調整" })
+    ).toBeInTheDocument();
+  });
+
+  it("does not render resize handle when sidebar is collapsed", () => {
+    localStorage.setItem("reown-sidebar-collapsed", "true");
+    render(
+      <Layout {...defaultProps}>
+        <div>Content</div>
+      </Layout>
+    );
+    expect(
+      screen.queryByRole("separator", { name: "サイドバーの幅を調整" })
+    ).not.toBeInTheDocument();
+    localStorage.removeItem("reown-sidebar-collapsed");
   });
 });

@@ -1,10 +1,20 @@
-import { type ReactNode, useState, useCallback, useEffect } from "react";
+import {
+  type ReactNode,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
 import type { RepositoryEntry } from "../types";
 
 const STORAGE_KEY = "reown-sidebar-collapsed";
+const WIDTH_STORAGE_KEY = "reown-sidebar-width";
+const DEFAULT_SIDEBAR_WIDTH = 224; // w-56 = 14rem = 224px
+const MIN_SIDEBAR_WIDTH = 160;
+const MAX_SIDEBAR_WIDTH = 480;
 
 interface NavItem {
   id: string;
@@ -56,6 +66,22 @@ export function Layout({
       return false;
     }
   });
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const stored = localStorage.getItem(WIDTH_STORAGE_KEY);
+      if (stored) {
+        const parsed = Number(stored);
+        if (parsed >= MIN_SIDEBAR_WIDTH && parsed <= MAX_SIDEBAR_WIDTH) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return DEFAULT_SIDEBAR_WIDTH;
+  });
+  const [resizing, setResizing] = useState(false);
+  const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
@@ -79,6 +105,54 @@ export function Layout({
     },
     [onSelectRepo]
   );
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      resizeRef.current = { startX: e.clientX, startWidth: sidebarWidth };
+      setResizing(true);
+    },
+    [sidebarWidth]
+  );
+
+  useEffect(() => {
+    if (!resizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeRef.current) return;
+      const delta = e.clientX - resizeRef.current.startX;
+      const newWidth = Math.min(
+        MAX_SIDEBAR_WIDTH,
+        Math.max(MIN_SIDEBAR_WIDTH, resizeRef.current.startWidth + delta)
+      );
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setResizing(false);
+      resizeRef.current = null;
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [resizing]);
+
+  // Persist sidebar width to localStorage when resizing ends
+  const prevResizingRef = useRef(false);
+  useEffect(() => {
+    if (prevResizingRef.current && !resizing) {
+      try {
+        localStorage.setItem(WIDTH_STORAGE_KEY, String(sidebarWidth));
+      } catch {
+        // ignore storage errors
+      }
+    }
+    prevResizingRef.current = resizing;
+  }, [resizing, sidebarWidth]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -107,9 +181,11 @@ export function Layout({
   }, [drawerOpen, toggleCollapse]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-primary">
+    <div
+      className={`flex h-screen overflow-hidden bg-bg-primary${resizing ? " select-none" : ""}`}
+    >
       {/* Desktop sidebar — hidden on small screens */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex">
         <Sidebar
           repositories={repositories}
           selectedPath={selectedRepoPath}
@@ -123,7 +199,28 @@ export function Layout({
           onToggleSettings={onToggleSettings}
           collapsed={collapsed}
           onToggleCollapse={toggleCollapse}
+          width={collapsed ? undefined : sidebarWidth}
         />
+        {!collapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t("sidebar.resizeHandle")}
+            aria-valuemin={MIN_SIDEBAR_WIDTH}
+            aria-valuemax={MAX_SIDEBAR_WIDTH}
+            aria-valuenow={sidebarWidth}
+            className={`group flex w-1 shrink-0 cursor-col-resize items-center justify-center hover:bg-accent/20 active:bg-accent/30 ${
+              resizing ? "bg-accent/30" : ""
+            }`}
+            onMouseDown={handleResizeStart}
+          >
+            <div
+              className={`h-8 w-0.5 rounded-full bg-border group-hover:bg-accent/60 group-active:bg-accent ${
+                resizing ? "bg-accent" : ""
+              }`}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile drawer overlay */}
