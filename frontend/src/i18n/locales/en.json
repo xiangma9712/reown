@@ -211,6 +211,11 @@
     "saveError": "Failed to save automation settings: {{message}}",
     "loadError": "Failed to load automation settings: {{message}}"
   },
+  "automationPanel": {
+    "title": "Automation",
+    "description": "Evaluate auto-approve candidates and execute bulk approve/merge.",
+    "resultSummary": "Approved: {{approved}} / Failed: {{failed}}"
+  },
   "review": {
     "changedFiles": "Changed Files",
     "loading": "Loading diff…",

@@ -22,6 +22,7 @@ import type {
   HybridAnalysisResult,
   TodoItem,
   ReviewSuggestion,
+  AutoApproveCandidate,
   AutoApproveWithMergeResult,
 } from "../types";
 
@@ -480,13 +481,50 @@ const reviewSuggestions: ReviewSuggestion[] = [
   },
 ];
 
+const autoApproveCandidates: AutoApproveCandidate[] = [
+  {
+    pr_number: 38,
+    risk_level: "Low",
+    reason: "テストとドキュメントのみの変更",
+  },
+  {
+    pr_number: 35,
+    risk_level: "Low",
+    reason: "依存関係の更新のみ",
+  },
+];
+
 const autoApproveWithMergeResult: AutoApproveWithMergeResult = {
   outcomes: [
     {
-      pr_number: 1,
+      pr_number: 38,
       approve_success: true,
       approve_error: null,
       auto_merge_status: "Enabled",
+    },
+    {
+      pr_number: 35,
+      approve_success: true,
+      approve_error: null,
+      auto_merge_status: "Skipped",
+    },
+  ],
+  merge_method: "Squash",
+};
+
+const autoApproveWithMergeResultMixed: AutoApproveWithMergeResult = {
+  outcomes: [
+    {
+      pr_number: 38,
+      approve_success: true,
+      approve_error: null,
+      auto_merge_status: "Enabled",
+    },
+    {
+      pr_number: 35,
+      approve_success: false,
+      approve_error: "GitHub API error: 403 Forbidden",
+      auto_merge_status: "SkippedDueToApproveFail",
     },
   ],
   merge_method: "Squash",
@@ -513,5 +551,7 @@ export const fixtures = {
   hybridAnalysisResult,
   todoItems,
   reviewSuggestions,
+  autoApproveCandidates,
   autoApproveWithMergeResult,
+  autoApproveWithMergeResultMixed,
 };
