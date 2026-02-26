@@ -31,6 +31,7 @@
     "nextAction": "Next Action",
     "settings": "Settings",
     "settingsAriaLabel": "Open settings",
+    "settingsCloseAriaLabel": "Close settings",
     "shortcutTooltip": "Keyboard shortcut: {{key}}"
   },
   "common": {

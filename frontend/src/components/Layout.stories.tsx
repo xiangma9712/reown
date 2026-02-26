@@ -84,6 +84,27 @@ export const SidebarResized: Story = {
   ],
 };
 
+export const SettingsOpen: Story = {
+  args: {
+    settingsOpen: true,
+    onToggleSettings: fn(),
+    settingsContent: (
+      <div className="mx-auto max-w-xl space-y-8">
+        <div className="rounded-lg border border-border bg-bg-primary p-5">
+          <h2 className="text-lg font-semibold text-text-primary">LLM設定</h2>
+          <p className="mt-2 text-sm text-text-muted">設定コンテンツ領域</p>
+        </div>
+        <div className="rounded-lg border border-border bg-bg-primary p-5">
+          <h2 className="text-lg font-semibold text-text-primary">
+            オートメーション設定
+          </h2>
+          <p className="mt-2 text-sm text-text-muted">設定コンテンツ領域</p>
+        </div>
+      </div>
+    ),
+  },
+};
+
 export const Loading: Story = {
   args: {
     loadingRepos: true,
