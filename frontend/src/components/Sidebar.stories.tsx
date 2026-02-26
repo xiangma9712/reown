@@ -56,3 +56,18 @@ export const WithCloseButton: Story = {
     onClose: fn(),
   },
 };
+
+export const Collapsed: Story = {
+  args: {
+    collapsed: true,
+    onToggleCollapse: fn(),
+    selectedPath: fixtures.repositories[0].path,
+  },
+};
+
+export const CollapsedWithToggle: Story = {
+  args: {
+    collapsed: false,
+    onToggleCollapse: fn(),
+  },
+};

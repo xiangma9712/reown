@@ -74,4 +74,22 @@ test.describe("Sidebar", () => {
     await page.waitForSelector('[data-radix-popper-content-wrapper]');
     await expect(page).toHaveScreenshot("tooltip-visible.png");
   });
+
+  test("collapsed state", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--collapsed&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "collapsed.png"
+    );
+  });
+
+  test("expanded with toggle button", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--collapsed-with-toggle&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "expanded-with-toggle.png"
+    );
+  });
 });
