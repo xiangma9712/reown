@@ -7,9 +7,7 @@ interface AutoMergeBadgeProps {
   className?: string;
 }
 
-function getVariant(
-  status: AutoMergeStatus
-): "success" | "danger" | "default" {
+function getVariant(status: AutoMergeStatus): "success" | "danger" | "default" {
   if (status === "Enabled") return "success";
   if (typeof status === "object" && "Failed" in status) return "danger";
   return "default";

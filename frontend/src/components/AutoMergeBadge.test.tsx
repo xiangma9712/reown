@@ -74,7 +74,11 @@ describe("AutoMergeBadge", () => {
   });
 
   describe("状態反映ロジック", () => {
-    it.each<{ status: AutoMergeStatus; expectedText: string; expectedClass: string }>([
+    it.each<{
+      status: AutoMergeStatus;
+      expectedText: string;
+      expectedClass: string;
+    }>([
       {
         status: "Enabled",
         expectedText: "Auto Merge: Enabled",
