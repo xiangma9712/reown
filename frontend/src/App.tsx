@@ -158,7 +158,6 @@ export function App() {
             {activeTab === "next-action" && <TodoTab />}
           </>
         )}
-
       </Layout>
     </RepositoryProvider>
   );
