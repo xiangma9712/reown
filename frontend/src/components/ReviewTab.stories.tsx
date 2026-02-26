@@ -115,3 +115,65 @@ export const WithPrInfo: Story = {
     },
   ],
 };
+
+/** PRファイル差分ローディング状態 */
+export const PrFilesLoading: Story = {
+  args: {
+    selectedBranch: "feature/auth",
+    prs: fixtures.pullRequests,
+  },
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        diff_branches: () => fixtures.fileDiffs,
+        load_app_config: () => ({
+          ...fixtures.appConfig,
+          github_token: "ghp_dummy",
+        }),
+        get_pull_request_files: () =>
+          new Promise(() => {
+            /* never resolves */
+          }),
+        analyze_pr_risk: () =>
+          new Promise(() => {
+            /* never resolves */
+          }),
+        analyze_pr_risk_with_llm: () =>
+          new Promise(() => {
+            /* never resolves */
+          }),
+      });
+      return <Story />;
+    },
+  ],
+};
+
+/** PRファイル差分エラー状態 */
+export const PrFilesError: Story = {
+  args: {
+    selectedBranch: "feature/auth",
+    prs: fixtures.pullRequests,
+  },
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        diff_branches: () => fixtures.fileDiffs,
+        load_app_config: () => ({
+          ...fixtures.appConfig,
+          github_token: "ghp_dummy",
+        }),
+        get_pull_request_files: () =>
+          Promise.reject("GitHub API rate limit exceeded"),
+        analyze_pr_risk: () =>
+          new Promise(() => {
+            /* never resolves */
+          }),
+        analyze_pr_risk_with_llm: () =>
+          new Promise(() => {
+            /* never resolves */
+          }),
+      });
+      return <Story />;
+    },
+  ],
+};

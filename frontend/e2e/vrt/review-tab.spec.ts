@@ -67,4 +67,27 @@ test.describe("ReviewTab", () => {
       "with-pr-info.png"
     );
   });
+
+  test("pr files loading", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-reviewtab--pr-files-loading&viewMode=story"
+    );
+    await page.waitForSelector("text=PR情報", { timeout: 10_000 });
+    await page.waitForSelector('[role="status"]', { timeout: 10_000 });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "pr-files-loading.png",
+      { maxDiffPixelRatio: 0.08 }
+    );
+  });
+
+  test("pr files error", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-reviewtab--pr-files-error&viewMode=story"
+    );
+    await page.waitForSelector("text=PR情報", { timeout: 10_000 });
+    await page.waitForSelector("text=GitHub API", { timeout: 10_000 });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "pr-files-error.png"
+    );
+  });
 });

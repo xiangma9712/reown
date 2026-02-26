@@ -222,6 +222,9 @@
     "prAuthor": "Author: {{author}}",
     "prState": "Status: {{state}}",
     "prAnalysis": "PR Analysis",
+    "prFiles": "PR Files",
+    "prFilesEmpty": "No changed files.",
+    "prFilesLoading": "Loading PR file diffs…",
     "noPr": "No PR associated with this branch."
   },
   "theme": {
