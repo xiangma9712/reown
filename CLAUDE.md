@@ -67,6 +67,11 @@ frontend/                   — Web frontend (React + TypeScript)
 5. Add frontend UI in `frontend/src/`
 6. Write tests using tempfile pattern
 
+## Frontend: Storybook & VRT
+
+- コンポーネント（`frontend/src/components/*.tsx`）を修正・追加した場合、対応する Stories（`*.stories.tsx`）と VRT スペック（`frontend/e2e/vrt/*.spec.ts`）も必ず更新すること
+- アニメーション系テスト（Loading, Spinner等）には `maxDiffPixelRatio: 0.08` を設定すること
+
 ## Autonomous Agent
 
 エージェントとして実行する場合は `agent/prompts/` 配下のプロンプトに従うこと。

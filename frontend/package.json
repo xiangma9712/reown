@@ -14,7 +14,8 @@
     "test": "vitest run",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test:vrt": "npx playwright test --config=playwright-vrt.config.ts"
+    "test:vrt": "npx playwright test --config=playwright-vrt.config.ts",
+    "test:vrt:update": "npx playwright test --config=playwright-vrt.config.ts --update-snapshots"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

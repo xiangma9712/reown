@@ -71,7 +71,7 @@ UIを意図的に変更した場合は、スナップショットを更新して
 
 ```sh
 cd frontend
-npm run test:vrt -- --update-snapshots
+npm run test:vrt:update
 ```
 
 更新された `frontend/e2e/vrt/__snapshots__/` 内の PNG ファイルをコミットに含めてください。
@@ -114,7 +114,7 @@ npm run test:vrt -- --update-snapshots
 
 #### CI での実行
 
-PRを作成すると、GitHub Actions で自動的にビジュアルリグレッションテストが実行されます。差分が検出された場合は CI が失敗し、差分画像が `vrt-diff` アーティファクトとしてダウンロードできます。
+VRT は CI では実行されません。ローカルで `npm run test:vrt` を実行してスナップショットを確認してください。
 
 ### Tauri アプリ
 
