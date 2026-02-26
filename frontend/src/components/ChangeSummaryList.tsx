@@ -218,7 +218,7 @@ export function ChangeSummaryList({
     text: "",
     done: false,
   });
-  const [expandedDiffs, setExpandedDiffs] = useState<Set<number>>(new Set());
+  const [expandedDiffs, setExpandedDiffs] = useState<Set<string>>(new Set());
   const [activeCategories, setActiveCategories] = useState<Set<ChangeCategory>>(
     new Set()
   );
@@ -448,7 +448,7 @@ export function ChangeSummaryList({
           )}
 
           {/* File summaries list */}
-          {summary.file_summaries.length > 0 && (
+          {filteredFileSummaries.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-[0.85rem] font-semibold text-text-heading">
                 {t("pr.fileSummaries")}
@@ -456,10 +456,10 @@ export function ChangeSummaryList({
               {filteredFileSummaries.map((file, i) => {
                 const category = findCategoryForPath(file.path, diffs);
                 const diffIndex = findDiffIndexForPath(file.path, diffs);
-                const isDiffExpanded = expandedDiffs.has(i);
+                const isDiffExpanded = expandedDiffs.has(file.path);
                 const fileDiff = diffIndex >= 0 ? diffs[diffIndex] : undefined;
                 return (
-                  <Panel key={i} className="space-y-1">
+                  <Panel key={file.path} className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-mono text-[0.8rem] font-semibold text-info">
                         {file.path}
@@ -478,10 +478,10 @@ export function ChangeSummaryList({
                           onClick={() => {
                             setExpandedDiffs((prev) => {
                               const next = new Set(prev);
-                              if (next.has(i)) {
-                                next.delete(i);
+                              if (next.has(file.path)) {
+                                next.delete(file.path);
                               } else {
-                                next.add(i);
+                                next.add(file.path);
                               }
                               return next;
                             });
