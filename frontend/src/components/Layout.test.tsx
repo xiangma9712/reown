@@ -15,6 +15,7 @@ vi.mock("react-i18next", () => ({
         "repository.add": "リポジトリを追加",
         "repository.remove": "削除",
         "repository.addAriaLabel": "リポジトリを追加",
+        "repository.navAriaLabel": "リポジトリ一覧",
         "tabs.settingsAriaLabel": "設定を開く",
       };
       if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;

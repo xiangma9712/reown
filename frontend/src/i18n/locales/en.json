@@ -10,6 +10,7 @@
     "removeAriaLabel": "Remove {{name}}",
     "selectAriaLabel": "Select {{name}}",
     "addAriaLabel": "Add repository",
+    "navAriaLabel": "Repository list",
     "confirmRemove": "Remove repository '{{name}}' from the list?",
     "selectPrompt": "Select a repository from the sidebar.",
     "empty": "No repositories registered. Click \"Add Repository\" to get started."

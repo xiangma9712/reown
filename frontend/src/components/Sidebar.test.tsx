@@ -15,6 +15,7 @@ vi.mock("react-i18next", () => ({
         "repository.add": "リポジトリを追加",
         "repository.remove": "削除",
         "repository.addAriaLabel": "リポジトリを追加",
+        "repository.navAriaLabel": "リポジトリ一覧",
         "tabs.settingsAriaLabel": "設定を開く",
         "common.confirm": "確認",
         "common.cancel": "キャンセル",
@@ -127,6 +128,11 @@ describe("Sidebar", () => {
   it("has aria-label on settings button", () => {
     render(<Sidebar {...defaultProps} />);
     expect(screen.getByLabelText("設定を開く")).toBeInTheDocument();
+  });
+
+  it("has aria-label on nav element", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.getByRole("navigation", { name: "リポジトリ一覧" })).toBeInTheDocument();
   });
 
   it("highlights selected repository", () => {
