@@ -53,6 +53,7 @@ export function Sidebar({
                 className="flex-1 cursor-pointer truncate border-none bg-transparent text-left text-inherit"
                 onClick={() => onSelect(repo.path)}
                 title={repo.path}
+                aria-label={t("repository.selectAriaLabel", { name: repo.name })}
               >
                 {repo.name}
               </button>
@@ -63,6 +64,7 @@ export function Sidebar({
                   onRemove(repo.path);
                 }}
                 title={t("repository.remove")}
+                aria-label={t("repository.removeAriaLabel", { name: repo.name })}
               >
                 ✕
               </button>
@@ -74,6 +76,7 @@ export function Sidebar({
         <button
           onClick={onAdd}
           className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent"
+          aria-label={t("repository.addAriaLabel")}
         >
           + {t("repository.add")}
         </button>
@@ -87,6 +90,7 @@ export function Sidebar({
               : "text-text-secondary hover:text-text-primary"
           }`}
           title={t("tabs.settings")}
+          aria-label={t("tabs.settingsAriaLabel")}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
