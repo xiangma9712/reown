@@ -7,6 +7,23 @@ import type { RepositoryEntry } from "../types";
 
 const THEME_OPTIONS: Theme[] = ["light", "dark", "system"];
 
+const CheckIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
 const SettingsGearIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -136,8 +153,16 @@ export function Sidebar({
                       name: repo.name,
                     })}
                   >
-                    <span className="text-sm font-medium">
-                      {repo.name.charAt(0).toUpperCase()}
+                    <span className="flex flex-col items-center gap-0.5">
+                      <span className="text-sm font-medium">
+                        {repo.name.charAt(0).toUpperCase()}
+                      </span>
+                      {selectedPath === repo.path && (
+                        <span
+                          className="h-1 w-1 rounded-full bg-accent"
+                          aria-hidden="true"
+                        />
+                      )}
                     </span>
                   </button>
                 </Tooltip.Trigger>
@@ -169,10 +194,15 @@ export function Sidebar({
                     : "border-l-2 border-l-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
                 }`}
               >
+                {selectedPath === repo.path && (
+                  <span className="mr-1.5 flex shrink-0 items-center text-accent">
+                    <CheckIcon />
+                  </span>
+                )}
                 <Tooltip.Root>
                   <Tooltip.Trigger asChild>
                     <button
-                      className="flex-1 cursor-pointer truncate rounded border-none bg-transparent text-left text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className="min-w-0 flex-1 cursor-pointer truncate rounded border-none bg-transparent text-left text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       onClick={() => onSelect(repo.path)}
                       aria-label={t("repository.selectAriaLabel", {
                         name: repo.name,

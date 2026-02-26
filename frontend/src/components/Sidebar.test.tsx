@@ -193,6 +193,29 @@ describe("Sidebar", () => {
     expect(selectedItem).toBeInTheDocument();
   });
 
+  it("shows checkmark icon for selected repository", () => {
+    const { container } = render(
+      <Sidebar {...defaultProps} selectedPath="/Users/dev/project" />
+    );
+    const selectedItem = container.querySelector('[aria-current="true"]');
+    expect(selectedItem).toBeInTheDocument();
+    const checkIcon = selectedItem!.querySelector("svg[aria-hidden='true']");
+    expect(checkIcon).toBeInTheDocument();
+  });
+
+  it("does not show checkmark icon for non-selected repositories", () => {
+    const { container } = render(
+      <Sidebar {...defaultProps} selectedPath="/Users/dev/project" />
+    );
+    const nonSelectedItems = container.querySelectorAll(
+      ".border-l-transparent"
+    );
+    nonSelectedItems.forEach((item) => {
+      const checkIcon = item.querySelector("svg[aria-hidden='true']");
+      expect(checkIcon).not.toBeInTheDocument();
+    });
+  });
+
   it("shows tooltip with repo name and path on hover", async () => {
     const user = userEvent.setup();
     render(<Sidebar {...defaultProps} />);
