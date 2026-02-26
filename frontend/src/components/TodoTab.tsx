@@ -79,9 +79,7 @@ export function TodoTab() {
           })
         );
       } catch (err) {
-        setError(
-          t("todo.createWorktreeError", { message: String(err) })
-        );
+        setError(t("todo.createWorktreeError", { message: String(err) }));
       } finally {
         setCreatingKey(null);
       }
@@ -131,9 +129,7 @@ export function TodoTab() {
             </p>
           )}
           {successMessage && (
-            <p className="p-2 text-[0.9rem] text-accent">
-              {successMessage}
-            </p>
+            <p className="p-2 text-[0.9rem] text-accent">{successMessage}</p>
           )}
           {!loading && !error && todos.length === 0 && (
             <p className="p-2 text-[0.9rem] italic text-text-secondary">
@@ -168,7 +164,9 @@ export function TodoTab() {
                       : t("todo.createWorktree")}
                   </Button>
                 </div>
-                <div className="mt-1 pl-1 text-text-primary">{item.content}</div>
+                <div className="mt-1 pl-1 text-text-primary">
+                  {item.content}
+                </div>
               </div>
             );
           })}
