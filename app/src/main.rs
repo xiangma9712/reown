@@ -774,16 +774,37 @@ mod tests {
 
     #[test]
     fn test_app_error_kind_variants_serialize() {
-        for (kind, expected) in [(ErrorKind::Git, "git"), (ErrorKind::GitHub, "github")] {
+        for (kind, expected) in [
+            (ErrorKind::Git, "git"),
+            (ErrorKind::GitHub, "github"),
+            (ErrorKind::Storage, "storage"),
+            (ErrorKind::Analysis, "analysis"),
+            (ErrorKind::Llm, "llm"),
+        ] {
             let json = serde_json::to_value(&kind).unwrap();
             assert_eq!(json, expected);
         }
     }
 
     #[test]
-    fn test_app_error_display() {
-        let err = AppError::git(anyhow::anyhow!("something went wrong"));
-        assert_eq!(err.to_string(), "something went wrong");
+    fn test_app_error_display_all_variants() {
+        let cases = vec![
+            AppError::git(anyhow::anyhow!("git error msg")),
+            AppError::github(anyhow::anyhow!("github error msg")),
+            AppError::storage(anyhow::anyhow!("storage error msg")),
+            AppError::analysis(anyhow::anyhow!("analysis error msg")),
+            AppError::llm(anyhow::anyhow!("llm error msg")),
+        ];
+        let expected = [
+            "git error msg",
+            "github error msg",
+            "storage error msg",
+            "analysis error msg",
+            "llm error msg",
+        ];
+        for (err, exp) in cases.iter().zip(expected.iter()) {
+            assert_eq!(err.to_string(), *exp);
+        }
     }
 
     #[test]
@@ -852,6 +873,41 @@ mod tests {
         let json = serde_json::to_value(&err).unwrap();
         assert_eq!(json["kind"], "llm");
         assert_eq!(json["message"], "llm error");
+    }
+
+    #[test]
+    fn test_app_error_empty_message() {
+        let err = AppError::git(anyhow::anyhow!(""));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "git");
+        assert_eq!(json["message"], "");
+        assert_eq!(err.to_string(), "");
+    }
+
+    #[test]
+    fn test_app_error_unicode_message() {
+        let err = AppError::storage(anyhow::anyhow!("リポジトリが見つかりません"));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "storage");
+        assert_eq!(json["message"], "リポジトリが見つかりません");
+        assert_eq!(err.to_string(), "リポジトリが見つかりません");
+    }
+
+    #[test]
+    fn test_app_error_deep_context_chain() {
+        let inner = anyhow::anyhow!("root cause: disk full")
+            .context("failed to write config")
+            .context("failed to save repository")
+            .context("add_repository failed");
+        let err = AppError::storage(inner);
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "storage");
+        // anyhow の {:#} フォーマットで全コンテキストが保持される
+        let msg = json["message"].as_str().unwrap();
+        assert!(msg.contains("add_repository failed"));
+        assert!(msg.contains("failed to save repository"));
+        assert!(msg.contains("failed to write config"));
+        assert!(msg.contains("root cause: disk full"));
     }
 
     // ── テスト用ヘルパー ────────────────────────────────────────────────────
