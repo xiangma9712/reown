@@ -54,9 +54,7 @@ export const Consistent: Story = {
     const button = canvas.getByRole("button");
     await userEvent.click(button);
     await waitFor(() => {
-      canvas.getByText(
-        "PRタイトル・本文と変更内容は一致しています"
-      );
+      canvas.getByText("PRタイトル・本文と変更内容は一致しています");
     });
   },
 };
@@ -77,9 +75,7 @@ export const WithWarnings: Story = {
     const button = canvas.getByRole("button");
     await userEvent.click(button);
     await waitFor(() => {
-      canvas.getByText(
-        "PRタイトル・本文と実際の変更内容に乖離があります"
-      );
+      canvas.getByText("PRタイトル・本文と実際の変更内容に乖離があります");
     });
   },
 };
@@ -88,8 +84,7 @@ export const WithWarnings: Story = {
 export const Error: Story = {
   play: async ({ canvasElement }) => {
     overrideInvoke({
-      check_pr_consistency: () =>
-        Promise.reject("API rate limit exceeded"),
+      check_pr_consistency: () => Promise.reject("API rate limit exceeded"),
     });
     const canvas = within(canvasElement);
     const button = canvas.getByRole("button");
