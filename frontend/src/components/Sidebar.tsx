@@ -326,7 +326,9 @@ export function Sidebar({
             )}
           </div>
         )}
-        <div className="border-t border-border px-4 py-3">
+        <div
+          className={`border-t border-border ${collapsed ? "px-2" : "px-4"} py-3`}
+        >
           {collapsed ? (
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
@@ -359,7 +361,7 @@ export function Sidebar({
             <>
               <button
                 onClick={onToggleSettings}
-                className={`flex w-full cursor-pointer items-center gap-2 rounded border-none bg-transparent px-2 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                className={`flex w-full cursor-pointer items-center gap-2 rounded border-none bg-transparent px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                   settingsOpen
                     ? "text-accent"
                     : "text-text-secondary hover:text-text-primary"
