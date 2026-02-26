@@ -178,7 +178,9 @@ describe("Sidebar", () => {
 
   it("does not render close button when onClose is not provided", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.queryByLabelText("サイドバーを閉じる")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("サイドバーを閉じる")
+    ).not.toBeInTheDocument();
   });
 
   it("calls onClose when close button is clicked", async () => {

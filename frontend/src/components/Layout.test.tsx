@@ -141,7 +141,9 @@ describe("Layout", () => {
     await user.click(hamburgerButtons[0]);
     const closeButton = screen.getByLabelText("サイドバーを閉じる");
     await user.click(closeButton);
-    expect(screen.queryByLabelText("サイドバーを閉じる")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("サイドバーを閉じる")
+    ).not.toBeInTheDocument();
   });
 
   it("closes drawer on Escape key", async () => {
@@ -155,7 +157,9 @@ describe("Layout", () => {
     await user.click(hamburgerButtons[0]);
     expect(screen.getByLabelText("サイドバーを閉じる")).toBeInTheDocument();
     await user.keyboard("{Escape}");
-    expect(screen.queryByLabelText("サイドバーを閉じる")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("サイドバーを閉じる")
+    ).not.toBeInTheDocument();
   });
 
   it("renders hamburger button when no repo selected", () => {
