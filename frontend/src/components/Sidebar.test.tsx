@@ -130,6 +130,18 @@ describe("Sidebar", () => {
     expect(screen.getByLabelText("設定を開く")).toBeInTheDocument();
   });
 
+  it("has aria-keyshortcuts on settings button", () => {
+    render(<Sidebar {...defaultProps} />);
+    const settingsButton = screen.getByLabelText("設定を開く");
+    expect(settingsButton).toHaveAttribute("aria-keyshortcuts", "S");
+  });
+
+  it("hides kbd shortcut from screen readers", () => {
+    const { container } = render(<Sidebar {...defaultProps} />);
+    const kbd = container.querySelector("kbd");
+    expect(kbd).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("has aria-label on nav element", () => {
     render(<Sidebar {...defaultProps} />);
     expect(

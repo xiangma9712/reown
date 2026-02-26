@@ -104,6 +104,7 @@ export function Sidebar({
           }`}
           title={t("tabs.settings")}
           aria-label={t("tabs.settingsAriaLabel")}
+          aria-keyshortcuts="S"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -120,7 +121,10 @@ export function Sidebar({
             <circle cx="12" cy="12" r="3" />
           </svg>
           {t("tabs.settings")}
-          <kbd className="ml-auto rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted">
+          <kbd
+            aria-hidden="true"
+            className="ml-auto rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted"
+          >
             S
           </kbd>
         </button>
