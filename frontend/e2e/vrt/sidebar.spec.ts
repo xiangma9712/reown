@@ -44,4 +44,25 @@ test.describe("Sidebar", () => {
       "focus-visible.png"
     );
   });
+
+  test("long repo name with tooltip", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--long-repo-name&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "long-repo-name.png"
+    );
+  });
+
+  test("tooltip shows full path on hover", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--long-repo-name&viewMode=story"
+    );
+    const repoButton = page.getByText(
+      "my-very-long-repository-name-that-exceeds-sidebar-width"
+    );
+    await repoButton.hover();
+    await page.waitForSelector('[data-radix-popper-content-wrapper]');
+    await expect(page).toHaveScreenshot("tooltip-visible.png");
+  });
 });

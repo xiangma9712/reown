@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { ConfirmDialog } from "./ConfirmDialog";
 import type { RepositoryEntry } from "../types";
 
@@ -28,6 +29,7 @@ export function Sidebar({
   );
 
   return (
+    <Tooltip.Provider delayDuration={300}>
     <aside className="flex h-full w-56 flex-col border-r border-border bg-sidebar-bg">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <span className="text-xl font-bold text-text-heading">
@@ -58,16 +60,30 @@ export function Sidebar({
                   : "border-l-2 border-l-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
               }`}
             >
-              <button
-                className="flex-1 cursor-pointer truncate rounded border-none bg-transparent text-left text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                onClick={() => onSelect(repo.path)}
-                title={repo.path}
-                aria-label={t("repository.selectAriaLabel", {
-                  name: repo.name,
-                })}
-              >
-                {repo.name}
-              </button>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <button
+                    className="flex-1 cursor-pointer truncate rounded border-none bg-transparent text-left text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    onClick={() => onSelect(repo.path)}
+                    aria-label={t("repository.selectAriaLabel", {
+                      name: repo.name,
+                    })}
+                  >
+                    {repo.name}
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="z-50 max-w-xs rounded bg-bg-tooltip px-3 py-2 text-sm text-text-tooltip shadow-md"
+                    side="right"
+                    sideOffset={8}
+                  >
+                    <p className="font-semibold">{repo.name}</p>
+                    <p className="text-xs opacity-80">{repo.path}</p>
+                    <Tooltip.Arrow className="fill-bg-tooltip" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
               <button
                 className="ml-1 cursor-pointer rounded border-none bg-transparent p-0.5 text-text-muted opacity-0 transition-opacity hover:text-danger focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent group-hover:opacity-100 group-focus-within:opacity-100"
                 onClick={(e) => {
@@ -149,5 +165,6 @@ export function Sidebar({
         onCancel={() => setRemovingRepo(null)}
       />
     </aside>
+    </Tooltip.Provider>
   );
 }
