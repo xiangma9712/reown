@@ -215,6 +215,12 @@
     "prAnalysis": "PR分析",
     "noPr": "このブランチに関連するPRはありません。"
   },
+  "theme": {
+    "label": "テーマ切替",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "todo": {
     "title": "TODO / FIXME",
     "empty": "TODO/FIXMEコメントは見つかりませんでした。",

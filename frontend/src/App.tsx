@@ -7,6 +7,7 @@ import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
+import { ThemeProvider } from "./ThemeContext";
 import { invoke } from "./invoke";
 import type { RepositoryEntry, RepoInfo, PrInfo } from "./types";
 import "./style.css";
@@ -122,43 +123,45 @@ export function App() {
   }, []);
 
   return (
-    <RepositoryProvider repoPath={selectedRepoPath} repoInfo={repoInfo}>
-      <Layout
-        repositories={repositories}
-        selectedRepoPath={selectedRepoPath}
-        onSelectRepo={setSelectedRepoPath}
-        onAddRepo={handleAddRepo}
-        onRemoveRepo={handleRemoveRepo}
-        navItems={[...NAV_ITEMS]}
-        activeTabId={activeTab}
-        onSelectTab={(id) => {
-          setActiveTab(id as TabName);
-          setSettingsOpen(false);
-        }}
-        settingsOpen={settingsOpen}
-        onToggleSettings={() => setSettingsOpen((prev) => !prev)}
-        branchSelector={
-          <BranchSelector
-            prs={prs}
-            selectedBranch={selectedBranch}
-            onSelectBranch={setSelectedBranch}
-          />
-        }
-      >
-        {settingsOpen ? (
-          <div className="mx-auto max-w-xl space-y-8">
-            <LlmSettingsTab />
-            <AutomationSettingsTab />
-          </div>
-        ) : (
-          <>
-            {activeTab === "review" && (
-              <ReviewTab selectedBranch={selectedBranch} prs={prs} />
-            )}
-            {activeTab === "next-action" && <TodoTab />}
-          </>
-        )}
-      </Layout>
-    </RepositoryProvider>
+    <ThemeProvider>
+      <RepositoryProvider repoPath={selectedRepoPath} repoInfo={repoInfo}>
+        <Layout
+          repositories={repositories}
+          selectedRepoPath={selectedRepoPath}
+          onSelectRepo={setSelectedRepoPath}
+          onAddRepo={handleAddRepo}
+          onRemoveRepo={handleRemoveRepo}
+          navItems={[...NAV_ITEMS]}
+          activeTabId={activeTab}
+          onSelectTab={(id) => {
+            setActiveTab(id as TabName);
+            setSettingsOpen(false);
+          }}
+          settingsOpen={settingsOpen}
+          onToggleSettings={() => setSettingsOpen((prev) => !prev)}
+          branchSelector={
+            <BranchSelector
+              prs={prs}
+              selectedBranch={selectedBranch}
+              onSelectBranch={setSelectedBranch}
+            />
+          }
+        >
+          {settingsOpen ? (
+            <div className="mx-auto max-w-xl space-y-8">
+              <LlmSettingsTab />
+              <AutomationSettingsTab />
+            </div>
+          ) : (
+            <>
+              {activeTab === "review" && (
+                <ReviewTab selectedBranch={selectedBranch} prs={prs} />
+              )}
+              {activeTab === "next-action" && <TodoTab />}
+            </>
+          )}
+        </Layout>
+      </RepositoryProvider>
+    </ThemeProvider>
   );
 }

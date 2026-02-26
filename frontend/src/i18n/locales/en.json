@@ -215,6 +215,12 @@
     "prAnalysis": "PR Analysis",
     "noPr": "No PR associated with this branch."
   },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "todo": {
     "title": "TODO / FIXME",
     "empty": "No TODO/FIXME comments found.",
