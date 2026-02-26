@@ -16,9 +16,14 @@ vi.mock("react-i18next", () => ({
         "todo.filterAll": "すべて",
         "todo.filterTodo": "TODO",
         "todo.filterFixme": "FIXME",
+        "todo.expandAll": "全て展開",
+        "todo.collapseAll": "全て折りたたみ",
         "common.loading": "Loading…",
       };
       if (key === "todo.count" && params) {
+        return `${params.count}件`;
+      }
+      if (key === "todo.groupCount" && params) {
         return `${params.count}件`;
       }
       if (key === "common.error" && params) {
@@ -115,8 +120,67 @@ describe("TodoTab", () => {
     renderWithProvider(<TodoTab />);
     await user.click(screen.getByText("TODOを抽出"));
     await waitFor(() => {
-      expect(screen.getByText("3件")).toBeInTheDocument();
+      expect(screen.getByText("3件", { selector: "h2 span" })).toBeInTheDocument();
     });
+  });
+
+  it("shows module group headers", async () => {
+    const user = userEvent.setup();
+    renderWithProvider(<TodoTab />);
+    await user.click(screen.getByText("TODOを抽出"));
+    await waitFor(() => {
+      // fixture items: src/auth.ts -> "src", src/components/LoginForm.tsx -> "src/components", src/legacy/old-auth.ts -> "src/legacy"
+      expect(screen.getByText("src/legacy")).toBeInTheDocument();
+    });
+    expect(screen.getByText("src/components")).toBeInTheDocument();
+  });
+
+  it("sorts FIXME items before TODO items", async () => {
+    const user = userEvent.setup();
+    renderWithProvider(<TodoTab />);
+    await user.click(screen.getByText("TODOを抽出"));
+    await waitFor(() => {
+      expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
+    });
+    // FIXME group (src/legacy) should appear before TODO-only groups
+    const groupButtons = screen.getAllByRole("button", { expanded: true });
+    const groupTexts = groupButtons.map((btn) => btn.textContent);
+    const legacyIdx = groupTexts.findIndex((t) => t?.includes("src/legacy"));
+    const authIdx = groupTexts.findIndex((t) => t?.includes("src") && !t?.includes("src/"));
+    expect(legacyIdx).toBeLessThan(authIdx);
+  });
+
+  it("collapses and expands groups", async () => {
+    const user = userEvent.setup();
+    renderWithProvider(<TodoTab />);
+    await user.click(screen.getByText("TODOを抽出"));
+    await waitFor(() => {
+      expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
+    });
+    // Click "全て折りたたみ"
+    await user.click(screen.getByText("全て折りたたみ"));
+    // Items should be hidden
+    expect(screen.queryByText("このファイルは削除予定")).not.toBeInTheDocument();
+    // Click "全て展開"
+    await user.click(screen.getByText("全て展開"));
+    // Items should be visible again
+    expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
+  });
+
+  it("toggles individual group", async () => {
+    const user = userEvent.setup();
+    renderWithProvider(<TodoTab />);
+    await user.click(screen.getByText("TODOを抽出"));
+    await waitFor(() => {
+      expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
+    });
+    // Click the src/legacy group header to collapse it
+    const legacyHeader = screen.getByText("src/legacy").closest("button")!;
+    await user.click(legacyHeader);
+    // FIXME item should be hidden
+    expect(screen.queryByText("このファイルは削除予定")).not.toBeInTheDocument();
+    // Other items should still be visible
+    expect(screen.getByText("リフレッシュトークンの実装")).toBeInTheDocument();
   });
 
   it("filters by TODO", async () => {
@@ -136,7 +200,7 @@ describe("TodoTab", () => {
     expect(todoFilterBtn).toBeDefined();
     await user.click(todoFilterBtn!);
     await waitFor(() => {
-      expect(screen.getByText("2件")).toBeInTheDocument();
+      expect(screen.getByText("2件", { selector: "h2 span" })).toBeInTheDocument();
     });
     expect(screen.getByText("リフレッシュトークンの実装")).toBeInTheDocument();
     expect(
@@ -160,7 +224,7 @@ describe("TodoTab", () => {
     expect(fixmeFilterBtn).toBeDefined();
     await user.click(fixmeFilterBtn!);
     await waitFor(() => {
-      expect(screen.getByText("1件")).toBeInTheDocument();
+      expect(screen.getByText("1件", { selector: "h2 span" })).toBeInTheDocument();
     });
     expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
     expect(
@@ -178,5 +242,23 @@ describe("TodoTab", () => {
     await waitFor(() => {
       expect(screen.getByText(/エラー:.*extract failed/)).toBeInTheDocument();
     });
+  });
+
+  it("shows grouped items with groupedTodoItems fixture", async () => {
+    const user = userEvent.setup();
+    mockInvokeFn.mockImplementation((command: string) => {
+      if (command === "extract_todos") {
+        return Promise.resolve(fixtures.groupedTodoItems);
+      }
+      return Promise.reject(new Error(`Unhandled command: ${command}`));
+    });
+    renderWithProvider(<TodoTab />);
+    await user.click(screen.getByText("TODOを抽出"));
+    await waitFor(() => {
+      expect(screen.getByText("lib/git")).toBeInTheDocument();
+    });
+    expect(screen.getByText("lib/github")).toBeInTheDocument();
+    expect(screen.getByText("frontend/src")).toBeInTheDocument();
+    expect(screen.getByText("app/src")).toBeInTheDocument();
   });
 });

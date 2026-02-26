@@ -16,6 +16,62 @@ function generateBranchName(filePath: string, lineNumber: number): string {
   return `todo/${stem}-${lineNumber}`;
 }
 
+/** ファイルパスからモジュールグループ名を導出する */
+function getModuleGroup(filePath: string): string {
+  const parts = filePath.split("/");
+  if (parts.length <= 2) return parts[0];
+  return parts.slice(0, 2).join("/");
+}
+
+interface TodoGroup {
+  module: string;
+  items: TodoItem[];
+}
+
+/** FIXME優先でソートし、同種内はファイルパス→行番号でソート */
+function sortTodos(items: TodoItem[]): TodoItem[] {
+  return [...items].sort((a, b) => {
+    // FIXME first
+    if (a.kind !== b.kind) return a.kind === "Fixme" ? -1 : 1;
+    // Then by file path
+    const pathCmp = a.file_path.localeCompare(b.file_path);
+    if (pathCmp !== 0) return pathCmp;
+    // Then by line number
+    return a.line_number - b.line_number;
+  });
+}
+
+/** アイテムをモジュールグループに分類する */
+function groupByModule(items: TodoItem[]): TodoGroup[] {
+  const groupMap = new Map<string, TodoItem[]>();
+  for (const item of items) {
+    const module = getModuleGroup(item.file_path);
+    const group = groupMap.get(module);
+    if (group) {
+      group.push(item);
+    } else {
+      groupMap.set(module, [item]);
+    }
+  }
+
+  // FIXMEを含むグループを優先、グループ内もFIXME優先ソート
+  const groups: TodoGroup[] = Array.from(groupMap.entries()).map(
+    ([module, groupItems]) => ({
+      module,
+      items: sortTodos(groupItems),
+    })
+  );
+
+  groups.sort((a, b) => {
+    const aHasFixme = a.items.some((i) => i.kind === "Fixme");
+    const bHasFixme = b.items.some((i) => i.kind === "Fixme");
+    if (aHasFixme !== bHasFixme) return aHasFixme ? -1 : 1;
+    return a.module.localeCompare(b.module);
+  });
+
+  return groups;
+}
+
 export function TodoTab() {
   const { t } = useTranslation();
   const { repoPath } = useRepository();
@@ -25,6 +81,9 @@ export function TodoTab() {
   const [filter, setFilter] = useState<FilterKind>("all");
   const [creatingKey, setCreatingKey] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set()
+  );
 
   const loadTodos = useCallback(async () => {
     if (!repoPath) return;
@@ -50,9 +109,36 @@ export function TodoTab() {
     return todos.filter((item) => item.kind === filter);
   }, [todos, filter]);
 
+  const groups = useMemo(() => groupByModule(filtered), [filtered]);
+
+  const allGroupsCollapsed = useMemo(
+    () => groups.length > 0 && groups.every((g) => collapsedGroups.has(g.module)),
+    [groups, collapsedGroups]
+  );
+
   function kindVariant(kind: TodoKind): "warning" | "danger" {
     return kind === "Todo" ? "warning" : "danger";
   }
+
+  const toggleGroup = useCallback((module: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(module)) {
+        next.delete(module);
+      } else {
+        next.add(module);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAllGroups = useCallback(() => {
+    if (allGroupsCollapsed) {
+      setCollapsedGroups(new Set());
+    } else {
+      setCollapsedGroups(new Set(groups.map((g) => g.module)));
+    }
+  }, [allGroupsCollapsed, groups]);
 
   const handleCreateWorktree = useCallback(
     async (item: TodoItem) => {
@@ -100,7 +186,7 @@ export function TodoTab() {
         </h2>
 
         {todos.length > 0 && (
-          <div className="mb-3 flex gap-2">
+          <div className="mb-3 flex items-center gap-2">
             {(["all", "Todo", "Fixme"] as const).map((f) => (
               <button
                 key={f}
@@ -118,6 +204,16 @@ export function TodoTab() {
                     : t("todo.filterFixme")}
               </button>
             ))}
+            <div className="ml-auto">
+              <button
+                className="rounded px-2 py-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
+                onClick={toggleAllGroups}
+              >
+                {allGroupsCollapsed
+                  ? t("todo.expandAll")
+                  : t("todo.collapseAll")}
+              </button>
+            </div>
           </div>
         )}
 
@@ -136,37 +232,65 @@ export function TodoTab() {
               {t("todo.empty")}
             </p>
           )}
-          {filtered.map((item, index) => {
-            const itemKey = `${item.file_path}:${item.line_number}`;
-            const isCreating = creatingKey === itemKey;
+          {groups.map((group) => {
+            const isCollapsed = collapsedGroups.has(group.module);
             return (
-              <div
-                key={itemKey}
-                className={`border-b border-border px-3 py-2.5 font-mono text-[0.85rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                  index % 2 === 0 ? "" : "bg-bg-hover/30"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Badge variant={kindVariant(item.kind)}>
-                    {item.kind === "Todo" ? "TODO" : "FIXME"}
-                  </Badge>
-                  <span className="flex-1 text-text-secondary">
-                    {item.file_path}:{item.line_number}
-                  </span>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={isCreating}
-                    onClick={() => handleCreateWorktree(item)}
+              <div key={group.module} className="mb-1">
+                <button
+                  className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm font-semibold text-text-heading hover:bg-bg-hover transition-colors"
+                  onClick={() => toggleGroup(group.module)}
+                  aria-expanded={!isCollapsed}
+                >
+                  <span
+                    className={`inline-block text-[0.7rem] text-text-secondary transition-transform ${
+                      isCollapsed ? "" : "rotate-90"
+                    }`}
                   >
-                    {isCreating
-                      ? t("todo.creatingWorktree")
-                      : t("todo.createWorktree")}
-                  </Button>
-                </div>
-                <div className="mt-1 pl-1 text-text-primary">
-                  {item.content}
-                </div>
+                    ▶
+                  </span>
+                  <span className="font-mono">{group.module}</span>
+                  <span className="text-xs font-normal text-text-secondary">
+                    {t("todo.groupCount", { count: group.items.length })}
+                  </span>
+                </button>
+                {!isCollapsed && (
+                  <div>
+                    {group.items.map((item, index) => {
+                      const itemKey = `${item.file_path}:${item.line_number}`;
+                      const isCreating = creatingKey === itemKey;
+                      return (
+                        <div
+                          key={itemKey}
+                          className={`border-b border-border px-3 py-2.5 pl-8 font-mono text-[0.85rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                            index % 2 === 0 ? "" : "bg-bg-hover/30"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant={kindVariant(item.kind)}>
+                              {item.kind === "Todo" ? "TODO" : "FIXME"}
+                            </Badge>
+                            <span className="flex-1 text-text-secondary">
+                              {item.file_path}:{item.line_number}
+                            </span>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={isCreating}
+                              onClick={() => handleCreateWorktree(item)}
+                            >
+                              {isCreating
+                                ? t("todo.creatingWorktree")
+                                : t("todo.createWorktree")}
+                            </Button>
+                          </div>
+                          <div className="mt-1 pl-1 text-text-primary">
+                            {item.content}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

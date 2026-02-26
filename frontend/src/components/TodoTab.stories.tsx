@@ -44,7 +44,7 @@ export const Loading: Story = {
   },
 };
 
-/** TODO/FIXMEアイテム表示 */
+/** TODO/FIXMEアイテム表示（モジュールグルーピング付き） */
 export const WithItems: Story = {
   play: async ({ canvasElement }) => {
     overrideInvoke({
@@ -107,5 +107,38 @@ export const FilteredFixme: Story = {
     // FIXMEフィルターをクリック
     const fixmeFilter = canvas.getByRole("button", { name: "FIXME" });
     await userEvent.click(fixmeFilter);
+  },
+};
+
+/** 多モジュールグルーピング表示 */
+export const GroupedModules: Story = {
+  play: async ({ canvasElement }) => {
+    overrideInvoke({
+      extract_todos: () => fixtures.groupedTodoItems,
+    });
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", { name: "TODO/FIXMEを抽出" });
+    await userEvent.click(button);
+    await waitFor(() => {
+      canvas.getByText("lib/git");
+    });
+  },
+};
+
+/** グループ折りたたみ状態 */
+export const CollapsedGroups: Story = {
+  play: async ({ canvasElement }) => {
+    overrideInvoke({
+      extract_todos: () => fixtures.groupedTodoItems,
+    });
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", { name: "TODO/FIXMEを抽出" });
+    await userEvent.click(button);
+    await waitFor(() => {
+      canvas.getByText("lib/git");
+    });
+    // 「全て折りたたみ」をクリック
+    const collapseBtn = canvas.getByRole("button", { name: "全て折りたたみ" });
+    await userEvent.click(collapseBtn);
   },
 };
