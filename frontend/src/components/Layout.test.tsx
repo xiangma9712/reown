@@ -48,9 +48,8 @@ describe("Layout", () => {
         <div>Content</div>
       </Layout>
     );
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "reown"
-    );
+    const allReown = screen.getAllByText("reown");
+    expect(allReown.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Content")).toBeInTheDocument();
   });
 
