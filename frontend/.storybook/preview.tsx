@@ -9,7 +9,7 @@ import "../src/i18n";
  * html.dark クラスを付与するデコレータ。
  * globals.theme === "dark" のとき dark クラスを付与する。
  */
-const withThemeClass: DecoratorFunction<ReactRenderer> = (Story, context) => {
+const WithThemeClass: DecoratorFunction<ReactRenderer> = (Story, context) => {
   const isDark = context.globals.theme === "dark";
 
   useEffect(() => {
@@ -55,7 +55,7 @@ const preview: Preview = {
   initialGlobals: {
     theme: "light",
   },
-  decorators: [withThemeClass],
+  decorators: [WithThemeClass],
 };
 
 export default preview;
