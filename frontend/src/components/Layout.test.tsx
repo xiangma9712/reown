@@ -92,4 +92,15 @@ describe("Layout", () => {
     );
     expect(screen.queryByText("Branch Selector")).not.toBeInTheDocument();
   });
+
+  it("renders tabpanel with correct aria attributes", () => {
+    render(
+      <Layout {...defaultProps} activeTabId="review">
+        <div>Content</div>
+      </Layout>
+    );
+    const tabpanel = screen.getByRole("tabpanel");
+    expect(tabpanel).toHaveAttribute("id", "tabpanel-review");
+    expect(tabpanel).toHaveAttribute("aria-labelledby", "tab-review");
+  });
 });

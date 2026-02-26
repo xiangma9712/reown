@@ -16,10 +16,14 @@ export function TabBar({ items, activeId, onSelect }: Props) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex bg-bg-primary">
+    <div role="tablist" className="flex bg-bg-primary">
       {items.map((item) => (
         <button
           key={item.id}
+          role="tab"
+          aria-selected={activeId === item.id}
+          aria-controls={`tabpanel-${item.id}`}
+          id={`tab-${item.id}`}
           onClick={() => onSelect(item.id)}
           className={`cursor-pointer border-none px-5 py-2.5 text-base transition-colors ${
             activeId === item.id
