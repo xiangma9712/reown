@@ -14,7 +14,6 @@ vi.mock("react-i18next", () => ({
     t: (key: string, opts?: Record<string, string>) => {
       const translations: Record<string, string> = {
         "app.title": "reown",
-        "app.tagline": "tagline",
         "repository.title": "Repositories",
         "repository.empty": "リポジトリがありません",
         "repository.add": "リポジトリを追加",

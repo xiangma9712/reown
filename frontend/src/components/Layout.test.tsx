@@ -10,7 +10,6 @@ vi.mock("react-i18next", () => ({
       const translations: Record<string, string> = {
         "repository.selectPrompt": "リポジトリを選択してください",
         "app.title": "reown",
-        "app.tagline": "tagline",
         "repository.title": "Repositories",
         "repository.empty": "リポジトリがありません",
         "repository.add": "リポジトリを追加",

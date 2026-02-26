@@ -433,11 +433,6 @@ export function Sidebar({
             </button>
           </div>
         )}
-        {!collapsed && (
-          <div className="border-t border-border px-4 py-3">
-            <p className="text-xs text-text-muted">{t("app.tagline")}</p>
-          </div>
-        )}
         <ConfirmDialog
           open={removingRepo !== null}
           message={
