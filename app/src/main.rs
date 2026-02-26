@@ -829,4 +829,310 @@ mod tests {
         assert!(err.message.contains("Failed to open repository"));
         assert!(err.message.contains("disk I/O error"));
     }
+
+    // ── テスト用ヘルパー ────────────────────────────────────────────────────
+
+    /// テスト用リポジトリを初期化する（初期コミット付き）
+    fn init_test_repo() -> (tempfile::TempDir, git2::Repository) {
+        let dir = tempfile::TempDir::new().unwrap();
+        let repo = git2::Repository::init(dir.path()).unwrap();
+
+        let mut config = repo.config().unwrap();
+        config.set_str("user.name", "Test").unwrap();
+        config.set_str("user.email", "test@test.com").unwrap();
+        config.set_str("init.defaultBranch", "main").unwrap();
+        drop(config);
+
+        repo.set_head("refs/heads/main").unwrap();
+
+        std::fs::write(dir.path().join("hello.txt"), "hello\n").unwrap();
+        let sig = git2::Signature::now("Test", "test@test.com").unwrap();
+        let mut index = repo.index().unwrap();
+        index.add_path(std::path::Path::new("hello.txt")).unwrap();
+        index.write().unwrap();
+        let tree_id = index.write_tree().unwrap();
+        {
+            let tree = repo.find_tree(tree_id).unwrap();
+            repo.commit(Some("HEAD"), &sig, &sig, "init", &tree, &[])
+                .unwrap();
+        }
+
+        (dir, repo)
+    }
+
+    // ── Branch コマンドテスト ──────────────────────────────────────────────
+
+    #[test]
+    fn test_cmd_list_branches_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let branches = super::list_branches(path).unwrap();
+        assert_eq!(branches.len(), 1);
+        assert!(branches[0].is_head);
+        assert_eq!(branches[0].name, "main");
+    }
+
+    #[test]
+    fn test_cmd_list_branches_invalid_path() {
+        let result = super::list_branches("/nonexistent/path/xyz".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    #[test]
+    fn test_cmd_create_branch_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        super::create_branch(path.clone(), "feature".to_string()).unwrap();
+        let branches = super::list_branches(path).unwrap();
+        assert!(branches.iter().any(|b| b.name == "feature"));
+    }
+
+    #[test]
+    fn test_cmd_create_branch_duplicate() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        super::create_branch(path.clone(), "dup".to_string()).unwrap();
+        let result = super::create_branch(path, "dup".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    #[test]
+    fn test_cmd_switch_branch_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        super::create_branch(path.clone(), "feature".to_string()).unwrap();
+        super::switch_branch(path.clone(), "feature".to_string()).unwrap();
+        let branches = super::list_branches(path).unwrap();
+        let feature = branches.iter().find(|b| b.name == "feature").unwrap();
+        assert!(feature.is_head);
+    }
+
+    #[test]
+    fn test_cmd_switch_branch_nonexistent() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let result = super::switch_branch(path, "nonexistent".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    #[test]
+    fn test_cmd_delete_branch_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        super::create_branch(path.clone(), "to-delete".to_string()).unwrap();
+        super::delete_branch(path.clone(), "to-delete".to_string()).unwrap();
+        let branches = super::list_branches(path).unwrap();
+        assert!(!branches.iter().any(|b| b.name == "to-delete"));
+    }
+
+    #[test]
+    fn test_cmd_delete_branch_nonexistent() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let result = super::delete_branch(path, "nonexistent".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    // ── list_enriched_branches コマンドテスト ────────────────────────────
+
+    #[test]
+    fn test_cmd_list_enriched_branches_empty_prs() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        super::create_branch(path.clone(), "feature".to_string()).unwrap();
+        let enriched = super::list_enriched_branches(path, vec![]).unwrap();
+        assert_eq!(enriched.len(), 2);
+        for b in &enriched {
+            assert!(b.is_local);
+            assert!(b.pr_number.is_none());
+        }
+    }
+
+    #[test]
+    fn test_cmd_list_enriched_branches_with_prs() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        super::create_branch(path.clone(), "feature-x".to_string()).unwrap();
+
+        let prs = vec![PrInfo {
+            number: 42,
+            title: "Add feature X".to_string(),
+            author: "alice".to_string(),
+            state: "open".to_string(),
+            head_branch: "feature-x".to_string(),
+            base_branch: "main".to_string(),
+            updated_at: "2025-01-15T10:30:00Z".to_string(),
+            additions: 10,
+            deletions: 2,
+            changed_files: 1,
+            body: String::new(),
+            html_url: "https://github.com/owner/repo/pull/42".to_string(),
+        }];
+
+        let enriched = super::list_enriched_branches(path, prs).unwrap();
+        let feature = enriched.iter().find(|b| b.name == "feature-x").unwrap();
+        assert_eq!(feature.pr_number, Some(42));
+        assert_eq!(feature.pr_title.as_deref(), Some("Add feature X"));
+    }
+
+    // ── Worktree コマンドテスト ──────────────────────────────────────────
+
+    #[test]
+    fn test_cmd_list_worktrees_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let wts = super::list_worktrees(path).unwrap();
+        assert_eq!(wts.len(), 1);
+        assert!(wts[0].is_main);
+    }
+
+    #[test]
+    fn test_cmd_list_worktrees_invalid_path() {
+        let result = super::list_worktrees("/nonexistent/path/xyz".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    #[test]
+    fn test_cmd_add_worktree_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let wt_path = dir.path().join("wt-feature");
+        super::add_worktree(
+            path.clone(),
+            wt_path.to_str().unwrap().to_string(),
+            "feature".to_string(),
+        )
+        .unwrap();
+        let wts = super::list_worktrees(path).unwrap();
+        assert_eq!(wts.len(), 2);
+        assert!(wts.iter().any(|w| w.name == "feature"));
+    }
+
+    #[test]
+    fn test_cmd_add_worktree_invalid_repo_path() {
+        let result = super::add_worktree(
+            "/nonexistent/path/xyz".to_string(),
+            "/tmp/wt".to_string(),
+            "branch".to_string(),
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    // ── Diff コマンドテスト ──────────────────────────────────────────────
+
+    #[test]
+    fn test_cmd_diff_workdir_no_changes() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let diffs = super::diff_workdir(path).unwrap();
+        assert!(diffs.is_empty());
+    }
+
+    #[test]
+    fn test_cmd_diff_workdir_with_changes() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        std::fs::write(dir.path().join("hello.txt"), "hello\nworld\n").unwrap();
+        let diffs = super::diff_workdir(path).unwrap();
+        assert_eq!(diffs.len(), 1);
+        assert_eq!(diffs[0].status, reown::git::diff::FileStatus::Modified);
+    }
+
+    #[test]
+    fn test_cmd_diff_workdir_invalid_path() {
+        let result = super::diff_workdir("/nonexistent/path/xyz".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    #[test]
+    fn test_cmd_diff_commit_ok() {
+        let (dir, repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+
+        // 2回目のコミットを作成
+        std::fs::write(dir.path().join("hello.txt"), "hello\nworld\n").unwrap();
+        let sig = git2::Signature::now("Test", "test@test.com").unwrap();
+        let mut index = repo.index().unwrap();
+        index.add_path(std::path::Path::new("hello.txt")).unwrap();
+        index.write().unwrap();
+        let tree_id = index.write_tree().unwrap();
+        let parent = repo.head().unwrap().peel_to_commit().unwrap();
+        let tree = repo.find_tree(tree_id).unwrap();
+        let oid = repo
+            .commit(Some("HEAD"), &sig, &sig, "update", &tree, &[&parent])
+            .unwrap();
+
+        let diffs = super::diff_commit(path, oid.to_string()).unwrap();
+        assert_eq!(diffs.len(), 1);
+        assert_eq!(diffs[0].status, reown::git::diff::FileStatus::Modified);
+    }
+
+    #[test]
+    fn test_cmd_diff_commit_invalid_sha() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let result = super::diff_commit(path, "invalid_sha_value".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    // ── get_repo_info コマンドテスト ──────────────────────────────────────
+
+    #[test]
+    fn test_cmd_get_repo_info_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+        let info = super::get_repo_info(path).unwrap();
+        assert!(!info.name.is_empty());
+        assert!(!info.path.is_empty());
+    }
+
+    #[test]
+    fn test_cmd_get_repo_info_invalid_path() {
+        let result = super::get_repo_info("/nonexistent/path/xyz".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    // ── extract_todos コマンドテスト ──────────────────────────────────────
+
+    #[test]
+    fn test_cmd_extract_todos_ok() {
+        let (dir, _repo) = init_test_repo();
+        let path = dir.path().to_str().unwrap().to_string();
+
+        std::fs::write(
+            dir.path().join("main.rs"),
+            "fn main() {\n    // TODO: implement this\n}\n",
+        )
+        .unwrap();
+
+        let items = super::extract_todos(path).unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].content, "implement this");
+    }
+
+    #[test]
+    fn test_cmd_extract_todos_invalid_path() {
+        let result = super::extract_todos("/nonexistent/path/xyz".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Git));
+    }
 }
