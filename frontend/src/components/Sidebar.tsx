@@ -39,7 +39,10 @@ export function Sidebar({
           {t("repository.title")}
         </span>
       </div>
-      <nav className="scrollbar-custom flex-1 overflow-y-auto py-2">
+      <nav
+        aria-label={t("repository.navAriaLabel")}
+        className="scrollbar-custom flex-1 overflow-y-auto py-2"
+      >
         {repositories.length === 0 ? (
           <p className="px-4 py-3 text-sm text-text-muted">
             {t("repository.empty")}

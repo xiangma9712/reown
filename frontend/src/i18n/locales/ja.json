@@ -10,6 +10,7 @@
     "removeAriaLabel": "{{name}} を削除",
     "selectAriaLabel": "{{name}} を選択",
     "addAriaLabel": "リポジトリを追加",
+    "navAriaLabel": "リポジトリ一覧",
     "confirmRemove": "リポジトリ '{{name}}' を一覧から削除しますか？",
     "selectPrompt": "左のサイドメニューからリポジトリを選択してください。",
     "empty": "リポジトリが登録されていません。「リポジトリを追加」から追加してください。"
