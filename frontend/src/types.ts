@@ -139,6 +139,15 @@ export interface TodoItem {
 
 export type ReviewEvent = "APPROVE" | "REQUEST_CHANGES";
 
+export interface ReviewRecord {
+  pr_number: number;
+  repository: string;
+  action: ReviewEvent;
+  risk_level: RiskLevel;
+  timestamp: string;
+  categories: ChangeCategory[];
+}
+
 // ── Risk Analysis Types ─────────────────────────────────────────────────────
 
 export type RiskLevel = "Low" | "Medium" | "High";

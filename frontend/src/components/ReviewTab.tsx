@@ -17,6 +17,7 @@ import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 import { ChangeSummaryList } from "./ChangeSummaryList";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 import { ReviewSuggestionPanel } from "./ReviewSuggestionPanel";
+import { ReviewSubmit } from "./ReviewSubmit";
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -447,6 +448,18 @@ function PrAnalysisSection({
           repo={repo}
           prNumber={matchedPr.number}
           token={token}
+        />
+      )}
+
+      {/* Review submit */}
+      {token && (
+        <ReviewSubmit
+          matchedPr={matchedPr}
+          owner={owner}
+          repo={repo}
+          token={token}
+          analysisResult={analysisResult}
+          prDiffs={prDiffs}
         />
       )}
     </div>

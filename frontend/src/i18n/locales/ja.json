@@ -144,6 +144,7 @@
     "changeSummaryTitle": "変更要約",
     "viewDiff": "diffを見る",
     "hideDiff": "diffを閉じる",
+    "reviewSubmitTitle": "レビュー送信",
     "reviewSuggestions": "レビューサジェスト",
     "reviewSuggestionsRun": "サジェスト生成",
     "reviewSuggestionsLoading": "サジェスト生成中…",
