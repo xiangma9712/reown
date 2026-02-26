@@ -6,4 +6,5 @@ node_modules/
 frontend/out/
 frontend/storybook-static/
 frontend/e2e/vrt/test-results/
+frontend/test-results/
 app/gen/
