@@ -63,6 +63,7 @@ test.describe("ReviewTab", () => {
       "/iframe.html?id=components-reviewtab--with-pr-info&viewMode=story"
     );
     await page.waitForSelector("text=PR情報", { timeout: 10_000 });
+    await page.waitForSelector("text=コミット一覧", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "with-pr-info.png"
     );
@@ -86,6 +87,7 @@ test.describe("ReviewTab", () => {
     );
     await page.waitForSelector("text=PR情報", { timeout: 10_000 });
     await page.waitForSelector("text=GitHub API", { timeout: 10_000 });
+    await page.waitForSelector("text=コミット一覧", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "pr-files-error.png"
     );

@@ -8,6 +8,7 @@ import type {
   AnalysisResult,
   HybridAnalysisResult,
   CategorizedFileDiff,
+  CommitInfo,
 } from "../types";
 import { Badge } from "./Badge";
 import { Card } from "./Card";
@@ -15,6 +16,7 @@ import { Loading } from "./Loading";
 import { DiffViewer } from "./DiffViewer";
 import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 import { ChangeSummaryList } from "./ChangeSummaryList";
+import { CommitListPanel } from "./CommitListPanel";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 import { ReviewSuggestionPanel } from "./ReviewSuggestionPanel";
 import { ReviewSubmit } from "./ReviewSubmit";
@@ -399,18 +401,45 @@ function PrAnalysisSection({
 }) {
   const { t } = useTranslation();
   const [token, setToken] = useState("");
+  const [commits, setCommits] = useState<CommitInfo[]>([]);
+  const [commitsLoading, setCommitsLoading] = useState(false);
+  const [commitsError, setCommitsError] = useState<string | null>(null);
 
   useEffect(() => {
     invoke("load_app_config")
-      .then((config) => setToken(config.github_token))
+      .then((config) => {
+        const ghToken = config.github_token;
+        setToken(ghToken);
+        if (!ghToken) return;
+
+        // Fetch PR commits
+        setCommitsLoading(true);
+        setCommitsError(null);
+        invoke("list_pr_commits", {
+          owner,
+          repo,
+          prNumber: matchedPr.number,
+          token: ghToken,
+        })
+          .then(setCommits)
+          .catch((err) => setCommitsError(String(err)))
+          .finally(() => setCommitsLoading(false));
+      })
       .catch(() => {});
-  }, []);
+  }, [owner, repo, matchedPr.number]);
 
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-medium text-text-heading">
         {t("review.prAnalysis")}
       </h2>
+
+      {/* Commit list */}
+      <CommitListPanel
+        commits={commits}
+        loading={commitsLoading}
+        error={commitsError}
+      />
 
       {/* Risk analysis */}
       {analysisResult && (

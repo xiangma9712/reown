@@ -108,6 +108,7 @@ export const WithPrInfo: Story = {
           github_token: "ghp_dummy",
         }),
         get_pull_request_files: () => fixtures.categorizedFileDiffs,
+        list_pr_commits: () => fixtures.commits,
         analyze_pr_risk: () => fixtures.analysisResult,
         analyze_pr_risk_with_llm: () => fixtures.hybridAnalysisResult,
       });
@@ -131,6 +132,10 @@ export const PrFilesLoading: Story = {
           github_token: "ghp_dummy",
         }),
         get_pull_request_files: () =>
+          new Promise(() => {
+            /* never resolves */
+          }),
+        list_pr_commits: () =>
           new Promise(() => {
             /* never resolves */
           }),
@@ -164,6 +169,7 @@ export const PrFilesError: Story = {
         }),
         get_pull_request_files: () =>
           Promise.reject("GitHub API rate limit exceeded"),
+        list_pr_commits: () => fixtures.commits,
         analyze_pr_risk: () =>
           new Promise(() => {
             /* never resolves */
