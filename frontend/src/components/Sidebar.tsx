@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { useTheme, type Theme } from "../ThemeContext";
 import type { RepositoryEntry } from "../types";
+
+const THEME_OPTIONS: Theme[] = ["light", "dark", "system"];
 
 interface Props {
   repositories: RepositoryEntry[];
@@ -26,6 +29,7 @@ export function Sidebar({
   onClose,
 }: Props) {
   const { t } = useTranslation();
+  const { theme, setTheme } = useTheme();
   const [removingRepo, setRemovingRepo] = useState<RepositoryEntry | null>(
     null
   );
@@ -168,6 +172,29 @@ export function Sidebar({
               S
             </kbd>
           </button>
+        </div>
+        <div className="border-t border-border px-4 py-3">
+          <div
+            className="flex items-center gap-1 rounded border border-border p-0.5"
+            role="radiogroup"
+            aria-label={t("theme.label")}
+          >
+            {THEME_OPTIONS.map((option) => (
+              <button
+                key={option}
+                role="radio"
+                aria-checked={theme === option}
+                onClick={() => setTheme(option)}
+                className={`flex-1 cursor-pointer rounded border-none px-1.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                  theme === option
+                    ? "bg-accent text-white"
+                    : "bg-transparent text-text-muted hover:text-text-primary"
+                }`}
+              >
+                {t(`theme.${option}`)}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="border-t border-border px-4 py-3">
           <p className="text-xs text-text-muted">{t("app.tagline")}</p>

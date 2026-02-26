@@ -7,6 +7,7 @@ import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
+import { ThemeProvider } from "./ThemeContext";
 import { invoke } from "./invoke";
 import type { RepositoryEntry, RepoInfo, PrInfo } from "./types";
 import "./style.css";
@@ -122,6 +123,7 @@ export function App() {
   }, []);
 
   return (
+    <ThemeProvider>
     <RepositoryProvider repoPath={selectedRepoPath} repoInfo={repoInfo}>
       <Layout
         repositories={repositories}
@@ -160,5 +162,6 @@ export function App() {
         )}
       </Layout>
     </RepositoryProvider>
+    </ThemeProvider>
   );
 }

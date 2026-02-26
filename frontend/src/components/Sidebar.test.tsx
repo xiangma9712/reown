@@ -4,6 +4,11 @@ import { describe, it, expect, vi } from "vitest";
 import { Sidebar } from "./Sidebar";
 import { fixtures } from "../storybook/fixtures";
 
+const mockSetTheme = vi.fn();
+vi.mock("../ThemeContext", () => ({
+  useTheme: () => ({ theme: "system", setTheme: mockSetTheme }),
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, opts?: Record<string, string>) => {
@@ -21,6 +26,10 @@ vi.mock("react-i18next", () => ({
         "common.confirm": "確認",
         "common.cancel": "キャンセル",
         "common.delete": "削除",
+        "theme.label": "テーマ切替",
+        "theme.light": "Light",
+        "theme.dark": "Dark",
+        "theme.system": "System",
       };
       if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;
       if (key === "repository.selectAriaLabel") return `${opts?.name} を選択`;
@@ -199,5 +208,33 @@ describe("Sidebar", () => {
     expect(currentItem).toBeInTheDocument();
     const nonSelectedItems = container.querySelectorAll("[aria-current]");
     expect(nonSelectedItems).toHaveLength(1);
+  });
+
+  it("renders theme toggle with three options", () => {
+    render(<Sidebar {...defaultProps} />);
+    const radiogroup = screen.getByRole("radiogroup", { name: "テーマ切替" });
+    expect(radiogroup).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Light" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Dark" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "System" })).toBeInTheDocument();
+  });
+
+  it("calls setTheme when theme option is clicked", async () => {
+    const user = userEvent.setup();
+    render(<Sidebar {...defaultProps} />);
+    await user.click(screen.getByRole("radio", { name: "Dark" }));
+    expect(mockSetTheme).toHaveBeenCalledWith("dark");
+  });
+
+  it("marks current theme as checked", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.getByRole("radio", { name: "System" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(screen.getByRole("radio", { name: "Light" })).toHaveAttribute(
+      "aria-checked",
+      "false"
+    );
   });
 });
