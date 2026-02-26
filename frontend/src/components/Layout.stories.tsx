@@ -42,8 +42,6 @@ export const NoRepoSelected: Story = {
 
 export const WithBranchSelector: Story = {
   args: {
-    branchSelector: (
-      <span className="text-sm text-text-secondary">main</span>
-    ),
+    branchSelector: <span className="text-sm text-text-secondary">main</span>,
   },
 };
