@@ -112,4 +112,71 @@ test.describe("Sidebar", () => {
       { maxDiffPixelRatio: 0.08 }
     );
   });
+
+  // ── Theme toggle ───────────────────────────────────────────
+
+  test("theme toggle light", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--theme-toggle-light&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "theme-toggle-light.png"
+    );
+  });
+
+  test("theme toggle dark", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--theme-toggle-dark&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "theme-toggle-dark.png"
+    );
+  });
+
+  // ── Dark mode ──────────────────────────────────────────────
+
+  test("dark: default with repositories", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--dark-default&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-default.png"
+    );
+  });
+
+  test("dark: selected repository", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--dark-selected&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-selected.png"
+    );
+  });
+
+  test("dark: empty state", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--dark-empty&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-empty.png"
+    );
+  });
+
+  test("dark: collapsed state", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--dark-collapsed&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-collapsed.png"
+    );
+  });
+
+  test("dark: settings open", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--dark-settings-open&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-settings-open.png"
+    );
+  });
 });

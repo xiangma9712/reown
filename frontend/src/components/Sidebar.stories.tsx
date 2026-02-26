@@ -107,3 +107,54 @@ export const CollapsedLoading: Story = {
     loading: true,
   },
 };
+
+// ── Theme toggle variants ────────────────────────────────────
+
+export const ThemeToggleLight: Story = {
+  args: {
+    repositories: [],
+  },
+};
+
+export const ThemeToggleDark: Story = {
+  args: {
+    repositories: [],
+  },
+  globals: { theme: "dark" },
+};
+
+// ── Dark mode variants ──────────────────────────────────────
+
+export const DarkDefault: Story = {
+  globals: { theme: "dark" },
+};
+
+export const DarkSelected: Story = {
+  args: {
+    selectedPath: fixtures.repositories[0].path,
+  },
+  globals: { theme: "dark" },
+};
+
+export const DarkEmpty: Story = {
+  args: {
+    repositories: [],
+  },
+  globals: { theme: "dark" },
+};
+
+export const DarkCollapsed: Story = {
+  args: {
+    collapsed: true,
+    onToggleCollapse: fn(),
+    selectedPath: fixtures.repositories[0].path,
+  },
+  globals: { theme: "dark" },
+};
+
+export const DarkSettingsOpen: Story = {
+  args: {
+    settingsOpen: true,
+  },
+  globals: { theme: "dark" },
+};
