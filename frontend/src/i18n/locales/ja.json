@@ -15,6 +15,10 @@
     "selectPrompt": "左のサイドメニューからリポジトリを選択してください。",
     "empty": "リポジトリが登録されていません。「リポジトリを追加」から追加してください。"
   },
+  "sidebar": {
+    "open": "サイドバーを開く",
+    "close": "サイドバーを閉じる"
+  },
   "tabs": {
     "review": "Review",
     "nextAction": "Next Action",

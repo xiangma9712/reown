@@ -15,6 +15,10 @@
     "selectPrompt": "Select a repository from the sidebar.",
     "empty": "No repositories registered. Click \"Add Repository\" to get started."
   },
+  "sidebar": {
+    "open": "Open sidebar",
+    "close": "Close sidebar"
+  },
   "tabs": {
     "review": "Review",
     "nextAction": "Next Action",
