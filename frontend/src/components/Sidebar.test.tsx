@@ -17,7 +17,8 @@ vi.mock("react-i18next", () => ({
         "repository.title": "Repositories",
         "repository.empty": "リポジトリがありません",
         "repository.emptyTitle": "リポジトリがありません",
-        "repository.emptyDescription": "下の「リポジトリを追加」ボタンから追加してください。",
+        "repository.emptyDescription":
+          "下の「リポジトリを追加」ボタンから追加してください。",
         "repository.add": "リポジトリを追加",
         "repository.remove": "削除",
         "repository.addAriaLabel": "リポジトリを追加",
