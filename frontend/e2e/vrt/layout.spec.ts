@@ -94,4 +94,42 @@ test.describe("Layout", () => {
       { maxDiffPixelRatio: 0.08 }
     );
   });
+
+  // ── Dark mode ──────────────────────────────────────────────
+
+  test("dark: with repository selected", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--dark-with-repo&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-with-repo.png"
+    );
+  });
+
+  test("dark: no repository selected", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--dark-no-repo-selected&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-no-repo-selected.png"
+    );
+  });
+
+  test("dark: settings open", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--dark-settings-open&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-settings-open.png"
+    );
+  });
+
+  test("dark: sidebar collapsed", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--dark-sidebar-collapsed&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "dark-sidebar-collapsed.png"
+    );
+  });
 });

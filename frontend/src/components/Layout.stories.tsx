@@ -112,3 +112,48 @@ export const Loading: Story = {
     selectedRepoPath: null,
   },
 };
+
+// ── Dark mode variants ──────────────────────────────────────
+
+export const DarkWithRepo: Story = {
+  globals: { theme: "dark" },
+};
+
+export const DarkNoRepoSelected: Story = {
+  args: {
+    selectedRepoPath: null,
+  },
+  globals: { theme: "dark" },
+};
+
+export const DarkSettingsOpen: Story = {
+  args: {
+    settingsOpen: true,
+    onToggleSettings: fn(),
+    settingsContent: (
+      <div className="mx-auto max-w-xl space-y-8">
+        <div className="rounded-lg border border-border bg-bg-primary p-5">
+          <h2 className="text-lg font-semibold text-text-primary">LLM設定</h2>
+          <p className="mt-2 text-sm text-text-muted">設定コンテンツ領域</p>
+        </div>
+        <div className="rounded-lg border border-border bg-bg-primary p-5">
+          <h2 className="text-lg font-semibold text-text-primary">
+            オートメーション設定
+          </h2>
+          <p className="mt-2 text-sm text-text-muted">設定コンテンツ領域</p>
+        </div>
+      </div>
+    ),
+  },
+  globals: { theme: "dark" },
+};
+
+export const DarkSidebarCollapsed: Story = {
+  decorators: [
+    (Story) => {
+      localStorage.setItem("reown-sidebar-collapsed", "true");
+      return <Story />;
+    },
+  ],
+  globals: { theme: "dark" },
+};
