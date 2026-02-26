@@ -76,16 +76,6 @@ npm run test:vrt:update
 
 更新された `frontend/e2e/vrt/__snapshots__/` 内の PNG ファイルをコミットに含めてください。
 
-#### CI経由でのスナップショット更新
-
-ローカル（macOS）と CI（Linux）ではフォント描画が異なるため、ローカルで生成したスナップショットが CI で一致しない場合があります。その場合は以下の方法で CI 上のスナップショットを更新できます：
-
-1. PRに `update-snapshots` ラベルを付与する
-2. GitHub Actions の「Update VRT Snapshots」ワークフローが自動実行される
-3. Linux 環境で生成されたスナップショットがブランチにコミットされる
-
-手動で実行する場合は、GitHub Actions の「Update VRT Snapshots」ワークフローを `workflow_dispatch` で起動してください。
-
 #### 新しいコンポーネントにストーリーを追加する
 
 1. `frontend/src/components/` にストーリーファイルを作成する（例: `MyComponent.stories.tsx`）
@@ -124,7 +114,7 @@ npm run test:vrt:update
 
 #### CI での実行
 
-PRを作成すると、GitHub Actions で自動的にビジュアルリグレッションテストが実行されます。差分が検出された場合は CI が失敗し、差分画像が `vrt-diff` アーティファクトとしてダウンロードできます。
+VRT は CI では実行されません。ローカルで `npm run test:vrt` を実行してスナップショットを確認してください。
 
 ### Tauri アプリ
 

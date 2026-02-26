@@ -71,8 +71,6 @@ frontend/                   — Web frontend (React + TypeScript)
 
 - コンポーネント（`frontend/src/components/*.tsx`）を修正・追加した場合、対応する Stories（`*.stories.tsx`）と VRT スペック（`frontend/e2e/vrt/*.spec.ts`）も必ず更新すること
 - アニメーション系テスト（Loading, Spinner等）には `maxDiffPixelRatio: 0.08` を設定すること
-- **PR作成時には必ず `update-snapshots` ラベルを付与すること** — ローカル（macOS）と CI（Linux）でフォント描画が異なるため、CI上でスナップショットを再生成する必要がある
-  - `gh pr create` 後に `gh pr edit <number> --add-label update-snapshots` を実行する
 
 ## Autonomous Agent
 
