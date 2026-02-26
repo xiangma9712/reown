@@ -30,6 +30,9 @@ interface Props {
   onSelect: (path: string) => void;
   onAdd: () => void;
   onRemove: (path: string) => void;
+  adding?: boolean;
+  addError?: string | null;
+  onDismissAddError?: () => void;
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
   onClose?: () => void;
@@ -43,6 +46,9 @@ export function Sidebar({
   onSelect,
   onAdd,
   onRemove,
+  adding = false,
+  addError = null,
+  onDismissAddError,
   settingsOpen,
   onToggleSettings,
   onClose,
@@ -210,10 +216,18 @@ export function Sidebar({
               <Tooltip.Trigger asChild>
                 <button
                   onClick={onAdd}
-                  className="flex w-full cursor-pointer items-center justify-center rounded border border-border bg-transparent py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  disabled={adding}
+                  className="flex w-full cursor-pointer items-center justify-center rounded border border-border bg-transparent py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={t("repository.addAriaLabel")}
+                  aria-busy={adding}
                 >
-                  +
+                  {adding ? (
+                    <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" role="status">
+                      <span className="sr-only">{t("repository.adding")}</span>
+                    </span>
+                  ) : (
+                    "+"
+                  )}
                 </button>
               </Tooltip.Trigger>
               <Tooltip.Portal>
@@ -222,7 +236,7 @@ export function Sidebar({
                   side="right"
                   sideOffset={8}
                 >
-                  {t("repository.add")}
+                  {adding ? t("repository.adding") : t("repository.add")}
                   <Tooltip.Arrow className="fill-bg-tooltip" />
                 </Tooltip.Content>
               </Tooltip.Portal>
@@ -232,11 +246,39 @@ export function Sidebar({
           <div className="border-t border-border px-4 py-3">
             <button
               onClick={onAdd}
-              className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              disabled={adding}
+              className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={t("repository.addAriaLabel")}
+              aria-busy={adding}
             >
-              + {t("repository.add")}
+              {adding ? (
+                <>
+                  <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" role="status">
+                    <span className="sr-only">{t("repository.adding")}</span>
+                  </span>
+                  {t("repository.adding")}
+                </>
+              ) : (
+                <>+ {t("repository.add")}</>
+              )}
             </button>
+            {addError && (
+              <div
+                role="alert"
+                className="mt-2 flex items-start gap-1 rounded border border-danger/30 bg-danger/10 px-2 py-1.5 text-xs text-danger"
+              >
+                <span className="flex-1">{addError}</span>
+                {onDismissAddError && (
+                  <button
+                    onClick={onDismissAddError}
+                    className="shrink-0 cursor-pointer border-none bg-transparent p-0 text-danger transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    aria-label={t("common.cancel")}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
         <div className="border-t border-border px-4 py-3">

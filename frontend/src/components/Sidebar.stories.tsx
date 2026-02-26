@@ -71,3 +71,25 @@ export const CollapsedWithToggle: Story = {
     onToggleCollapse: fn(),
   },
 };
+
+export const Adding: Story = {
+  args: {
+    adding: true,
+  },
+};
+
+export const AddError: Story = {
+  args: {
+    addError:
+      "リポジトリの追加に失敗しました。Gitリポジトリであることを確認してください。",
+    onDismissAddError: fn(),
+  },
+};
+
+export const CollapsedAdding: Story = {
+  args: {
+    collapsed: true,
+    onToggleCollapse: fn(),
+    adding: true,
+  },
+};
