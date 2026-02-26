@@ -67,7 +67,12 @@ export function Layout({
                 onSelect={onSelectTab}
               />
             </div>
-            <main className="scrollbar-custom flex-1 overflow-y-auto p-8">
+            <main
+              role="tabpanel"
+              id={`tabpanel-${activeTabId}`}
+              aria-labelledby={`tab-${activeTabId}`}
+              className="scrollbar-custom flex-1 overflow-y-auto p-8"
+            >
               {children}
             </main>
           </>

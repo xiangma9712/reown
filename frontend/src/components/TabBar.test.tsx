@@ -49,4 +49,27 @@ describe("TabBar", () => {
     await user.click(screen.getByText("Next Action"));
     expect(onSelect).toHaveBeenCalledWith("next-action");
   });
+
+  it("has role=tablist on container and role=tab on buttons", () => {
+    render(<TabBar items={items} activeId="review" onSelect={vi.fn()} />);
+    expect(screen.getByRole("tablist")).toBeInTheDocument();
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs).toHaveLength(2);
+  });
+
+  it("sets aria-selected on the active tab", () => {
+    render(<TabBar items={items} activeId="review" onSelect={vi.fn()} />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    expect(tabs[1]).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("sets aria-controls and id on each tab", () => {
+    render(<TabBar items={items} activeId="review" onSelect={vi.fn()} />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("id", "tab-review");
+    expect(tabs[0]).toHaveAttribute("aria-controls", "tabpanel-review");
+    expect(tabs[1]).toHaveAttribute("id", "tab-next-action");
+    expect(tabs[1]).toHaveAttribute("aria-controls", "tabpanel-next-action");
+  });
 });
