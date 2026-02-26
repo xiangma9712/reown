@@ -71,4 +71,32 @@ test.describe("TodoTab", () => {
       "filtered-fixme.png"
     );
   });
+
+  test("grouped modules", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-todotab--grouped-modules&viewMode=story"
+    );
+    // play関数のグループ表示を待つ
+    await page.waitForSelector("text=lib/git", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "grouped-modules.png"
+    );
+  });
+
+  test("collapsed groups", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-todotab--collapsed-groups&viewMode=story"
+    );
+    // play関数のグループ表示を待つ
+    await page.waitForSelector("text=lib/git", {
+      timeout: 10_000,
+    });
+    // 折りたたみアニメーション完了を待つ
+    await page.waitForTimeout(500);
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "collapsed-groups.png"
+    );
+  });
 });

@@ -254,6 +254,9 @@
     "createWorktreeConfirm": "Create a worktree with branch \"{{branch}}\"?",
     "createWorktreeSuccess": "Worktree created: {{branch}}",
     "createWorktreeError": "Failed to create worktree: {{message}}",
-    "creatingWorktree": "Creating…"
+    "creatingWorktree": "Creating…",
+    "groupCount": "{{count}} items",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All"
   }
 }

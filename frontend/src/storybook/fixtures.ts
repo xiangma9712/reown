@@ -466,6 +466,52 @@ const todoItems: TodoItem[] = [
   },
 ];
 
+/** モジュールグルーピングのテスト用に多様なパスを含むTODOアイテム */
+const groupedTodoItems: TodoItem[] = [
+  {
+    file_path: "lib/git/branch.rs",
+    line_number: 42,
+    kind: "Fixme",
+    content: "エラーハンドリングを改善する",
+  },
+  {
+    file_path: "lib/git/diff.rs",
+    line_number: 15,
+    kind: "Todo",
+    content: "バイナリファイルの差分表示",
+  },
+  {
+    file_path: "lib/github/pull_request.rs",
+    line_number: 88,
+    kind: "Fixme",
+    content: "レート制限の処理を追加",
+  },
+  {
+    file_path: "frontend/src/components/TodoTab.tsx",
+    line_number: 30,
+    kind: "Todo",
+    content: "アクセシビリティの改善",
+  },
+  {
+    file_path: "frontend/src/components/ReviewTab.tsx",
+    line_number: 55,
+    kind: "Todo",
+    content: "キーボードナビゲーション対応",
+  },
+  {
+    file_path: "frontend/src/components/DiffViewer.tsx",
+    line_number: 120,
+    kind: "Fixme",
+    content: "大きなファイルでパフォーマンスが低下する",
+  },
+  {
+    file_path: "app/src/main.rs",
+    line_number: 200,
+    kind: "Todo",
+    content: "コマンドのバリデーション追加",
+  },
+];
+
 const reviewSuggestions: ReviewSuggestion[] = [
   {
     message:
@@ -550,6 +596,7 @@ export const fixtures = {
   analysisResult,
   hybridAnalysisResult,
   todoItems,
+  groupedTodoItems,
   reviewSuggestions,
   autoApproveCandidates,
   autoApproveWithMergeResult,

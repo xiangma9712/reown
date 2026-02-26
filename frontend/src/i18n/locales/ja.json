@@ -254,6 +254,9 @@
     "createWorktreeConfirm": "ブランチ「{{branch}}」でWorktreeを作成しますか？",
     "createWorktreeSuccess": "Worktreeを作成しました: {{branch}}",
     "createWorktreeError": "Worktreeの作成に失敗しました: {{message}}",
-    "creatingWorktree": "作成中…"
+    "creatingWorktree": "作成中…",
+    "groupCount": "{{count}} 件",
+    "expandAll": "全て展開",
+    "collapseAll": "全て折りたたみ"
   }
 }
