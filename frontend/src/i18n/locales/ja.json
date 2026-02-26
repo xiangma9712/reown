@@ -222,6 +222,9 @@
     "prAuthor": "作成者: {{author}}",
     "prState": "ステータス: {{state}}",
     "prAnalysis": "PR分析",
+    "prFiles": "PRファイル一覧",
+    "prFilesEmpty": "変更ファイルがありません。",
+    "prFilesLoading": "PRのファイル差分を取得中…",
     "noPr": "このブランチに関連するPRはありません。"
   },
   "theme": {
