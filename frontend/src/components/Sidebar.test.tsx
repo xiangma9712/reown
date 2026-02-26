@@ -50,8 +50,8 @@ describe("Sidebar", () => {
 
   it("renders repository list", () => {
     render(<Sidebar {...defaultProps} />);
-    // Repo names are rendered as buttons (not headings)
-    expect(screen.getByTitle("/Users/dev/project")).toBeInTheDocument();
+    // Repo names are rendered as buttons with aria-label
+    expect(screen.getByLabelText("reown を選択")).toBeInTheDocument();
     expect(screen.getByText("other-project")).toBeInTheDocument();
   });
 
@@ -157,6 +157,16 @@ describe("Sidebar", () => {
     );
     const selectedItem = container.querySelector(".border-l-accent");
     expect(selectedItem).toBeInTheDocument();
+  });
+
+  it("shows tooltip with repo name and path on hover", async () => {
+    const user = userEvent.setup();
+    render(<Sidebar {...defaultProps} />);
+    const repoButton = screen.getByLabelText("reown を選択");
+    await user.hover(repoButton);
+    // Radix renders tooltip content twice (visual + aria-describedby hidden span)
+    const pathElements = await screen.findAllByText("/Users/dev/project");
+    expect(pathElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it("sets aria-current on selected repository", () => {

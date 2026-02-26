@@ -38,3 +38,15 @@ export const SettingsOpen: Story = {
     settingsOpen: true,
   },
 };
+
+export const LongRepoName: Story = {
+  args: {
+    repositories: [
+      {
+        name: "my-very-long-repository-name-that-exceeds-sidebar-width",
+        path: "/Users/dev/workspace/organizations/my-company/my-very-long-repository-name-that-exceeds-sidebar-width",
+      },
+      ...fixtures.repositories,
+    ],
+  },
+};
