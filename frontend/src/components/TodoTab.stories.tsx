@@ -61,7 +61,7 @@ export const Empty: Story = {
 };
 
 /** エラー状態 */
-export const Error: Story = {
+export const ErrorState: Story = {
   beforeEach: () => {
     overrideInvoke({
       extract_todos: () => {
