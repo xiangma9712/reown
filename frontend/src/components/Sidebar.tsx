@@ -86,7 +86,13 @@ export function Sidebar({
         className={`flex h-full flex-col border-r border-border bg-sidebar-bg ${
           collapsed ? "w-14 transition-[width] duration-200 ease-in-out" : ""
         }`}
-        style={!collapsed && width ? { width: `${width}px` } : !collapsed ? { width: "14rem" } : undefined}
+        style={
+          !collapsed && width
+            ? { width: `${width}px` }
+            : !collapsed
+              ? { width: "14rem" }
+              : undefined
+        }
       >
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           {collapsed ? (

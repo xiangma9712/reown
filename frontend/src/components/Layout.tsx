@@ -1,4 +1,10 @@
-import { type ReactNode, useState, useCallback, useEffect, useRef } from "react";
+import {
+  type ReactNode,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
@@ -175,7 +181,9 @@ export function Layout({
   }, [drawerOpen, toggleCollapse]);
 
   return (
-    <div className={`flex h-screen overflow-hidden bg-bg-primary${resizing ? " select-none" : ""}`}>
+    <div
+      className={`flex h-screen overflow-hidden bg-bg-primary${resizing ? " select-none" : ""}`}
+    >
       {/* Desktop sidebar — hidden on small screens */}
       <div className="hidden md:flex">
         <Sidebar
@@ -206,9 +214,11 @@ export function Layout({
             }`}
             onMouseDown={handleResizeStart}
           >
-            <div className={`h-8 w-0.5 rounded-full bg-border group-hover:bg-accent/60 group-active:bg-accent ${
-              resizing ? "bg-accent" : ""
-            }`} />
+            <div
+              className={`h-8 w-0.5 rounded-full bg-border group-hover:bg-accent/60 group-active:bg-accent ${
+                resizing ? "bg-accent" : ""
+              }`}
+            />
           </div>
         )}
       </div>
