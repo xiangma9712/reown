@@ -89,4 +89,61 @@ describe("TabBar", () => {
       expect(kbd).toHaveAttribute("aria-hidden", "true");
     });
   });
+
+  it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
+    render(<TabBar items={items} activeId="review" onSelect={vi.fn()} />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs[0]).toHaveAttribute("tabindex", "0");
+    expect(tabs[1]).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("navigates to next tab on ArrowRight", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(<TabBar items={items} activeId="review" onSelect={onSelect} />);
+    const tabs = screen.getAllByRole("tab");
+    tabs[0].focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onSelect).toHaveBeenCalledWith("next-action");
+  });
+
+  it("navigates to previous tab on ArrowLeft (wraps)", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(<TabBar items={items} activeId="review" onSelect={onSelect} />);
+    const tabs = screen.getAllByRole("tab");
+    tabs[0].focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(onSelect).toHaveBeenCalledWith("next-action");
+  });
+
+  it("navigates to first tab on Home", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(<TabBar items={items} activeId="next-action" onSelect={onSelect} />);
+    const tabs = screen.getAllByRole("tab");
+    tabs[1].focus();
+    await user.keyboard("{Home}");
+    expect(onSelect).toHaveBeenCalledWith("review");
+  });
+
+  it("navigates to last tab on End", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(<TabBar items={items} activeId="review" onSelect={onSelect} />);
+    const tabs = screen.getAllByRole("tab");
+    tabs[0].focus();
+    await user.keyboard("{End}");
+    expect(onSelect).toHaveBeenCalledWith("next-action");
+  });
+
+  it("wraps from last tab to first on ArrowRight", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(<TabBar items={items} activeId="next-action" onSelect={onSelect} />);
+    const tabs = screen.getAllByRole("tab");
+    tabs[1].focus();
+    await user.keyboard("{ArrowRight}");
+    expect(onSelect).toHaveBeenCalledWith("review");
+  });
 });
