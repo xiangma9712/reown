@@ -53,4 +53,28 @@ test.describe("PrListView", () => {
       "with-risk-badge.png"
     );
   });
+
+  test("with expanded commits", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-prlistview--with-expanded-commits&viewMode=story"
+    );
+    // PR行をクリックしてコミット一覧を展開
+    await page.locator("text=#42").click();
+    await page.waitForSelector("text=abc1234", { timeout: 10_000 });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "with-expanded-commits.png"
+    );
+  });
+
+  test("with expanded commits error", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-prlistview--with-expanded-commits-error&viewMode=story"
+    );
+    // PR行をクリックしてエラー状態を表示
+    await page.locator("text=#42").click();
+    await page.waitForTimeout(500);
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "with-expanded-commits-error.png"
+    );
+  });
 });

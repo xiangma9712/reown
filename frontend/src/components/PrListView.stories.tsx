@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 import { PrListView } from "./PrListView";
-import { fixtures } from "../storybook";
+import { fixtures, overrideInvoke, resetInvokeOverrides } from "../storybook";
 import type { PrInfo } from "../types";
 
 const mergedPr: PrInfo = {
@@ -72,5 +72,33 @@ export const WithRiskBadge: Story = {
       35: "Low",
       30: "High",
     },
+  },
+};
+
+/** コミット一覧展開状態（PR行クリックで展開） */
+export const WithExpandedCommits: Story = {
+  args: {
+    prs: allPrs,
+    owner: "example",
+    repo: "reown",
+    token: "dummy-token",
+  },
+};
+
+/** コミット一覧エラー状態（PR行クリックで展開） */
+export const WithExpandedCommitsError: Story = {
+  args: {
+    prs: allPrs,
+    owner: "example",
+    repo: "reown",
+    token: "dummy-token",
+  },
+  beforeEach: () => {
+    overrideInvoke({
+      list_pr_commits: () => {
+        throw new globalThis.Error("GitHub API rate limit exceeded");
+      },
+    });
+    return () => resetInvokeOverrides();
   },
 };
