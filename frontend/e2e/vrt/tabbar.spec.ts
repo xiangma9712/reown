@@ -37,4 +37,15 @@ test.describe("TabBar", () => {
       "focus-visible.png"
     );
   });
+
+  test("shortcut tooltip on hover", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-tabbar--first-active&viewMode=story"
+    );
+    await page.locator("kbd").first().hover();
+    await page.waitForSelector('[data-radix-popper-content-wrapper]');
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "shortcut-tooltip.png"
+    );
+  });
 });

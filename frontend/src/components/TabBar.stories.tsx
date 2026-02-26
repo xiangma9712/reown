@@ -3,9 +3,9 @@ import { fn } from "storybook/test";
 import { TabBar } from "./TabBar";
 
 const tabs = [
-  { id: "review", labelKey: "tabs.review", shortcut: "⌘1" },
-  { id: "nextAction", labelKey: "tabs.nextAction", shortcut: "⌘2" },
-  { id: "settings", labelKey: "tabs.settings", shortcut: "⌘3" },
+  { id: "review", labelKey: "tabs.review", shortcut: "R" },
+  { id: "nextAction", labelKey: "tabs.nextAction", shortcut: "N" },
+  { id: "settings", labelKey: "tabs.settings", shortcut: "S" },
 ];
 
 const meta = {

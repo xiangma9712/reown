@@ -30,7 +30,8 @@
     "review": "Review",
     "nextAction": "Next Action",
     "settings": "Settings",
-    "settingsAriaLabel": "Open settings"
+    "settingsAriaLabel": "Open settings",
+    "shortcutTooltip": "Keyboard shortcut: {{key}}"
   },
   "common": {
     "loading": "Loading…",

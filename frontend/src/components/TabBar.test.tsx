@@ -90,6 +90,16 @@ describe("TabBar", () => {
     });
   });
 
+  it("renders keyboard icon inside shortcut badges", () => {
+    const { container } = render(
+      <TabBar items={items} activeId="review" onSelect={vi.fn()} />
+    );
+    const kbds = container.querySelectorAll("kbd");
+    kbds.forEach((kbd) => {
+      expect(kbd.querySelector("svg")).toBeInTheDocument();
+    });
+  });
+
   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
     render(<TabBar items={items} activeId="review" onSelect={vi.fn()} />);
     const tabs = screen.getAllByRole("tab");
