@@ -106,7 +106,9 @@ export function Sidebar({
           </div>
         )}
         <nav
-          aria-labelledby={!collapsed ? "sidebar-repositories-heading" : undefined}
+          aria-labelledby={
+            !collapsed ? "sidebar-repositories-heading" : undefined
+          }
           aria-label={collapsed ? t("repository.navAriaLabel") : undefined}
           className="scrollbar-custom flex-1 overflow-y-auto py-2"
         >

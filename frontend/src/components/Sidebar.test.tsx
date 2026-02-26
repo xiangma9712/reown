@@ -65,7 +65,10 @@ describe("Sidebar", () => {
     expect(heading).toHaveAttribute("id", "sidebar-repositories-heading");
     expect(heading.textContent).toBe("Repositories");
     const nav = screen.getByRole("navigation");
-    expect(nav).toHaveAttribute("aria-labelledby", "sidebar-repositories-heading");
+    expect(nav).toHaveAttribute(
+      "aria-labelledby",
+      "sidebar-repositories-heading"
+    );
   });
 
   it("renders repository list", () => {
@@ -167,11 +170,16 @@ describe("Sidebar", () => {
   it("has accessible name on nav element via aria-labelledby", () => {
     render(<Sidebar {...defaultProps} />);
     const nav = screen.getByRole("navigation");
-    expect(nav).toHaveAttribute("aria-labelledby", "sidebar-repositories-heading");
+    expect(nav).toHaveAttribute(
+      "aria-labelledby",
+      "sidebar-repositories-heading"
+    );
   });
 
   it("falls back to aria-label on nav when collapsed", () => {
-    render(<Sidebar {...defaultProps} collapsed={true} onToggleCollapse={vi.fn()} />);
+    render(
+      <Sidebar {...defaultProps} collapsed={true} onToggleCollapse={vi.fn()} />
+    );
     const nav = screen.getByRole("navigation");
     expect(nav).not.toHaveAttribute("aria-labelledby");
     expect(nav).toHaveAttribute("aria-label", "リポジトリ一覧");
