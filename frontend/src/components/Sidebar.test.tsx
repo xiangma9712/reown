@@ -132,7 +132,9 @@ describe("Sidebar", () => {
 
   it("has aria-label on nav element", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.getByRole("navigation", { name: "リポジトリ一覧" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "リポジトリ一覧" })
+    ).toBeInTheDocument();
   });
 
   it("highlights selected repository", () => {
