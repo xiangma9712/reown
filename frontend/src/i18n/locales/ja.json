@@ -214,6 +214,11 @@
     "count": "{{count}} 件",
     "filterAll": "すべて",
     "filterTodo": "TODO",
-    "filterFixme": "FIXME"
+    "filterFixme": "FIXME",
+    "createWorktree": "Worktree作成",
+    "createWorktreeConfirm": "ブランチ「{{branch}}」でWorktreeを作成しますか？",
+    "createWorktreeSuccess": "Worktreeを作成しました: {{branch}}",
+    "createWorktreeError": "Worktreeの作成に失敗しました: {{message}}",
+    "creatingWorktree": "作成中…"
   }
 }
