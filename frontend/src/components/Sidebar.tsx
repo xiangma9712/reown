@@ -128,7 +128,7 @@ export function Sidebar({
           )}
         </div>
         {!collapsed && (
-          <div className="border-b border-border px-4 py-2">
+          <div className="border-b border-border px-4 py-3">
             <h2
               id="sidebar-repositories-heading"
               className="m-0 text-xs font-semibold uppercase tracking-wider text-text-muted"
