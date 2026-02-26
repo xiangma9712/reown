@@ -31,6 +31,7 @@ interface Props {
   addingRepo?: boolean;
   addRepoError?: string | null;
   onDismissAddRepoError?: () => void;
+  loadingRepos?: boolean;
   navItems: NavItem[];
   activeTabId: string;
   onSelectTab: (id: string) => void;
@@ -49,6 +50,7 @@ export function Layout({
   addingRepo,
   addRepoError,
   onDismissAddRepoError,
+  loadingRepos,
   navItems,
   activeTabId,
   onSelectTab,
@@ -195,6 +197,7 @@ export function Layout({
           adding={addingRepo}
           addError={addRepoError}
           onDismissAddError={onDismissAddRepoError}
+          loading={loadingRepos}
           settingsOpen={settingsOpen}
           onToggleSettings={onToggleSettings}
           collapsed={collapsed}
@@ -241,6 +244,7 @@ export function Layout({
               adding={addingRepo}
               addError={addRepoError}
               onDismissAddError={onDismissAddRepoError}
+              loading={loadingRepos}
               settingsOpen={settingsOpen}
               onToggleSettings={onToggleSettings}
               onClose={closeDrawer}

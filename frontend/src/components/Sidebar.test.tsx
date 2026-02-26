@@ -283,4 +283,24 @@ describe("Sidebar", () => {
       "false"
     );
   });
+
+  it("shows skeleton placeholders when loading", () => {
+    render(<Sidebar {...defaultProps} loading={true} />);
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByText("reown")).toBeInTheDocument();
+    expect(screen.queryByLabelText("reown を選択")).not.toBeInTheDocument();
+  });
+
+  it("sets aria-busy on nav when loading", () => {
+    render(<Sidebar {...defaultProps} loading={true} />);
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("does not show skeleton when not loading", () => {
+    render(<Sidebar {...defaultProps} loading={false} />);
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveAttribute("aria-busy", "false");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
 });

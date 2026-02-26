@@ -31,6 +31,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addingRepo, setAddingRepo] = useState(false);
   const [addRepoError, setAddRepoError] = useState<string | null>(null);
+  const [loadingRepos, setLoadingRepos] = useState(true);
   const addErrorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
@@ -47,11 +48,14 @@ export function App() {
   }, [selectedRepoPath]);
 
   const loadRepositories = useCallback(async () => {
+    setLoadingRepos(true);
     try {
       const repos = await invoke("list_repositories");
       setRepositories(repos);
     } catch {
       // silently ignore — list may be empty on first run
+    } finally {
+      setLoadingRepos(false);
     }
   }, []);
 
@@ -156,6 +160,7 @@ export function App() {
           addingRepo={addingRepo}
           addRepoError={addRepoError}
           onDismissAddRepoError={dismissAddRepoError}
+          loadingRepos={loadingRepos}
           navItems={[...NAV_ITEMS]}
           activeTabId={activeTab}
           onSelectTab={(id) => {

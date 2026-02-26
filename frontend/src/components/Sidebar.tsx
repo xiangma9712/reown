@@ -56,6 +56,7 @@ interface Props {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   width?: number;
+  loading?: boolean;
 }
 
 export function Sidebar({
@@ -73,6 +74,7 @@ export function Sidebar({
   collapsed = false,
   onToggleCollapse,
   width,
+  loading = false,
 }: Props) {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
@@ -142,9 +144,34 @@ export function Sidebar({
             !collapsed ? "sidebar-repositories-heading" : undefined
           }
           aria-label={collapsed ? t("repository.navAriaLabel") : undefined}
+          aria-busy={loading}
           className="scrollbar-custom flex-1 overflow-y-auto py-2"
         >
-          {collapsed ? (
+          {loading ? (
+            collapsed ? (
+              <div className="flex flex-col items-center gap-2 px-2 py-1">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-8 w-8 animate-pulse rounded bg-border/50"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div
+                role="status"
+                aria-label={t("common.loading")}
+                className="space-y-1 px-4 py-1"
+              >
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-8 animate-pulse rounded bg-border/50"
+                  />
+                ))}
+              </div>
+            )
+          ) : collapsed ? (
             repositories.map((repo) => (
               <Tooltip.Root key={repo.path}>
                 <Tooltip.Trigger asChild>

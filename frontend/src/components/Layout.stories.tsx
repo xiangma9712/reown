@@ -83,3 +83,11 @@ export const SidebarResized: Story = {
     },
   ],
 };
+
+export const Loading: Story = {
+  args: {
+    loadingRepos: true,
+    repositories: [],
+    selectedRepoPath: null,
+  },
+};
