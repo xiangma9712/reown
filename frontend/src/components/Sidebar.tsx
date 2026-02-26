@@ -97,13 +97,17 @@ export function Sidebar({
         </div>
         {!collapsed && (
           <div className="border-b border-border px-4 py-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            <h2
+              id="sidebar-repositories-heading"
+              className="m-0 text-xs font-semibold uppercase tracking-wider text-text-muted"
+            >
               {t("repository.title")}
-            </span>
+            </h2>
           </div>
         )}
         <nav
-          aria-label={t("repository.navAriaLabel")}
+          aria-labelledby={!collapsed ? "sidebar-repositories-heading" : undefined}
+          aria-label={collapsed ? t("repository.navAriaLabel") : undefined}
           className="scrollbar-custom flex-1 overflow-y-auto py-2"
         >
           {collapsed ? (
