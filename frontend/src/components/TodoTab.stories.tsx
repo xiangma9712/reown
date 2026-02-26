@@ -87,9 +87,7 @@ export const FilterTodo: Story = {
     const loadButton = canvasElement.querySelector("button");
     loadButton?.click();
     await new Promise((resolve) => setTimeout(resolve, 100));
-    const filterButtons = canvasElement.querySelectorAll(
-      ".flex.gap-2 button"
-    );
+    const filterButtons = canvasElement.querySelectorAll(".flex.gap-2 button");
     // filterButtons[1] = "Todo" filter
     (filterButtons[1] as HTMLButtonElement)?.click();
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -107,9 +105,7 @@ export const FilterFixme: Story = {
     const loadButton = canvasElement.querySelector("button");
     loadButton?.click();
     await new Promise((resolve) => setTimeout(resolve, 100));
-    const filterButtons = canvasElement.querySelectorAll(
-      ".flex.gap-2 button"
-    );
+    const filterButtons = canvasElement.querySelectorAll(".flex.gap-2 button");
     // filterButtons[2] = "Fixme" filter
     (filterButtons[2] as HTMLButtonElement)?.click();
     await new Promise((resolve) => setTimeout(resolve, 50));
