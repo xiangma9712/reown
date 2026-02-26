@@ -58,6 +58,19 @@ describe("Sidebar", () => {
     expect(brandElement).toBeDefined();
   });
 
+  it("renders repository section heading as h2 with aria-labelledby", () => {
+    render(<Sidebar {...defaultProps} />);
+    const heading = screen.getByRole("heading", { level: 2 });
+    expect(heading).toBeInTheDocument();
+    expect(heading).toHaveAttribute("id", "sidebar-repositories-heading");
+    expect(heading.textContent).toBe("Repositories");
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveAttribute(
+      "aria-labelledby",
+      "sidebar-repositories-heading"
+    );
+  });
+
   it("renders repository list", () => {
     render(<Sidebar {...defaultProps} />);
     // Repo names are rendered as buttons with aria-label
@@ -154,11 +167,22 @@ describe("Sidebar", () => {
     expect(kbd).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("has aria-label on nav element", () => {
+  it("has accessible name on nav element via aria-labelledby", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(
-      screen.getByRole("navigation", { name: "リポジトリ一覧" })
-    ).toBeInTheDocument();
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveAttribute(
+      "aria-labelledby",
+      "sidebar-repositories-heading"
+    );
+  });
+
+  it("falls back to aria-label on nav when collapsed", () => {
+    render(
+      <Sidebar {...defaultProps} collapsed={true} onToggleCollapse={vi.fn()} />
+    );
+    const nav = screen.getByRole("navigation");
+    expect(nav).not.toHaveAttribute("aria-labelledby");
+    expect(nav).toHaveAttribute("aria-label", "リポジトリ一覧");
   });
 
   it("highlights selected repository", () => {
