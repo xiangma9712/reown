@@ -120,7 +120,9 @@ describe("TodoTab", () => {
     renderWithProvider(<TodoTab />);
     await user.click(screen.getByText("TODOを抽出"));
     await waitFor(() => {
-      expect(screen.getByText("3件", { selector: "h2 span" })).toBeInTheDocument();
+      expect(
+        screen.getByText("3件", { selector: "h2 span" })
+      ).toBeInTheDocument();
     });
   });
 
@@ -146,7 +148,9 @@ describe("TodoTab", () => {
     const groupButtons = screen.getAllByRole("button", { expanded: true });
     const groupTexts = groupButtons.map((btn) => btn.textContent);
     const legacyIdx = groupTexts.findIndex((t) => t?.includes("src/legacy"));
-    const authIdx = groupTexts.findIndex((t) => t?.includes("src") && !t?.includes("src/"));
+    const authIdx = groupTexts.findIndex(
+      (t) => t?.includes("src") && !t?.includes("src/")
+    );
     expect(legacyIdx).toBeLessThan(authIdx);
   });
 
@@ -160,7 +164,9 @@ describe("TodoTab", () => {
     // Click "全て折りたたみ"
     await user.click(screen.getByText("全て折りたたみ"));
     // Items should be hidden
-    expect(screen.queryByText("このファイルは削除予定")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("このファイルは削除予定")
+    ).not.toBeInTheDocument();
     // Click "全て展開"
     await user.click(screen.getByText("全て展開"));
     // Items should be visible again
@@ -178,7 +184,9 @@ describe("TodoTab", () => {
     const legacyHeader = screen.getByText("src/legacy").closest("button")!;
     await user.click(legacyHeader);
     // FIXME item should be hidden
-    expect(screen.queryByText("このファイルは削除予定")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("このファイルは削除予定")
+    ).not.toBeInTheDocument();
     // Other items should still be visible
     expect(screen.getByText("リフレッシュトークンの実装")).toBeInTheDocument();
   });
@@ -200,7 +208,9 @@ describe("TodoTab", () => {
     expect(todoFilterBtn).toBeDefined();
     await user.click(todoFilterBtn!);
     await waitFor(() => {
-      expect(screen.getByText("2件", { selector: "h2 span" })).toBeInTheDocument();
+      expect(
+        screen.getByText("2件", { selector: "h2 span" })
+      ).toBeInTheDocument();
     });
     expect(screen.getByText("リフレッシュトークンの実装")).toBeInTheDocument();
     expect(
@@ -224,7 +234,9 @@ describe("TodoTab", () => {
     expect(fixmeFilterBtn).toBeDefined();
     await user.click(fixmeFilterBtn!);
     await waitFor(() => {
-      expect(screen.getByText("1件", { selector: "h2 span" })).toBeInTheDocument();
+      expect(
+        screen.getByText("1件", { selector: "h2 span" })
+      ).toBeInTheDocument();
     });
     expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
     expect(

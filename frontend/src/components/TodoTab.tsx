@@ -112,7 +112,8 @@ export function TodoTab() {
   const groups = useMemo(() => groupByModule(filtered), [filtered]);
 
   const allGroupsCollapsed = useMemo(
-    () => groups.length > 0 && groups.every((g) => collapsedGroups.has(g.module)),
+    () =>
+      groups.length > 0 && groups.every((g) => collapsedGroups.has(g.module)),
     [groups, collapsedGroups]
   );
 
