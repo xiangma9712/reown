@@ -17,6 +17,7 @@ vi.mock("react-i18next", () => ({
         "repository.addAriaLabel": "リポジトリを追加",
         "repository.navAriaLabel": "リポジトリ一覧",
         "tabs.settingsAriaLabel": "設定を開く",
+        "sidebar.close": "サイドバーを閉じる",
         "common.confirm": "確認",
         "common.cancel": "キャンセル",
         "common.delete": "削除",
@@ -167,6 +168,25 @@ describe("Sidebar", () => {
     // Radix renders tooltip content twice (visual + aria-describedby hidden span)
     const pathElements = await screen.findAllByText("/Users/dev/project");
     expect(pathElements.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders close button when onClose is provided", () => {
+    const onClose = vi.fn();
+    render(<Sidebar {...defaultProps} onClose={onClose} />);
+    expect(screen.getByLabelText("サイドバーを閉じる")).toBeInTheDocument();
+  });
+
+  it("does not render close button when onClose is not provided", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.queryByLabelText("サイドバーを閉じる")).not.toBeInTheDocument();
+  });
+
+  it("calls onClose when close button is clicked", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<Sidebar {...defaultProps} onClose={onClose} />);
+    await user.click(screen.getByLabelText("サイドバーを閉じる"));
+    expect(onClose).toHaveBeenCalled();
   });
 
   it("sets aria-current on selected repository", () => {

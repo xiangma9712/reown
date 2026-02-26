@@ -54,6 +54,15 @@ test.describe("Sidebar", () => {
     );
   });
 
+  test("with close button", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--with-close-button&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "with-close-button.png"
+    );
+  });
+
   test("tooltip shows full path on hover", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=components-sidebar--long-repo-name&viewMode=story"

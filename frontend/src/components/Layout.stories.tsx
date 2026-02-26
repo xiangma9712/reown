@@ -45,3 +45,22 @@ export const WithBranchSelector: Story = {
     branchSelector: <span className="text-sm text-text-secondary">main</span>,
   },
 };
+
+export const MobileWithRepo: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile1",
+    },
+  },
+};
+
+export const MobileNoRepo: Story = {
+  args: {
+    selectedRepoPath: null,
+  },
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile1",
+    },
+  },
+};

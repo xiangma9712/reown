@@ -50,3 +50,9 @@ export const LongRepoName: Story = {
     ],
   },
 };
+
+export const WithCloseButton: Story = {
+  args: {
+    onClose: fn(),
+  },
+};
