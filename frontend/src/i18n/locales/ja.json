@@ -31,6 +31,7 @@
     "nextAction": "Next Action",
     "settings": "Settings",
     "settingsAriaLabel": "設定を開く",
+    "settingsCloseAriaLabel": "設定を閉じる",
     "shortcutTooltip": "キーボードショートカット: {{key}}"
   },
   "common": {

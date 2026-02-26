@@ -76,6 +76,15 @@ test.describe("Layout", () => {
     );
   });
 
+  test("settings open", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--settings-open&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "settings-open.png"
+    );
+  });
+
   test("loading repositories", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=components-layout--loading&viewMode=story"

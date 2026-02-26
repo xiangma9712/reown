@@ -37,6 +37,7 @@ interface Props {
   onSelectTab: (id: string) => void;
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
+  settingsContent?: ReactNode;
   branchSelector?: ReactNode;
   children: ReactNode;
 }
@@ -56,6 +57,7 @@ export function Layout({
   onSelectTab,
   settingsOpen,
   onToggleSettings,
+  settingsContent,
   branchSelector,
   children,
 }: Props) {
@@ -279,25 +281,63 @@ export function Layout({
                   <line x1="3" y1="18" x2="21" y2="18" />
                 </svg>
               </button>
-              {branchSelector && (
+              {!settingsOpen && branchSelector && (
                 <div className="shrink-0 border-r border-border px-4 py-2">
                   {branchSelector}
                 </div>
               )}
-              <TabBar
-                items={navItems}
-                activeId={activeTabId}
-                onSelect={onSelectTab}
-              />
+              {settingsOpen ? (
+                <div className="flex flex-1 items-center justify-between px-4 py-2">
+                  <h1 className="text-sm font-semibold text-text-primary">
+                    {t("tabs.settings")}
+                  </h1>
+                  <button
+                    onClick={onToggleSettings}
+                    className="cursor-pointer rounded border-none bg-transparent p-1 text-text-muted transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    aria-label={t("tabs.settingsCloseAriaLabel")}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <TabBar
+                  items={navItems}
+                  activeId={activeTabId}
+                  onSelect={onSelectTab}
+                />
+              )}
             </div>
-            <main
-              role="tabpanel"
-              id={`tabpanel-${activeTabId}`}
-              aria-labelledby={`tab-${activeTabId}`}
-              className="scrollbar-custom flex-1 overflow-y-auto p-8"
-            >
-              {children}
-            </main>
+            {settingsOpen && settingsContent ? (
+              <div
+                role="region"
+                aria-label={t("tabs.settings")}
+                className="scrollbar-custom flex-1 overflow-y-auto p-8"
+              >
+                {settingsContent}
+              </div>
+            ) : (
+              <main
+                role="tabpanel"
+                id={`tabpanel-${activeTabId}`}
+                aria-labelledby={`tab-${activeTabId}`}
+                className="scrollbar-custom flex-1 overflow-y-auto p-8"
+              >
+                {children}
+              </main>
+            )}
           </>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-4">

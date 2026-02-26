@@ -169,6 +169,12 @@ export function App() {
           }}
           settingsOpen={settingsOpen}
           onToggleSettings={() => setSettingsOpen((prev) => !prev)}
+          settingsContent={
+            <div className="mx-auto max-w-xl space-y-8">
+              <LlmSettingsTab />
+              <AutomationSettingsTab />
+            </div>
+          }
           branchSelector={
             <BranchSelector
               prs={prs}
@@ -177,19 +183,10 @@ export function App() {
             />
           }
         >
-          {settingsOpen ? (
-            <div className="mx-auto max-w-xl space-y-8">
-              <LlmSettingsTab />
-              <AutomationSettingsTab />
-            </div>
-          ) : (
-            <>
-              {activeTab === "review" && (
-                <ReviewTab selectedBranch={selectedBranch} prs={prs} />
-              )}
-              {activeTab === "next-action" && <TodoTab />}
-            </>
+          {activeTab === "review" && (
+            <ReviewTab selectedBranch={selectedBranch} prs={prs} />
           )}
+          {activeTab === "next-action" && <TodoTab />}
         </Layout>
       </RepositoryProvider>
     </ThemeProvider>
