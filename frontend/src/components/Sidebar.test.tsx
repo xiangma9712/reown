@@ -16,9 +16,14 @@ vi.mock("react-i18next", () => ({
         "repository.remove": "削除",
         "repository.addAriaLabel": "リポジトリを追加",
         "tabs.settingsAriaLabel": "設定を開く",
+        "common.confirm": "確認",
+        "common.cancel": "キャンセル",
+        "common.delete": "削除",
       };
       if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;
       if (key === "repository.selectAriaLabel") return `${opts?.name} を選択`;
+      if (key === "repository.confirmRemove")
+        return `リポジトリ '${opts?.name}' を一覧から削除しますか？`;
       return translations[key] ?? key;
     },
   }),
@@ -70,13 +75,36 @@ describe("Sidebar", () => {
     expect(onAdd).toHaveBeenCalled();
   });
 
-  it("calls onRemove when remove button is clicked", async () => {
+  it("shows confirmation dialog when remove button is clicked", async () => {
     const user = userEvent.setup();
     const onRemove = vi.fn();
     render(<Sidebar {...defaultProps} onRemove={onRemove} />);
     const removeButtons = screen.getAllByTitle("削除");
     await user.click(removeButtons[0]);
+    expect(onRemove).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("リポジトリ 'reown' を一覧から削除しますか？")
+    ).toBeInTheDocument();
+  });
+
+  it("calls onRemove after confirming deletion", async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    render(<Sidebar {...defaultProps} onRemove={onRemove} />);
+    const removeButtons = screen.getAllByTitle("削除");
+    await user.click(removeButtons[0]);
+    await user.click(screen.getByRole("button", { name: "削除" }));
     expect(onRemove).toHaveBeenCalledWith("/Users/dev/project");
+  });
+
+  it("does not call onRemove when cancelling deletion", async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    render(<Sidebar {...defaultProps} onRemove={onRemove} />);
+    const removeButtons = screen.getAllByTitle("削除");
+    await user.click(removeButtons[0]);
+    await user.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(onRemove).not.toHaveBeenCalled();
   });
 
   it("has aria-label on remove buttons", () => {

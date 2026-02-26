@@ -1,12 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ReviewTab } from "./components/ReviewTab";
 import { TodoTab } from "./components/TodoTab";
 import { BranchSelector } from "./components/BranchSelector";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
-import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
 import { invoke } from "./invoke";
@@ -21,7 +19,6 @@ const NAV_ITEMS = [
 type TabName = (typeof NAV_ITEMS)[number]["id"];
 
 export function App() {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabName>("review");
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
@@ -29,10 +26,6 @@ export function App() {
   const [prs] = useState<PrInfo[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{
-    message: string;
-    resolve: (value: boolean) => void;
-  } | null>(null);
 
   useEffect(() => {
     if (!selectedRepoPath) {
@@ -58,20 +51,6 @@ export function App() {
     loadRepositories();
   }, [loadRepositories]);
 
-  const showConfirm = useCallback((message: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setConfirmDialog({ message, resolve });
-    });
-  }, []);
-
-  const handleConfirm = useCallback(
-    (result: boolean) => {
-      confirmDialog?.resolve(result);
-      setConfirmDialog(null);
-    },
-    [confirmDialog]
-  );
-
   const handleAddRepo = useCallback(async () => {
     const selected = await open({ directory: true, multiple: false });
     if (!selected) return;
@@ -86,12 +65,6 @@ export function App() {
 
   const handleRemoveRepo = useCallback(
     async (path: string) => {
-      const repo = repositories.find((r) => r.path === path);
-      const name = repo?.name ?? path;
-      const confirmed = await showConfirm(
-        t("repository.confirmRemove", { name })
-      );
-      if (!confirmed) return;
       try {
         await invoke("remove_repository", { path });
         setRepositories((prev) => prev.filter((r) => r.path !== path));
@@ -102,7 +75,7 @@ export function App() {
         // silently ignore
       }
     },
-    [repositories, selectedRepoPath, showConfirm, t]
+    [selectedRepoPath]
   );
 
   useEffect(() => {
@@ -119,8 +92,6 @@ export function App() {
           return;
         }
       }
-
-      if (confirmDialog) return;
 
       switch (e.key) {
         case "r":
@@ -148,7 +119,7 @@ export function App() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [confirmDialog]);
+  }, []);
 
   return (
     <RepositoryProvider repoPath={selectedRepoPath} repoInfo={repoInfo}>
@@ -187,13 +158,6 @@ export function App() {
             {activeTab === "next-action" && <TodoTab />}
           </>
         )}
-
-        <ConfirmDialog
-          open={confirmDialog !== null}
-          message={confirmDialog?.message ?? ""}
-          onConfirm={() => handleConfirm(true)}
-          onCancel={() => handleConfirm(false)}
-        />
       </Layout>
     </RepositoryProvider>
   );
