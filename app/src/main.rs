@@ -848,9 +848,7 @@ mod tests {
         std::fs::write(dir.path().join("hello.txt"), "hello\n").unwrap();
         let sig = git2::Signature::now("Test", "test@test.com").unwrap();
         let mut index = repo.index().unwrap();
-        index
-            .add_path(std::path::Path::new("hello.txt"))
-            .unwrap();
+        index.add_path(std::path::Path::new("hello.txt")).unwrap();
         index.write().unwrap();
         let tree_id = index.write_tree().unwrap();
         {
@@ -1069,9 +1067,7 @@ mod tests {
         std::fs::write(dir.path().join("hello.txt"), "hello\nworld\n").unwrap();
         let sig = git2::Signature::now("Test", "test@test.com").unwrap();
         let mut index = repo.index().unwrap();
-        index
-            .add_path(std::path::Path::new("hello.txt"))
-            .unwrap();
+        index.add_path(std::path::Path::new("hello.txt")).unwrap();
         index.write().unwrap();
         let tree_id = index.write_tree().unwrap();
         let parent = repo.head().unwrap().peel_to_commit().unwrap();
