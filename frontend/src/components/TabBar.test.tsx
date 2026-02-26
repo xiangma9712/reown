@@ -120,9 +120,7 @@ describe("TabBar", () => {
   it("navigates to first tab on Home", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    render(
-      <TabBar items={items} activeId="next-action" onSelect={onSelect} />
-    );
+    render(<TabBar items={items} activeId="next-action" onSelect={onSelect} />);
     const tabs = screen.getAllByRole("tab");
     tabs[1].focus();
     await user.keyboard("{Home}");
@@ -142,9 +140,7 @@ describe("TabBar", () => {
   it("wraps from last tab to first on ArrowRight", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    render(
-      <TabBar items={items} activeId="next-action" onSelect={onSelect} />
-    );
+    render(<TabBar items={items} activeId="next-action" onSelect={onSelect} />);
     const tabs = screen.getAllByRole("tab");
     tabs[1].focus();
     await user.keyboard("{ArrowRight}");

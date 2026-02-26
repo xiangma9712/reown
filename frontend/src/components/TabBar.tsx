@@ -40,12 +40,18 @@ export function TabBar({ items, activeId, onSelect }: Props) {
 
     e.preventDefault();
     onSelect(items[nextIndex].id);
-    const tabs = tablistRef.current?.querySelectorAll<HTMLElement>('[role="tab"]');
+    const tabs =
+      tablistRef.current?.querySelectorAll<HTMLElement>('[role="tab"]');
     tabs?.[nextIndex]?.focus();
   };
 
   return (
-    <div role="tablist" ref={tablistRef} className="flex bg-bg-primary" onKeyDown={handleKeyDown}>
+    <div
+      role="tablist"
+      ref={tablistRef}
+      className="flex bg-bg-primary"
+      onKeyDown={handleKeyDown}
+    >
       {items.map((item) => (
         <button
           key={item.id}
