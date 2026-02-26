@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ConfirmDialog } from "./ConfirmDialog";
 import type { RepositoryEntry } from "../types";
 
 interface Props {
@@ -21,6 +23,9 @@ export function Sidebar({
   onToggleSettings,
 }: Props) {
   const { t } = useTranslation();
+  const [removingRepo, setRemovingRepo] = useState<RepositoryEntry | null>(
+    null
+  );
 
   return (
     <aside className="flex h-full w-56 flex-col border-r border-border bg-sidebar-bg">
@@ -64,7 +69,7 @@ export function Sidebar({
                 className="ml-1 cursor-pointer rounded border-none bg-transparent p-0.5 text-text-muted opacity-0 transition-opacity hover:text-danger focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent group-hover:opacity-100 group-focus-within:opacity-100"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onRemove(repo.path);
+                  setRemovingRepo(repo);
                 }}
                 title={t("repository.remove")}
                 aria-label={t("repository.removeAriaLabel", {
@@ -120,6 +125,22 @@ export function Sidebar({
       <div className="border-t border-border px-4 py-3">
         <p className="text-xs text-text-muted">{t("app.tagline")}</p>
       </div>
+      <ConfirmDialog
+        open={removingRepo !== null}
+        message={
+          removingRepo
+            ? t("repository.confirmRemove", { name: removingRepo.name })
+            : ""
+        }
+        confirmLabel={t("repository.remove")}
+        onConfirm={() => {
+          if (removingRepo) {
+            onRemove(removingRepo.path);
+          }
+          setRemovingRepo(null);
+        }}
+        onCancel={() => setRemovingRepo(null)}
+      />
     </aside>
   );
 }
