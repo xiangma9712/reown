@@ -164,8 +164,9 @@ describe("Sidebar", () => {
     render(<Sidebar {...defaultProps} />);
     const repoButton = screen.getByLabelText("reown を選択");
     await user.hover(repoButton);
-    // Radix tooltip content appears in the DOM; repo name shown as bold + path
-    expect(await screen.findByText("/Users/dev/project")).toBeInTheDocument();
+    // Radix renders tooltip content twice (visual + aria-describedby hidden span)
+    const pathElements = await screen.findAllByText("/Users/dev/project");
+    expect(pathElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it("sets aria-current on selected repository", () => {
