@@ -830,6 +830,30 @@ mod tests {
         assert!(err.message.contains("disk I/O error"));
     }
 
+    #[test]
+    fn test_app_error_storage_serializes() {
+        let err = AppError::storage(anyhow::anyhow!("file not found"));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "storage");
+        assert_eq!(json["message"], "file not found");
+    }
+
+    #[test]
+    fn test_app_error_analysis_serializes() {
+        let err = AppError::analysis(anyhow::anyhow!("analysis failed"));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "analysis");
+        assert_eq!(json["message"], "analysis failed");
+    }
+
+    #[test]
+    fn test_app_error_llm_serializes() {
+        let err = AppError::llm(anyhow::anyhow!("llm error"));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json["kind"], "llm");
+        assert_eq!(json["message"], "llm error");
+    }
+
     // ── テスト用ヘルパー ────────────────────────────────────────────────────
 
     /// テスト用リポジトリを初期化する（初期コミット付き）
@@ -1134,5 +1158,490 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err.kind, ErrorKind::Git));
+    }
+
+    // ── Repository コマンドテスト ────────────────────────────────────────
+
+    #[test]
+    fn test_cmd_add_and_list_repositories() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let app_data_dir = tmp.path().join("app_data");
+        let storage_path = reown::repository::default_storage_path(&app_data_dir);
+
+        // 空のリストから始まる
+        let repos = reown::repository::load_repositories(&storage_path).unwrap();
+        assert!(repos.is_empty());
+
+        // Gitリポジトリを作成して追加
+        let repo_dir = tempfile::TempDir::new().unwrap();
+        git2::Repository::init(repo_dir.path()).unwrap();
+        let repo_path = repo_dir.path().to_str().unwrap();
+
+        let entry = reown::repository::add_repository(&storage_path, repo_path).unwrap();
+        assert_eq!(entry.path, repo_path);
+
+        // 一覧に反映される
+        let repos = reown::repository::load_repositories(&storage_path).unwrap();
+        assert_eq!(repos.len(), 1);
+        assert_eq!(repos[0].path, repo_path);
+    }
+
+    #[test]
+    fn test_cmd_add_repository_duplicate_error() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::repository::default_storage_path(tmp.path());
+
+        let repo_dir = tempfile::TempDir::new().unwrap();
+        git2::Repository::init(repo_dir.path()).unwrap();
+        let repo_path = repo_dir.path().to_str().unwrap();
+
+        reown::repository::add_repository(&storage_path, repo_path).unwrap();
+        let result = reown::repository::add_repository(&storage_path, repo_path);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("すでに登録されています"));
+    }
+
+    #[test]
+    fn test_cmd_add_repository_invalid_path_error() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::repository::default_storage_path(tmp.path());
+
+        let result = reown::repository::add_repository(&storage_path, "/nonexistent/repo/path");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_add_repository_not_git_repo_error() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::repository::default_storage_path(tmp.path());
+
+        let non_git_dir = tempfile::TempDir::new().unwrap();
+        let result = reown::repository::add_repository(
+            &storage_path,
+            non_git_dir.path().to_str().unwrap(),
+        );
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("有効な Git リポジトリではありません"));
+    }
+
+    #[test]
+    fn test_cmd_remove_repository_ok() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::repository::default_storage_path(tmp.path());
+
+        let repo_dir = tempfile::TempDir::new().unwrap();
+        git2::Repository::init(repo_dir.path()).unwrap();
+        let repo_path = repo_dir.path().to_str().unwrap();
+
+        reown::repository::add_repository(&storage_path, repo_path).unwrap();
+        reown::repository::remove_repository(&storage_path, repo_path).unwrap();
+
+        let repos = reown::repository::load_repositories(&storage_path).unwrap();
+        assert!(repos.is_empty());
+    }
+
+    #[test]
+    fn test_cmd_remove_repository_not_found_error() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::repository::default_storage_path(tmp.path());
+
+        let result = reown::repository::remove_repository(&storage_path, "/nonexistent/repo");
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("リポジトリが見つかりません"));
+    }
+
+    #[test]
+    fn test_cmd_add_multiple_repositories() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::repository::default_storage_path(tmp.path());
+
+        let repo1 = tempfile::TempDir::new().unwrap();
+        git2::Repository::init(repo1.path()).unwrap();
+        let repo2 = tempfile::TempDir::new().unwrap();
+        git2::Repository::init(repo2.path()).unwrap();
+
+        reown::repository::add_repository(&storage_path, repo1.path().to_str().unwrap()).unwrap();
+        reown::repository::add_repository(&storage_path, repo2.path().to_str().unwrap()).unwrap();
+
+        let repos = reown::repository::load_repositories(&storage_path).unwrap();
+        assert_eq!(repos.len(), 2);
+    }
+
+    // ── App Config コマンドテスト ────────────────────────────────────────
+
+    #[test]
+    fn test_cmd_save_and_load_app_config() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        let config = reown::config::AppConfig {
+            github_token: "ghp_test_token".to_string(),
+            default_owner: "my-org".to_string(),
+            default_repo: "my-repo".to_string(),
+            ..Default::default()
+        };
+
+        reown::config::save_config(&config_path, &config).unwrap();
+        let loaded = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+        assert_eq!(loaded.github_token, "ghp_test_token");
+        assert_eq!(loaded.default_owner, "my-org");
+        assert_eq!(loaded.default_repo, "my-repo");
+    }
+
+    #[test]
+    fn test_cmd_load_app_config_default_when_no_file() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        let config = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(config, reown::config::AppConfig::default());
+        assert_eq!(config.github_token, "");
+        assert_eq!(config.default_owner, "");
+    }
+
+    #[test]
+    fn test_cmd_save_app_config_creates_parent_dirs() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = tmp.path().join("nested").join("dir").join("config.json");
+
+        let config = reown::config::AppConfig {
+            github_token: "ghp_abc".to_string(),
+            default_owner: "owner".to_string(),
+            default_repo: "repo".to_string(),
+            ..Default::default()
+        };
+
+        reown::config::save_config(&config_path, &config).unwrap();
+        let loaded = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+    }
+
+    #[test]
+    fn test_cmd_save_app_config_overwrite() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        let config1 = reown::config::AppConfig {
+            github_token: "old_token".to_string(),
+            default_owner: "old_owner".to_string(),
+            default_repo: "old_repo".to_string(),
+            ..Default::default()
+        };
+        reown::config::save_config(&config_path, &config1).unwrap();
+
+        let config2 = reown::config::AppConfig {
+            github_token: "new_token".to_string(),
+            default_owner: "new_owner".to_string(),
+            default_repo: "new_repo".to_string(),
+            ..Default::default()
+        };
+        reown::config::save_config(&config_path, &config2).unwrap();
+
+        let loaded = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(loaded, config2);
+        assert_eq!(loaded.github_token, "new_token");
+    }
+
+    // ── LLM Config コマンドテスト ───────────────────────────────────────
+
+    #[test]
+    fn test_cmd_save_and_load_llm_config() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        // save_llm_config のフロー: load -> modify llm -> save
+        let mut config = reown::config::load_config(&config_path).unwrap();
+        let llm_config = reown::config::LlmConfig {
+            llm_endpoint: "http://localhost:11434".to_string(),
+            llm_model: "llama3".to_string(),
+            llm_api_key_stored: true,
+        };
+        config.llm = llm_config.clone();
+        reown::config::save_config(&config_path, &config).unwrap();
+
+        // load_llm_config のフロー: load -> return .llm
+        let loaded = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(loaded.llm, llm_config);
+        assert_eq!(loaded.llm.llm_endpoint, "http://localhost:11434");
+        assert_eq!(loaded.llm.llm_model, "llama3");
+        assert!(loaded.llm.llm_api_key_stored);
+    }
+
+    #[test]
+    fn test_cmd_load_llm_config_default() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        let config = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(config.llm, reown::config::LlmConfig::default());
+        assert_eq!(config.llm.llm_endpoint, "https://api.anthropic.com");
+    }
+
+    #[test]
+    fn test_cmd_save_llm_config_preserves_other_fields() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        // まず他のフィールドを設定
+        let initial_config = reown::config::AppConfig {
+            github_token: "ghp_existing".to_string(),
+            default_owner: "existing_owner".to_string(),
+            default_repo: "existing_repo".to_string(),
+            ..Default::default()
+        };
+        reown::config::save_config(&config_path, &initial_config).unwrap();
+
+        // save_llm_config のフロー: load -> modify llm -> save
+        let mut config = reown::config::load_config(&config_path).unwrap();
+        config.llm = reown::config::LlmConfig {
+            llm_endpoint: "http://custom:8080".to_string(),
+            llm_model: "custom-model".to_string(),
+            llm_api_key_stored: false,
+        };
+        reown::config::save_config(&config_path, &config).unwrap();
+
+        // 他のフィールドが保持されることを確認
+        let loaded = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(loaded.github_token, "ghp_existing");
+        assert_eq!(loaded.default_owner, "existing_owner");
+        assert_eq!(loaded.llm.llm_endpoint, "http://custom:8080");
+    }
+
+    // ── LLM API Key コマンドテスト ──────────────────────────────────────
+
+    #[test]
+    fn test_cmd_save_and_delete_llm_api_key() {
+        // OS keychainを使うため、テスト環境でkeychainが利用可能かチェック
+        let save_result = reown::config::save_llm_api_key("test-api-key-for-reown-test");
+        if save_result.is_err() {
+            // keychainが利用できない環境（CIなど）ではスキップ
+            eprintln!("Skipping keychain test: keychain not available in this environment");
+            return;
+        }
+
+        // 保存したキーを読み込めることを確認
+        let key = reown::config::load_llm_api_key().unwrap();
+        assert_eq!(key, "test-api-key-for-reown-test");
+
+        // 削除後は読み込めないことを確認
+        reown::config::delete_llm_api_key().unwrap();
+        let result = reown::config::load_llm_api_key();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cmd_delete_llm_api_key_when_not_exists() {
+        // keychainにキーがない状態で削除を試みる
+        // まず前のテストのクリーンアップとして削除を試みる（失敗しても問題ない）
+        let _ = reown::config::delete_llm_api_key();
+
+        let result = reown::config::delete_llm_api_key();
+        // keychainが利用できない環境ではスキップ
+        if result.is_err() {
+            // キーが存在しない or keychainが利用できない場合はエラーが返される
+            // これは正常な異常系の動作
+            return;
+        }
+    }
+
+    // ── Automation Config コマンドテスト ─────────────────────────────────
+
+    #[test]
+    fn test_cmd_save_and_load_automation_config() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        // save_automation_config のフロー: load -> modify automation -> save
+        let mut config = reown::config::load_config(&config_path).unwrap();
+        let automation_config = reown::config::AutomationConfig {
+            enabled: true,
+            auto_approve_max_risk: reown::config::AutoApproveMaxRisk::Medium,
+            enable_auto_merge: true,
+            auto_merge_method: reown::config::MergeMethod::Squash,
+        };
+        config.automation = automation_config.clone();
+        reown::config::save_config(&config_path, &config).unwrap();
+
+        // load_automation_config のフロー: load -> return .automation
+        let loaded = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(loaded.automation, automation_config);
+        assert!(loaded.automation.enabled);
+        assert_eq!(
+            loaded.automation.auto_approve_max_risk,
+            reown::config::AutoApproveMaxRisk::Medium
+        );
+        assert!(loaded.automation.enable_auto_merge);
+        assert_eq!(
+            loaded.automation.auto_merge_method,
+            reown::config::MergeMethod::Squash
+        );
+    }
+
+    #[test]
+    fn test_cmd_load_automation_config_default() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        let config = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(config.automation, reown::config::AutomationConfig::default());
+        assert!(!config.automation.enabled);
+        assert_eq!(
+            config.automation.auto_approve_max_risk,
+            reown::config::AutoApproveMaxRisk::Low
+        );
+    }
+
+    #[test]
+    fn test_cmd_save_automation_config_preserves_other_fields() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        // まず他のフィールドを設定
+        let initial_config = reown::config::AppConfig {
+            github_token: "ghp_keep_this".to_string(),
+            default_owner: "keep_owner".to_string(),
+            default_repo: "keep_repo".to_string(),
+            llm: reown::config::LlmConfig {
+                llm_endpoint: "http://keep:1234".to_string(),
+                llm_model: "keep-model".to_string(),
+                llm_api_key_stored: true,
+            },
+            ..Default::default()
+        };
+        reown::config::save_config(&config_path, &initial_config).unwrap();
+
+        // save_automation_config のフロー: load -> modify automation -> save
+        let mut config = reown::config::load_config(&config_path).unwrap();
+        config.automation = reown::config::AutomationConfig {
+            enabled: true,
+            auto_approve_max_risk: reown::config::AutoApproveMaxRisk::Low,
+            enable_auto_merge: false,
+            auto_merge_method: reown::config::MergeMethod::Merge,
+        };
+        reown::config::save_config(&config_path, &config).unwrap();
+
+        // 他のフィールドが保持されることを確認
+        let loaded = reown::config::load_config(&config_path).unwrap();
+        assert_eq!(loaded.github_token, "ghp_keep_this");
+        assert_eq!(loaded.default_owner, "keep_owner");
+        assert_eq!(loaded.llm.llm_endpoint, "http://keep:1234");
+        assert!(loaded.automation.enabled);
+    }
+
+    // ── Review History コマンドテスト ────────────────────────────────────
+
+    #[test]
+    fn test_cmd_list_review_history_empty() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::review_history::default_review_history_path(tmp.path());
+
+        let records = reown::review_history::load_review_history(&storage_path).unwrap();
+        assert!(records.is_empty());
+    }
+
+    #[test]
+    fn test_cmd_add_and_list_review_history() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::review_history::default_review_history_path(tmp.path());
+
+        let record = reown::review_history::ReviewRecord {
+            pr_number: 42,
+            repository: "owner/repo".to_string(),
+            action: reown::github::ReviewEvent::Approve,
+            risk_level: reown::analysis::RiskLevel::Low,
+            timestamp: "2025-06-01T12:00:00Z".to_string(),
+            categories: vec![
+                reown::analysis::ChangeCategory::Logic,
+                reown::analysis::ChangeCategory::Test,
+            ],
+        };
+
+        reown::review_history::add_review_record(&storage_path, record.clone()).unwrap();
+
+        let records = reown::review_history::load_review_history(&storage_path).unwrap();
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].pr_number, 42);
+        assert_eq!(records[0].repository, "owner/repo");
+        assert_eq!(records[0].action, reown::github::ReviewEvent::Approve);
+        assert_eq!(records[0].risk_level, reown::analysis::RiskLevel::Low);
+    }
+
+    #[test]
+    fn test_cmd_add_multiple_review_records() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::review_history::default_review_history_path(tmp.path());
+
+        let record1 = reown::review_history::ReviewRecord {
+            pr_number: 1,
+            repository: "owner/repo".to_string(),
+            action: reown::github::ReviewEvent::Approve,
+            risk_level: reown::analysis::RiskLevel::Low,
+            timestamp: "2025-06-01T12:00:00Z".to_string(),
+            categories: vec![reown::analysis::ChangeCategory::Test],
+        };
+
+        let record2 = reown::review_history::ReviewRecord {
+            pr_number: 2,
+            repository: "owner/other-repo".to_string(),
+            action: reown::github::ReviewEvent::RequestChanges,
+            risk_level: reown::analysis::RiskLevel::High,
+            timestamp: "2025-06-02T12:00:00Z".to_string(),
+            categories: vec![
+                reown::analysis::ChangeCategory::Logic,
+                reown::analysis::ChangeCategory::Config,
+            ],
+        };
+
+        reown::review_history::add_review_record(&storage_path, record1).unwrap();
+        reown::review_history::add_review_record(&storage_path, record2).unwrap();
+
+        let records = reown::review_history::load_review_history(&storage_path).unwrap();
+        assert_eq!(records.len(), 2);
+        assert_eq!(records[0].pr_number, 1);
+        assert_eq!(records[1].pr_number, 2);
+        assert_eq!(
+            records[1].action,
+            reown::github::ReviewEvent::RequestChanges
+        );
+        assert_eq!(records[1].risk_level, reown::analysis::RiskLevel::High);
+    }
+
+    #[test]
+    fn test_cmd_review_history_invalid_json_error() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let storage_path = reown::review_history::default_review_history_path(tmp.path());
+
+        std::fs::write(&storage_path, "invalid json content").unwrap();
+        let result = reown::review_history::load_review_history(&storage_path);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("JSON パースに失敗"));
+    }
+
+    #[test]
+    fn test_cmd_load_app_config_invalid_json_error() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let config_path = reown::config::default_config_path(tmp.path());
+
+        std::fs::create_dir_all(tmp.path()).unwrap();
+        std::fs::write(&config_path, "not json at all").unwrap();
+        let result = reown::config::load_config(&config_path);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("JSON パースに失敗"));
     }
 }
