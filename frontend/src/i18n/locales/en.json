@@ -14,6 +14,8 @@
     "confirmRemove": "Remove repository '{{name}}' from the list?",
     "selectPrompt": "Select a repository from the sidebar.",
     "empty": "No repositories registered. Click \"Add Repository\" to get started.",
+    "emptyTitle": "No repositories",
+    "emptyDescription": "Click \"Add Repository\" below to get started.",
     "adding": "Adding…",
     "addError": "Failed to add repository. Please ensure it is a Git repository."
   },

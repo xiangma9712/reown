@@ -220,9 +220,45 @@ export function Sidebar({
               </Tooltip.Root>
             ))
           ) : repositories.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-text-muted">
-              {t("repository.empty")}
-            </p>
+            <div className="flex flex-1 flex-col items-center justify-center px-4 py-6 text-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mb-3 text-text-muted/50"
+                aria-hidden="true"
+              >
+                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+              </svg>
+              <p className="text-sm font-medium text-text-muted">
+                {t("repository.emptyTitle")}
+              </p>
+              <p className="mt-1 text-xs text-text-muted/70">
+                {t("repository.emptyDescription")}
+              </p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mt-3 text-text-muted/40"
+                aria-hidden="true"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 19 5 12" />
+              </svg>
+            </div>
           ) : (
             repositories.map((repo) => (
               <div
