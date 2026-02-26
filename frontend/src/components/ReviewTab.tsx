@@ -494,9 +494,7 @@ function PrAnalysisSection({
       )}
 
       {/* Automation panel */}
-      {token && (
-        <AutomationPanel owner={owner} repo={repo} token={token} />
-      )}
+      {token && <AutomationPanel owner={owner} repo={repo} token={token} />}
     </div>
   );
 }

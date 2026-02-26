@@ -88,8 +88,7 @@ export const ResultSuccess: Story = {
           enable_auto_merge: true,
         }),
         evaluate_auto_approve_candidates: () => fixtures.autoApproveCandidates,
-        run_auto_approve_with_merge: () =>
-          fixtures.autoApproveWithMergeResult,
+        run_auto_approve_with_merge: () => fixtures.autoApproveWithMergeResult,
       });
       return <Story />;
     },
