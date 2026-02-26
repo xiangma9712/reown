@@ -7,6 +7,9 @@
     "title": "リポジトリ",
     "add": "リポジトリを追加",
     "remove": "削除",
+    "removeAriaLabel": "{{name}} を削除",
+    "selectAriaLabel": "{{name}} を選択",
+    "addAriaLabel": "リポジトリを追加",
     "confirmRemove": "リポジトリ '{{name}}' を一覧から削除しますか？",
     "selectPrompt": "左のサイドメニューからリポジトリを選択してください。",
     "empty": "リポジトリが登録されていません。「リポジトリを追加」から追加してください。"
@@ -14,7 +17,8 @@
   "tabs": {
     "review": "Review",
     "nextAction": "Next Action",
-    "settings": "Settings"
+    "settings": "Settings",
+    "settingsAriaLabel": "設定を開く"
   },
   "common": {
     "loading": "読み込み中…",

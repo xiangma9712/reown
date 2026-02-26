@@ -5,7 +5,7 @@ import { fixtures } from "../storybook/fixtures";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, opts?: Record<string, string>) => {
       const translations: Record<string, string> = {
         "repository.selectPrompt": "リポジトリを選択してください",
         "app.title": "reown",
@@ -14,7 +14,11 @@ vi.mock("react-i18next", () => ({
         "repository.empty": "リポジトリがありません",
         "repository.add": "リポジトリを追加",
         "repository.remove": "削除",
+        "repository.addAriaLabel": "リポジトリを追加",
+        "tabs.settingsAriaLabel": "設定を開く",
       };
+      if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;
+      if (key === "repository.selectAriaLabel") return `${opts?.name} を選択`;
       return translations[key] ?? key;
     },
   }),

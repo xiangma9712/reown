@@ -6,7 +6,7 @@ import { fixtures } from "../storybook/fixtures";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, opts?: Record<string, string>) => {
       const translations: Record<string, string> = {
         "app.title": "reown",
         "app.tagline": "tagline",
@@ -14,7 +14,11 @@ vi.mock("react-i18next", () => ({
         "repository.empty": "リポジトリがありません",
         "repository.add": "リポジトリを追加",
         "repository.remove": "削除",
+        "repository.addAriaLabel": "リポジトリを追加",
+        "tabs.settingsAriaLabel": "設定を開く",
       };
+      if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;
+      if (key === "repository.selectAriaLabel") return `${opts?.name} を選択`;
       return translations[key] ?? key;
     },
   }),
@@ -73,6 +77,28 @@ describe("Sidebar", () => {
     const removeButtons = screen.getAllByTitle("削除");
     await user.click(removeButtons[0]);
     expect(onRemove).toHaveBeenCalledWith("/Users/dev/project");
+  });
+
+  it("has aria-label on remove buttons", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.getByLabelText("reown を削除")).toBeInTheDocument();
+    expect(screen.getByLabelText("other-project を削除")).toBeInTheDocument();
+  });
+
+  it("has aria-label on repository select buttons", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.getByLabelText("reown を選択")).toBeInTheDocument();
+    expect(screen.getByLabelText("other-project を選択")).toBeInTheDocument();
+  });
+
+  it("has aria-label on add repository button", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.getByLabelText("リポジトリを追加")).toBeInTheDocument();
+  });
+
+  it("has aria-label on settings button", () => {
+    render(<Sidebar {...defaultProps} />);
+    expect(screen.getByLabelText("設定を開く")).toBeInTheDocument();
   });
 
   it("highlights selected repository", () => {
