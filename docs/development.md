@@ -71,10 +71,20 @@ UIを意図的に変更した場合は、スナップショットを更新して
 
 ```sh
 cd frontend
-npm run test:vrt -- --update-snapshots
+npm run test:vrt:update
 ```
 
 更新された `frontend/e2e/vrt/__snapshots__/` 内の PNG ファイルをコミットに含めてください。
+
+#### CI経由でのスナップショット更新
+
+ローカル（macOS）と CI（Linux）ではフォント描画が異なるため、ローカルで生成したスナップショットが CI で一致しない場合があります。その場合は以下の方法で CI 上のスナップショットを更新できます：
+
+1. PRに `update-snapshots` ラベルを付与する
+2. GitHub Actions の「Update VRT Snapshots」ワークフローが自動実行される
+3. Linux 環境で生成されたスナップショットがブランチにコミットされる
+
+手動で実行する場合は、GitHub Actions の「Update VRT Snapshots」ワークフローを `workflow_dispatch` で起動してください。
 
 #### 新しいコンポーネントにストーリーを追加する
 

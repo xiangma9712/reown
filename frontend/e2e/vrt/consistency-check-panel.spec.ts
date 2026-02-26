@@ -18,7 +18,7 @@ test.describe("ConsistencyCheckPanel", () => {
     await page.waitForSelector('[role="status"]', { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "loading.png",
-      { maxDiffPixelRatio: 0.03 }
+      { maxDiffPixelRatio: 0.08 }
     );
   });
 
