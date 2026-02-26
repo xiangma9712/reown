@@ -210,6 +210,27 @@ const categorizedFileDiffs: CategorizedFileDiff[] = [
   { ...fileDiffs[2], category: "Refactor" },
 ];
 
+/** カテゴリフィルタのテスト用に多様なカテゴリを含むdiff */
+const diverseCategorizedFileDiffs: CategorizedFileDiff[] = [
+  { ...fileDiffs[0], category: "Logic" },
+  { ...fileDiffs[1], category: "Logic" },
+  { ...fileDiffs[2], category: "Refactor" },
+  {
+    old_path: "src/__tests__/auth.test.ts",
+    new_path: "src/__tests__/auth.test.ts",
+    status: "Added",
+    chunks: [],
+    category: "Test",
+  },
+  {
+    old_path: "tsconfig.json",
+    new_path: "tsconfig.json",
+    status: "Modified",
+    chunks: [],
+    category: "Config",
+  },
+];
+
 const pullRequests: PrInfo[] = [
   {
     number: 42,
@@ -326,6 +347,36 @@ const prSummary: PrSummary = {
     {
       path: "src/components/LoginForm.tsx",
       summary: "ログインフォームのReactコンポーネントを新規作成。",
+    },
+  ],
+};
+
+/** カテゴリフィルタのテスト用に多様なカテゴリのファイルサマリーを含む */
+const diversePrSummary: PrSummary = {
+  overall_summary:
+    "認証機能を追加するPRです。JWTトークンによる認証基盤の実装と、ログインフォームUIの追加を含みます。",
+  reason: "ユーザー認証が未実装であり、セキュアなアクセス制御が必要なため。",
+  file_summaries: [
+    {
+      path: "src/auth.ts",
+      summary:
+        "JWT認証のコアロジックを実装。トークンの検証とエラーハンドリングを追加。",
+    },
+    {
+      path: "src/components/LoginForm.tsx",
+      summary: "ログインフォームのReactコンポーネントを新規作成。",
+    },
+    {
+      path: "src/legacy/old-auth.ts",
+      summary: "旧認証モジュールを削除。新しいJWT認証に置き換え。",
+    },
+    {
+      path: "src/__tests__/auth.test.ts",
+      summary: "認証ロジックのユニットテストを追加。",
+    },
+    {
+      path: "tsconfig.json",
+      summary: "TypeScript設定にパスエイリアスを追加。",
     },
   ],
 };
@@ -447,6 +498,7 @@ export const fixtures = {
   enrichedBranches,
   fileDiffs,
   categorizedFileDiffs,
+  diverseCategorizedFileDiffs,
   pullRequests,
   commits,
   repositories,
@@ -455,6 +507,7 @@ export const fixtures = {
   automationConfig,
   appConfig,
   prSummary,
+  diversePrSummary,
   consistencyResult,
   analysisResult,
   hybridAnalysisResult,

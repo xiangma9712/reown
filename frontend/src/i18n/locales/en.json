@@ -142,6 +142,8 @@
     "commitDiffEmpty": "No changes in this commit.",
     "selectCommit": "Select a commit to view its diff.",
     "changeSummaryTitle": "Change Summary",
+    "categoryFilterAll": "All",
+    "categoryFilterCount": "{{count}}/{{total}} files",
     "viewDiff": "View Diff",
     "hideDiff": "Hide Diff",
     "reviewSubmitTitle": "Submit Review",

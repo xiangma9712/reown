@@ -62,4 +62,30 @@ test.describe("ChangeSummaryList", () => {
       "diff-expanded.png"
     );
   });
+
+  test("with category filter", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-changesummarylist--with-category-filter&viewMode=story"
+    );
+    // play関数のサマリー表示を待つ
+    await page.waitForSelector("text=全体要約", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "with-category-filter.png"
+    );
+  });
+
+  test("filtered by logic", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-changesummarylist--filtered-by-logic&viewMode=story"
+    );
+    // play関数のフィルタ適用を待つ
+    await page.waitForSelector("text=2/5 ファイル", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "filtered-by-logic.png"
+    );
+  });
 });
