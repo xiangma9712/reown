@@ -30,9 +30,9 @@ export function Sidebar({
   return (
     <aside className="flex h-full w-56 flex-col border-r border-border bg-sidebar-bg">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <h1 className="text-xl font-bold text-text-heading">
+        <span className="text-xl font-bold text-text-heading">
           {t("app.title")}
-        </h1>
+        </span>
       </div>
       <div className="border-b border-border px-4 py-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">

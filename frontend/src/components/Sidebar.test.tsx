@@ -39,11 +39,13 @@ const defaultProps = {
 };
 
 describe("Sidebar", () => {
-  it("renders app title", () => {
+  it("renders app title as non-heading element", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "reown"
-    );
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    const allReown = screen.getAllByText("reown");
+    expect(allReown.length).toBeGreaterThanOrEqual(1);
+    const brandElement = allReown.find((el) => el.tagName === "SPAN");
+    expect(brandElement).toBeDefined();
   });
 
   it("renders repository list", () => {
