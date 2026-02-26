@@ -115,9 +115,7 @@ describe("Sidebar", () => {
     );
     const currentItem = container.querySelector('[aria-current="true"]');
     expect(currentItem).toBeInTheDocument();
-    const nonSelectedItems = container.querySelectorAll(
-      "[aria-current]"
-    );
+    const nonSelectedItems = container.querySelectorAll("[aria-current]");
     expect(nonSelectedItems).toHaveLength(1);
   });
 });
