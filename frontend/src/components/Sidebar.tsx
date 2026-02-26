@@ -43,6 +43,7 @@ export function Sidebar({
           repositories.map((repo) => (
             <div
               key={repo.path}
+              aria-current={selectedPath === repo.path ? "true" : undefined}
               className={`group flex w-full items-center justify-between px-4 py-2 text-base transition-colors ${
                 selectedPath === repo.path
                   ? "border-l-2 border-l-accent bg-bg-hover text-accent"
