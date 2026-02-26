@@ -50,6 +50,7 @@ const defaultHandlers: CommandHandlers = {
   suggest_review_comments: () => fixtures.reviewSuggestions,
   evaluate_auto_approve_candidates: () => [],
   run_auto_approve_with_merge: () => fixtures.autoApproveWithMergeResult,
+  add_review_record: () => undefined as never,
 };
 
 let currentOverrides: Partial<CommandHandlers> = {};

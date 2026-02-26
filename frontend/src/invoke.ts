@@ -17,6 +17,7 @@ import type {
   AnalysisResult,
   HybridAnalysisResult,
   ReviewEvent,
+  ReviewRecord,
   TodoItem,
   ReviewSuggestion,
   AutoApproveCandidate,
@@ -147,6 +148,10 @@ export type Commands = {
   suggest_review_comments: {
     args: { owner: string; repo: string; prNumber: number; token: string };
     ret: ReviewSuggestion[];
+  };
+  add_review_record: {
+    args: { record: ReviewRecord };
+    ret: void;
   };
 };
 

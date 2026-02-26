@@ -144,6 +144,7 @@
     "changeSummaryTitle": "Change Summary",
     "viewDiff": "View Diff",
     "hideDiff": "Hide Diff",
+    "reviewSubmitTitle": "Submit Review",
     "reviewSuggestions": "Review Suggestions",
     "reviewSuggestionsRun": "Generate",
     "reviewSuggestionsLoading": "Generating suggestions…",
