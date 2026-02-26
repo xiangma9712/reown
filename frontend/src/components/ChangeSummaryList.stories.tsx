@@ -109,3 +109,45 @@ export const DiffExpanded: Story = {
     });
   },
 };
+
+/** カテゴリフィルタ表示状態（多様なカテゴリのサマリー + フィルタUI） */
+export const WithCategoryFilter: Story = {
+  args: {
+    diffs: fixtures.diverseCategorizedFileDiffs,
+  },
+  play: async ({ canvasElement }) => {
+    overrideInvoke({
+      summarize_pull_request: () => fixtures.diversePrSummary,
+    });
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    await userEvent.click(button);
+    await waitFor(() => {
+      canvas.getByText("全体要約");
+    });
+  },
+};
+
+/** カテゴリフィルタでロジックのみ選択した状態 */
+export const FilteredByLogic: Story = {
+  args: {
+    diffs: fixtures.diverseCategorizedFileDiffs,
+  },
+  play: async ({ canvasElement }) => {
+    overrideInvoke({
+      summarize_pull_request: () => fixtures.diversePrSummary,
+    });
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    await userEvent.click(button);
+    await waitFor(() => {
+      canvas.getByText("全体要約");
+    });
+    // 「ロジック」フィルタボタンをクリック
+    const logicButton = canvas.getByRole("button", { name: /ロジック/ });
+    await userEvent.click(logicButton);
+    await waitFor(() => {
+      canvas.getByText(/2\/5 ファイル/);
+    });
+  },
+};

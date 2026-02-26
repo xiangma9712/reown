@@ -142,6 +142,8 @@
     "commitDiffEmpty": "このコミットには差分がありません。",
     "selectCommit": "コミットを選択してください。",
     "changeSummaryTitle": "変更要約",
+    "categoryFilterAll": "すべて",
+    "categoryFilterCount": "{{count}}/{{total}} ファイル",
     "viewDiff": "diffを見る",
     "hideDiff": "diffを閉じる",
     "reviewSubmitTitle": "レビュー送信",
