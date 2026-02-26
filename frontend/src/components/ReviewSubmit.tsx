@@ -68,11 +68,12 @@ export function ReviewSubmit({
         });
 
         // Record to review history
-        const categories: ChangeCategory[] = prDiffs.length > 0
-          ? [...new Set(prDiffs.map((d) => d.category))]
-          : analysisResult
-            ? analysisResult.summary.categories.map((c) => c.category)
-            : [];
+        const categories: ChangeCategory[] =
+          prDiffs.length > 0
+            ? [...new Set(prDiffs.map((d) => d.category))]
+            : analysisResult
+              ? analysisResult.summary.categories.map((c) => c.category)
+              : [];
 
         await invoke("add_review_record", {
           record: {
