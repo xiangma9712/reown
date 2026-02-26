@@ -290,7 +290,7 @@ export function Layout({
               role="tabpanel"
               id={`tabpanel-${activeTabId}`}
               aria-labelledby={`tab-${activeTabId}`}
-              className="scrollbar-custom flex-1 overflow-y-auto p-8"
+              className="scrollbar-custom flex-1 overflow-y-auto p-4"
             >
               {children}
             </main>
