@@ -1275,10 +1275,8 @@ mod tests {
         let storage_path = reown::repository::default_storage_path(tmp.path());
 
         let non_git_dir = tempfile::TempDir::new().unwrap();
-        let result = reown::repository::add_repository(
-            &storage_path,
-            non_git_dir.path().to_str().unwrap(),
-        );
+        let result =
+            reown::repository::add_repository(&storage_path, non_git_dir.path().to_str().unwrap());
         assert!(result.is_err());
         assert!(result
             .unwrap_err()
@@ -1549,7 +1547,10 @@ mod tests {
         let config_path = reown::config::default_config_path(tmp.path());
 
         let config = reown::config::load_config(&config_path).unwrap();
-        assert_eq!(config.automation, reown::config::AutomationConfig::default());
+        assert_eq!(
+            config.automation,
+            reown::config::AutomationConfig::default()
+        );
         assert!(!config.automation.enabled);
         assert_eq!(
             config.automation.auto_approve_max_risk,
