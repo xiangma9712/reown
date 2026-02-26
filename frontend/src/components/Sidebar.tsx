@@ -55,6 +55,7 @@ interface Props {
   onClose?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  width?: number;
 }
 
 export function Sidebar({
@@ -71,6 +72,7 @@ export function Sidebar({
   onClose,
   collapsed = false,
   onToggleCollapse,
+  width,
 }: Props) {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
@@ -81,9 +83,10 @@ export function Sidebar({
   return (
     <Tooltip.Provider delayDuration={300}>
       <aside
-        className={`flex h-full flex-col border-r border-border bg-sidebar-bg transition-[width] duration-200 ease-in-out ${
-          collapsed ? "w-14" : "w-56"
+        className={`flex h-full flex-col border-r border-border bg-sidebar-bg ${
+          collapsed ? "w-14 transition-[width] duration-200 ease-in-out" : ""
         }`}
+        style={!collapsed && width ? { width: `${width}px` } : !collapsed ? { width: "14rem" } : undefined}
       >
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           {collapsed ? (

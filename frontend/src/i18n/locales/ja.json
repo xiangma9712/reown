@@ -21,7 +21,8 @@
     "open": "サイドバーを開く",
     "close": "サイドバーを閉じる",
     "collapse": "サイドバーを折りたたむ",
-    "expand": "サイドバーを展開する"
+    "expand": "サイドバーを展開する",
+    "resizeHandle": "サイドバーの幅を調整"
   },
   "tabs": {
     "review": "Review",

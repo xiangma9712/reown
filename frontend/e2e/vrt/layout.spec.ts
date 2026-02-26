@@ -66,4 +66,13 @@ test.describe("Layout", () => {
       "sidebar-collapsed.png"
     );
   });
+
+  test("sidebar resized", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--sidebar-resized&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "sidebar-resized.png"
+    );
+  });
 });
