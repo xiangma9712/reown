@@ -31,7 +31,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addingRepo, setAddingRepo] = useState(false);
   const [addRepoError, setAddRepoError] = useState<string | null>(null);
-  const addErrorTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const addErrorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (!selectedRepoPath) {
