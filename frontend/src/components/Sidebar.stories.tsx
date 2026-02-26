@@ -108,6 +108,22 @@ export const CollapsedLoading: Story = {
   },
 };
 
+export const CollapsedEmpty: Story = {
+  args: {
+    collapsed: true,
+    onToggleCollapse: fn(),
+    repositories: [],
+  },
+};
+
+export const CollapsedSettingsOpen: Story = {
+  args: {
+    collapsed: true,
+    onToggleCollapse: fn(),
+    settingsOpen: true,
+  },
+};
+
 // ── Theme toggle variants ────────────────────────────────────
 
 export const ThemeToggleLight: Story = {

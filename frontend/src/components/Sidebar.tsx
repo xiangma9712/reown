@@ -85,8 +85,8 @@ export function Sidebar({
   return (
     <Tooltip.Provider delayDuration={300}>
       <aside
-        className={`flex h-full flex-col border-r border-border bg-sidebar-bg ${
-          collapsed ? "w-14 transition-[width] duration-200 ease-in-out" : ""
+        className={`flex h-full flex-col overflow-hidden border-r border-border bg-sidebar-bg transition-[width] duration-200 ease-in-out ${
+          collapsed ? "w-14" : ""
         }`}
         style={
           !collapsed && width
@@ -102,14 +102,14 @@ export function Sidebar({
               R
             </span>
           ) : (
-            <span className="text-xl font-bold text-text-heading">
+            <span className="sidebar-fade-text text-xl font-bold text-text-heading">
               {t("app.title")}
             </span>
           )}
           {onClose && !collapsed && (
             <button
               onClick={onClose}
-              className="ml-auto cursor-pointer rounded border-none bg-transparent p-1 text-text-muted transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="sidebar-fade-text ml-auto cursor-pointer rounded border-none bg-transparent p-1 text-text-muted transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               aria-label={t("sidebar.close")}
             >
               <svg
@@ -130,7 +130,7 @@ export function Sidebar({
           )}
         </div>
         {!collapsed && (
-          <div className="border-b border-border px-4 py-3">
+          <div className="sidebar-fade-text border-b border-border px-4 py-3">
             <h2
               id="sidebar-repositories-heading"
               className="m-0 text-xs font-semibold uppercase tracking-wider text-text-muted"
@@ -220,7 +220,7 @@ export function Sidebar({
               </Tooltip.Root>
             ))
           ) : repositories.length === 0 ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-6 text-center">
+            <div className="sidebar-fade-text flex flex-1 flex-col items-center justify-center px-4 py-6 text-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="32"
@@ -264,7 +264,7 @@ export function Sidebar({
               <div
                 key={repo.path}
                 aria-current={selectedPath === repo.path ? "true" : undefined}
-                className={`group flex w-full items-center justify-between px-4 py-2 text-base transition-colors ${
+                className={`sidebar-fade-text group flex w-full items-center justify-between px-4 py-2 text-base transition-colors ${
                   selectedPath === repo.path
                     ? "border-l-2 border-l-accent bg-bg-hover text-accent"
                     : "border-l-2 border-l-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
@@ -352,7 +352,7 @@ export function Sidebar({
             </Tooltip.Root>
           </div>
         ) : (
-          <div className="border-t border-border px-4 py-3">
+          <div className="sidebar-fade-text border-t border-border px-4 py-3">
             <button
               onClick={onAdd}
               disabled={adding}
@@ -425,7 +425,7 @@ export function Sidebar({
               </Tooltip.Portal>
             </Tooltip.Root>
           ) : (
-            <>
+            <div className="sidebar-fade-text">
               <button
                 onClick={onToggleSettings}
                 className={`flex w-full cursor-pointer items-center gap-2 rounded border-none bg-transparent px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
@@ -467,7 +467,7 @@ export function Sidebar({
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
         {onToggleCollapse && (
