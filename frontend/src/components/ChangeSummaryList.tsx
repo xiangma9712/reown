@@ -453,7 +453,7 @@ export function ChangeSummaryList({
               <h3 className="text-[0.85rem] font-semibold text-text-heading">
                 {t("pr.fileSummaries")}
               </h3>
-              {filteredFileSummaries.map((file, i) => {
+              {filteredFileSummaries.map((file) => {
                 const category = findCategoryForPath(file.path, diffs);
                 const diffIndex = findDiffIndexForPath(file.path, diffs);
                 const isDiffExpanded = expandedDiffs.has(file.path);
