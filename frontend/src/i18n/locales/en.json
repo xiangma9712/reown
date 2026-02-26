@@ -214,6 +214,11 @@
     "count": "{{count}} items",
     "filterAll": "All",
     "filterTodo": "TODO",
-    "filterFixme": "FIXME"
+    "filterFixme": "FIXME",
+    "createWorktree": "Create Worktree",
+    "createWorktreeConfirm": "Create a worktree with branch \"{{branch}}\"?",
+    "createWorktreeSuccess": "Worktree created: {{branch}}",
+    "createWorktreeError": "Failed to create worktree: {{message}}",
+    "creatingWorktree": "Creating…"
   }
 }

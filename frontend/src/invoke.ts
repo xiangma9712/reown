@@ -140,6 +140,10 @@ export type Commands = {
     ret: AutoApproveWithMergeResult;
   };
   extract_todos: { args: { repoPath: string }; ret: TodoItem[] };
+  create_worktree_for_todo: {
+    args: { repoPath: string; filePath: string; lineNumber: number };
+    ret: WorktreeInfo;
+  };
   suggest_review_comments: {
     args: { owner: string; repo: string; prNumber: number; token: string };
     ret: ReviewSuggestion[];

@@ -46,6 +46,7 @@ const defaultHandlers: CommandHandlers = {
   save_automation_config: () => undefined as never,
   load_automation_config: () => fixtures.automationConfig,
   extract_todos: () => fixtures.todoItems,
+  create_worktree_for_todo: () => fixtures.worktrees[1],
   suggest_review_comments: () => fixtures.reviewSuggestions,
   evaluate_auto_approve_candidates: () => [],
   run_auto_approve_with_merge: () => fixtures.autoApproveWithMergeResult,

@@ -513,6 +513,16 @@ fn extract_todos(repo_path: String) -> Result<Vec<reown::git::todo::TodoItem>, A
     reown::git::todo::extract_todos(&repo_path).map_err(AppError::git)
 }
 
+#[tauri::command]
+fn create_worktree_for_todo(
+    repo_path: String,
+    file_path: String,
+    line_number: u32,
+) -> Result<reown::git::worktree::WorktreeInfo, AppError> {
+    reown::git::worktree::add_worktree_for_todo(&repo_path, &file_path, line_number)
+        .map_err(AppError::git)
+}
+
 // ── Review Pattern commands ──────────────────────────────────────────────────
 
 #[tauri::command]
@@ -629,6 +639,7 @@ fn main() {
             run_auto_approve,
             run_auto_approve_with_merge,
             extract_todos,
+            create_worktree_for_todo,
             suggest_review_comments,
             list_review_history,
             add_review_record,
