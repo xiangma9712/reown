@@ -27,4 +27,14 @@ test.describe("Layout", () => {
       "with-branch-selector.png"
     );
   });
+
+  test("focus-visible on interactive elements", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-layout--with-repo&viewMode=story"
+    );
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "focus-visible.png"
+    );
+  });
 });

@@ -27,4 +27,14 @@ test.describe("TabBar", () => {
       "third-active.png"
     );
   });
+
+  test("focus-visible on tab", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-tabbar--first-active&viewMode=story"
+    );
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "focus-visible.png"
+    );
+  });
 });

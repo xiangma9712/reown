@@ -51,7 +51,7 @@ export function Sidebar({
               }`}
             >
               <button
-                className="flex-1 cursor-pointer truncate border-none bg-transparent text-left text-inherit"
+                className="flex-1 cursor-pointer truncate rounded border-none bg-transparent text-left text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 onClick={() => onSelect(repo.path)}
                 title={repo.path}
                 aria-label={t("repository.selectAriaLabel", {
@@ -61,7 +61,7 @@ export function Sidebar({
                 {repo.name}
               </button>
               <button
-                className="ml-1 cursor-pointer border-none bg-transparent p-0.5 text-text-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
+                className="ml-1 cursor-pointer rounded border-none bg-transparent p-0.5 text-text-muted opacity-0 transition-opacity hover:text-danger focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent group-hover:opacity-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   onRemove(repo.path);
@@ -80,7 +80,7 @@ export function Sidebar({
       <div className="border-t border-border px-4 py-3">
         <button
           onClick={onAdd}
-          className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent"
+          className="flex w-full cursor-pointer items-center justify-center gap-1 rounded border border-border bg-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           aria-label={t("repository.addAriaLabel")}
         >
           + {t("repository.add")}
@@ -89,7 +89,7 @@ export function Sidebar({
       <div className="border-t border-border px-4 py-3">
         <button
           onClick={onToggleSettings}
-          className={`flex w-full cursor-pointer items-center gap-2 rounded border-none bg-transparent px-2 py-1.5 text-sm transition-colors ${
+          className={`flex w-full cursor-pointer items-center gap-2 rounded border-none bg-transparent px-2 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
             settingsOpen
               ? "text-accent"
               : "text-text-secondary hover:text-text-primary"
