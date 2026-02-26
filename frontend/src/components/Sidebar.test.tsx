@@ -16,6 +16,8 @@ vi.mock("react-i18next", () => ({
         "app.title": "reown",
         "repository.title": "Repositories",
         "repository.empty": "リポジトリがありません",
+        "repository.emptyTitle": "リポジトリがありません",
+        "repository.emptyDescription": "下の「リポジトリを追加」ボタンから追加してください。",
         "repository.add": "リポジトリを追加",
         "repository.remove": "削除",
         "repository.addAriaLabel": "リポジトリを追加",
@@ -78,9 +80,12 @@ describe("Sidebar", () => {
     expect(screen.getByText("other-project")).toBeInTheDocument();
   });
 
-  it("shows empty message when no repositories", () => {
+  it("shows empty state guidance when no repositories", () => {
     render(<Sidebar {...defaultProps} repositories={[]} />);
     expect(screen.getByText("リポジトリがありません")).toBeInTheDocument();
+    expect(
+      screen.getByText("下の「リポジトリを追加」ボタンから追加してください。")
+    ).toBeInTheDocument();
   });
 
   it("calls onSelect when repo is clicked", async () => {
