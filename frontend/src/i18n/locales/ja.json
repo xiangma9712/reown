@@ -237,7 +237,9 @@
     "prFiles": "PRファイル一覧",
     "prFilesEmpty": "変更ファイルがありません。",
     "prFilesLoading": "PRのファイル差分を取得中…",
-    "noPr": "このブランチに関連するPRはありません。"
+    "noPr": "このブランチに関連するPRはありません。",
+    "diffOverview": "差分概要",
+    "diffOverviewFiles": "{{count}} ファイル変更"
   },
   "theme": {
     "label": "テーマ切替",

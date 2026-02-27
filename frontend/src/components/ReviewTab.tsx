@@ -225,7 +225,9 @@ export function ReviewTab() {
 
       {selectedBranch && selectedBranch !== "main" && (
         <>
-          {/* PR info section (if PR exists) */}
+          {/* === Overview Section (top) === */}
+
+          {/* PR info + diff overview (if PR exists) */}
           {matchedPr && (
             <Card>
               <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
@@ -245,6 +247,67 @@ export function ReviewTab() {
                   {t("review.prState", { state: matchedPr.state })}
                 </p>
               </div>
+              {/* Diff stats overview */}
+              <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-sm">
+                <span className="text-text-secondary">
+                  {t("review.diffOverviewFiles", {
+                    count: matchedPr.changed_files,
+                  })}
+                </span>
+                <span className="font-mono text-accent">
+                  +{matchedPr.additions}
+                </span>
+                <span className="font-mono text-danger">
+                  -{matchedPr.deletions}
+                </span>
+              </div>
+              {matchedPr.body && (
+                <p className="mt-2 whitespace-pre-wrap text-[0.85rem] text-text-secondary">
+                  {matchedPr.body}
+                </p>
+              )}
+            </Card>
+          )}
+
+          {/* No PR: branch diff overview */}
+          {!matchedPr && !loading && !error && diffs.length > 0 && (
+            <Card>
+              <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+                {t("review.diffOverview")}
+              </h2>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-text-secondary">
+                  {t("review.diffOverviewFiles", { count: diffs.length })}
+                </span>
+                <span className="font-mono text-accent">
+                  +
+                  {diffs.reduce(
+                    (sum, d) =>
+                      sum +
+                      d.chunks.reduce(
+                        (cs, c) =>
+                          cs +
+                          c.lines.filter((l) => l.origin === "Addition").length,
+                        0
+                      ),
+                    0
+                  )}
+                </span>
+                <span className="font-mono text-danger">
+                  -
+                  {diffs.reduce(
+                    (sum, d) =>
+                      sum +
+                      d.chunks.reduce(
+                        (cs, c) =>
+                          cs +
+                          c.lines.filter((l) => l.origin === "Deletion").length,
+                        0
+                      ),
+                    0
+                  )}
+                </span>
+              </div>
             </Card>
           )}
 
@@ -261,7 +324,7 @@ export function ReviewTab() {
           )}
 
           {/* No PR message */}
-          {!matchedPr && (
+          {!matchedPr && !loading && !error && diffs.length > 0 && (
             <Card>
               <p className="p-2 text-center text-sm text-text-secondary">
                 {t("review.noPr")}
@@ -269,7 +332,9 @@ export function ReviewTab() {
             </Card>
           )}
 
-          {/* PR file diff section (when PR is matched) — detail below overview */}
+          {/* === Detail Section (bottom) === */}
+
+          {/* PR file diff section (when PR is matched) */}
           {matchedPr && (
             <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
               <Card className="flex flex-col">
