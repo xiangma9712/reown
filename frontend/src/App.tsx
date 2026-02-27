@@ -3,19 +3,19 @@ import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ReviewTab } from "./components/ReviewTab";
 import { TodoTab } from "./components/TodoTab";
-import { BranchSelector } from "./components/BranchSelector";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
 import { ThemeProvider } from "./ThemeContext";
 import { invoke } from "./invoke";
-import type { RepositoryEntry, RepoInfo, PrInfo } from "./types";
+import type { RepositoryEntry, RepoInfo } from "./types";
 import "./style.css";
 
 const NAV_ITEMS = [
   { id: "review", labelKey: "tabs.review", shortcut: "R" },
   { id: "next-action", labelKey: "tabs.nextAction", shortcut: "N" },
+  { id: "automate", labelKey: "tabs.automate", shortcut: "A" },
 ] as const;
 
 type TabName = (typeof NAV_ITEMS)[number]["id"];
@@ -26,8 +26,6 @@ export function App() {
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
-  const [prs] = useState<PrInfo[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addingRepo, setAddingRepo] = useState(false);
   const [addRepoError, setAddRepoError] = useState<string | null>(null);
@@ -39,7 +37,6 @@ export function App() {
   useEffect(() => {
     if (!selectedRepoPath) {
       setRepoInfo(null);
-      setSelectedBranch(null);
       return;
     }
     invoke("get_repo_info", { repoPath: selectedRepoPath })
@@ -129,6 +126,10 @@ export function App() {
           setActiveTab("next-action");
           setSettingsOpen(false);
           break;
+        case "a":
+          setActiveTab("automate");
+          setSettingsOpen(false);
+          break;
         case "s":
           setSettingsOpen((prev) => !prev);
           break;
@@ -175,18 +176,10 @@ export function App() {
               <AutomationSettingsTab />
             </div>
           }
-          branchSelector={
-            <BranchSelector
-              prs={prs}
-              selectedBranch={selectedBranch}
-              onSelectBranch={setSelectedBranch}
-            />
-          }
         >
-          {activeTab === "review" && (
-            <ReviewTab selectedBranch={selectedBranch} prs={prs} />
-          )}
+          {activeTab === "review" && <ReviewTab />}
           {activeTab === "next-action" && <TodoTab />}
+          {activeTab === "automate" && <AutomationSettingsTab />}
         </Layout>
       </RepositoryProvider>
     </ThemeProvider>

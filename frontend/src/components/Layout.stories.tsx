@@ -4,8 +4,9 @@ import { Layout } from "./Layout";
 import { fixtures } from "../storybook/fixtures";
 
 const navItems = [
-  { id: "review", labelKey: "tabs.review", shortcut: "1" },
-  { id: "next-action", labelKey: "tabs.nextAction", shortcut: "2" },
+  { id: "review", labelKey: "tabs.review", shortcut: "R" },
+  { id: "next-action", labelKey: "tabs.nextAction", shortcut: "N" },
+  { id: "automate", labelKey: "tabs.automate", shortcut: "A" },
 ];
 
 const meta = {
@@ -37,12 +38,6 @@ export const WithRepo: Story = {};
 export const NoRepoSelected: Story = {
   args: {
     selectedRepoPath: null,
-  },
-};
-
-export const WithBranchSelector: Story = {
-  args: {
-    branchSelector: <span className="text-sm text-text-secondary">main</span>,
   },
 };
 

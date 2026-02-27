@@ -38,7 +38,6 @@ interface Props {
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
   settingsContent?: ReactNode;
-  branchSelector?: ReactNode;
   children: ReactNode;
 }
 
@@ -58,7 +57,6 @@ export function Layout({
   settingsOpen,
   onToggleSettings,
   settingsContent,
-  branchSelector,
   children,
 }: Props) {
   const { t } = useTranslation();
@@ -281,11 +279,6 @@ export function Layout({
                   <line x1="3" y1="18" x2="21" y2="18" />
                 </svg>
               </button>
-              {!settingsOpen && branchSelector && (
-                <div className="shrink-0 border-r border-border px-4 py-2">
-                  {branchSelector}
-                </div>
-              )}
               {settingsOpen ? (
                 <div className="flex flex-1 items-center justify-between px-4 py-2">
                   <h1 className="text-sm font-semibold text-text-primary">

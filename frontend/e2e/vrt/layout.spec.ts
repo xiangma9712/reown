@@ -19,15 +19,6 @@ test.describe("Layout", () => {
     );
   });
 
-  test("with branch selector", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-layout--with-branch-selector&viewMode=story"
-    );
-    await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "with-branch-selector.png"
-    );
-  });
-
   test("focus-visible on interactive elements", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=components-layout--with-repo&viewMode=story"

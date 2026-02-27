@@ -7,13 +7,15 @@ import {
   fixtures,
 } from "../storybook";
 
+/** feature/auth がHEADのenrichedBranches（自動選択でfeature/authが選ばれる） */
+const featureHeadBranches = fixtures.enrichedBranches.map((b) => ({
+  ...b,
+  is_head: b.name === "feature/auth",
+}));
+
 const meta = {
   title: "Components/ReviewTab",
   component: ReviewTab,
-  args: {
-    selectedBranch: null,
-    prs: [],
-  },
   decorators: [
     (Story) => {
       resetInvokeOverrides();
@@ -29,20 +31,36 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** ブランチ未選択 */
-export const NoBranch: Story = {};
+/** ブランチ未選択（初期状態） */
+export const NoBranch: Story = {
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        list_enriched_branches: () => [],
+      });
+      return <Story />;
+    },
+  ],
+};
 
 /** mainブランチ選択時 */
 export const MainBranch: Story = {
-  args: { selectedBranch: "main" },
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        list_enriched_branches: () => fixtures.enrichedBranches,
+      });
+      return <Story />;
+    },
+  ],
 };
 
 /** 差分なし（空状態） */
 export const Empty: Story = {
-  args: { selectedBranch: "feature/empty" },
   decorators: [
     (Story) => {
       overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => [],
       });
       return <Story />;
@@ -52,10 +70,10 @@ export const Empty: Story = {
 
 /** ローディング状態 */
 export const Loading: Story = {
-  args: { selectedBranch: "feature/auth" },
   decorators: [
     (Story) => {
       overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
         diff_branches: () =>
           new Promise(() => {
             /* never resolves */
@@ -68,10 +86,10 @@ export const Loading: Story = {
 
 /** エラー状態 */
 export const Error: Story = {
-  args: { selectedBranch: "feature/broken" },
   decorators: [
     (Story) => {
       overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
         diff_branches: () =>
           Promise.reject("Reference 'feature/broken' not found"),
       });
@@ -82,10 +100,10 @@ export const Error: Story = {
 
 /** 差分あり（PR関連なし） */
 export const WithDiffs: Story = {
-  args: { selectedBranch: "feature/auth" },
   decorators: [
     (Story) => {
       overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => fixtures.fileDiffs,
       });
       return <Story />;
@@ -95,13 +113,10 @@ export const WithDiffs: Story = {
 
 /** PR関連付きの差分表示 */
 export const WithPrInfo: Story = {
-  args: {
-    selectedBranch: "feature/auth",
-    prs: fixtures.pullRequests,
-  },
   decorators: [
     (Story) => {
       overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => fixtures.fileDiffs,
         load_app_config: () => ({
           ...fixtures.appConfig,
@@ -119,13 +134,10 @@ export const WithPrInfo: Story = {
 
 /** PRファイル差分ローディング状態 */
 export const PrFilesLoading: Story = {
-  args: {
-    selectedBranch: "feature/auth",
-    prs: fixtures.pullRequests,
-  },
   decorators: [
     (Story) => {
       overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => fixtures.fileDiffs,
         load_app_config: () => ({
           ...fixtures.appConfig,
@@ -155,13 +167,10 @@ export const PrFilesLoading: Story = {
 
 /** PRファイル差分エラー状態 */
 export const PrFilesError: Story = {
-  args: {
-    selectedBranch: "feature/auth",
-    prs: fixtures.pullRequests,
-  },
   decorators: [
     (Story) => {
       overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => fixtures.fileDiffs,
         load_app_config: () => ({
           ...fixtures.appConfig,
