@@ -20,6 +20,57 @@ step_implement() {
 
   git checkout -b "$BRANCH_NAME"
 
+  # ── Pre-check: verify if requirements are already met ────────────────────
+  local PRECHECK_PROMPT PRECHECK_INPUT PRECHECK_STDERR PRECHECK_OUTPUT PRECHECK_JSON PRECHECK_VERDICT
+
+  PRECHECK_PROMPT=$(cat "$SCRIPT_DIR/prompts/verify.md")
+  PRECHECK_INPUT="$PRECHECK_PROMPT
+
+## Issue
+
+- **Title**: $TASK_TITLE
+- **Body**: $TASK_DESC"
+
+  log "Running pre-implementation verification for #$TASK_ISSUE..."
+  PRECHECK_STDERR="/tmp/claude/agent-precheck-stderr.log"
+  PRECHECK_OUTPUT=$(claude -p "$PRECHECK_INPUT" \
+    --max-turns "$VERIFY_MAX_TURNS" \
+    --max-budget-usd "$MAX_BUDGET_USD" \
+    --allowedTools "Read,Glob,Grep" \
+    2>"$PRECHECK_STDERR") || true
+
+  if check_rate_limit "$PRECHECK_STDERR"; then
+    flag_rate_limit
+    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+    cleanup_branch "$BRANCH_NAME"
+    return 2
+  fi
+
+  PRECHECK_JSON=$(echo "$PRECHECK_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
+  PRECHECK_VERDICT=$(echo "$PRECHECK_JSON" | jq -r '.verdict' 2>/dev/null || echo "")
+
+  if [[ "$PRECHECK_VERDICT" == "pass" ]]; then
+    local PRECHECK_REASONING
+    PRECHECK_REASONING=$(echo "$PRECHECK_JSON" | jq -r '.reasoning' 2>/dev/null || echo "")
+    log "Pre-check passed: requirements already met for #$TASK_ISSUE. Skipping implementation."
+    gh issue edit "$TASK_ISSUE" --add-label "done" --remove-label "doing" --remove-label "planned" 2>/dev/null || true
+    gh issue comment "$TASK_ISSUE" \
+      --body "このissueの機能は既にmainに実装済みです。エージェントが確認しクローズしました。
+
+**検証結果**: $PRECHECK_REASONING
+
+---
+_Automatically posted by agent/loop.sh_" 2>/dev/null || true
+    gh issue close "$TASK_ISSUE" 2>/dev/null || true
+    log "Issue #$TASK_ISSUE closed as already implemented (pre-check)."
+    cleanup_branch "$BRANCH_NAME"
+    sleep "$SLEEP_SECONDS"
+    return 1
+  fi
+
+  log "Pre-check: requirements not yet met for #$TASK_ISSUE. Proceeding with implementation."
+
+  # ── Run implementation agent ─────────────────────────────────────────────
   local IMPLEMENT_PROMPT IMPLEMENT_INPUT CLAUDE_STDERR CLAUDE_EXIT
   IMPLEMENT_PROMPT=$(cat "$SCRIPT_DIR/prompts/implement.md")
   IMPLEMENT_INPUT="$IMPLEMENT_PROMPT

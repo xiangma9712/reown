@@ -4,29 +4,23 @@
 step_reqverify() {
   cd "$REPO_ROOT"
 
-  local VERIFY_PROMPT DIFF_OUTPUT VERIFY_INPUT VERIFY_STDERR VERIFY_OUTPUT VERIFY_JSON VERDICT REASONING
+  local VERIFY_PROMPT VERIFY_INPUT VERIFY_STDERR VERIFY_OUTPUT VERIFY_JSON VERDICT REASONING
 
   VERIFY_PROMPT=$(cat "$SCRIPT_DIR/prompts/verify.md")
-  DIFF_OUTPUT=$(git diff main...HEAD 2>/dev/null || git diff main 2>/dev/null || echo "(no diff available)")
 
   VERIFY_INPUT="$VERIFY_PROMPT
 
 ## Issue
 
 - **Title**: $TASK_TITLE
-- **Body**: $TASK_DESC
-
-## Git Diff (main...HEAD)
-
-\`\`\`diff
-$DIFF_OUTPUT
-\`\`\`"
+- **Body**: $TASK_DESC"
 
   log "Running requirement verification for #$TASK_ISSUE..."
   VERIFY_STDERR="/tmp/claude/agent-reqverify-stderr.log"
   VERIFY_OUTPUT=$(claude -p "$VERIFY_INPUT" \
     --max-turns "$VERIFY_MAX_TURNS" \
     --max-budget-usd "$MAX_BUDGET_USD" \
+    --allowedTools "Read,Glob,Grep" \
     2>"$VERIFY_STDERR") || true
 
   # Rate limit check
@@ -80,25 +74,19 @@ Please fix the implementation to address the gap. Then run cargo test and cargo 
   fi
 
   # ── Re-verify after fix ────────────────────────────────────────────────────
-  DIFF_OUTPUT=$(git diff main...HEAD 2>/dev/null || git diff main 2>/dev/null || echo "(no diff available)")
   VERIFY_INPUT="$VERIFY_PROMPT
 
 ## Issue
 
 - **Title**: $TASK_TITLE
-- **Body**: $TASK_DESC
-
-## Git Diff (main...HEAD)
-
-\`\`\`diff
-$DIFF_OUTPUT
-\`\`\`"
+- **Body**: $TASK_DESC"
 
   log "Re-running requirement verification for #$TASK_ISSUE after fix..."
   VERIFY_STDERR="/tmp/claude/agent-reqverify-retry-stderr.log"
   VERIFY_OUTPUT=$(claude -p "$VERIFY_INPUT" \
     --max-turns "$VERIFY_MAX_TURNS" \
     --max-budget-usd "$MAX_BUDGET_USD" \
+    --allowedTools "Read,Glob,Grep" \
     2>"$VERIFY_STDERR") || true
 
   if check_rate_limit "$VERIFY_STDERR"; then
