@@ -36,6 +36,51 @@ function stateVariant(
   }
 }
 
+function PrStateIcon({ state }: { state: string }) {
+  const props = {
+    xmlns: "http://www.w3.org/2000/svg",
+    width: 14,
+    height: 14,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "shrink-0",
+  };
+
+  switch (state) {
+    case "open":
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="6" r="3" />
+          <circle cx="12" cy="18" r="3" />
+          <line x1="12" y1="9" x2="12" y2="15" />
+        </svg>
+      );
+    case "closed":
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+        </svg>
+      );
+    case "merged":
+      return (
+        <svg {...props}>
+          <circle cx="18" cy="18" r="3" />
+          <circle cx="6" cy="6" r="3" />
+          <path d="M6 9v12" />
+          <path d="M18 9a9 9 0 0 1-9 9" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 export function PrListView({
   prs,
   loading = false,
@@ -102,14 +147,14 @@ export function PrListView({
         {t("pr.title")}
       </h2>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex gap-1">
         {filters.map((f) => (
           <button
             key={f.key}
-            className={`rounded px-3 py-1 text-sm transition-colors ${
+            className={`rounded-t px-3 py-1.5 text-sm transition-colors ${
               filter === f.key
-                ? "bg-accent text-white"
-                : "bg-btn-secondary text-text-secondary hover:bg-bg-hover"
+                ? "border-b-2 border-b-accent bg-accent/10 font-bold text-accent"
+                : "border-b-2 border-b-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
             }`}
             onClick={() => setFilter(f.key)}
           >
@@ -137,7 +182,7 @@ export function PrListView({
         filteredPrs.map((pr) => (
           <div key={pr.number}>
             <div
-              className="flex cursor-pointer items-center gap-3 border-b border-border px-3 py-2.5 transition-colors last:border-b-0 hover:bg-bg-hover"
+              className="flex cursor-pointer items-center gap-3 border-b border-border px-3 py-3.5 transition-colors last:border-b-0 hover:bg-bg-hover"
               onClick={() => handlePrClick(pr)}
             >
               <div className="min-w-0 flex-1">
@@ -149,7 +194,7 @@ export function PrListView({
                     {pr.title}
                   </span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-2 text-xs text-text-secondary">
+                <div className="mt-1.5 flex items-center gap-2 text-xs text-text-secondary">
                   <span>{pr.author}</span>
                   <span>{t("pr.files", { count: pr.changed_files })}</span>
                   <span className="text-accent">+{pr.additions}</span>
@@ -160,7 +205,12 @@ export function PrListView({
                 {riskLevels[pr.number] && (
                   <RiskBadge level={riskLevels[pr.number]} />
                 )}
-                <Badge variant={stateVariant(pr.state)}>{pr.state}</Badge>
+                <Badge variant={stateVariant(pr.state)}>
+                  <span className="inline-flex items-center gap-1">
+                    <PrStateIcon state={pr.state} />
+                    {pr.state}
+                  </span>
+                </Badge>
               </div>
             </div>
             {expandedPr === pr.number && (
