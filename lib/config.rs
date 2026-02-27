@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// 自動approveの最大リスクレベル
@@ -91,9 +92,27 @@ pub struct AppConfig {
     /// LLM設定
     #[serde(default)]
     pub llm: LlmConfig,
-    /// オートメーション設定
+    /// グローバルのオートメーション設定（フォールバック用）
     #[serde(default)]
     pub automation: AutomationConfig,
+    /// リポジトリ別のオートメーション設定（キーは "owner/repo" 形式）
+    #[serde(default)]
+    pub repo_automation: HashMap<String, AutomationConfig>,
+}
+
+impl AppConfig {
+    /// 指定リポジトリのオートメーション設定を返す。
+    /// リポジトリ別設定があればそれを返し、なければグローバル設定を返す。
+    pub fn get_automation_config(&self, repo_id: &str) -> &AutomationConfig {
+        self.repo_automation
+            .get(repo_id)
+            .unwrap_or(&self.automation)
+    }
+
+    /// リポジトリ別のオートメーション設定を保存する。
+    pub fn set_repo_automation_config(&mut self, repo_id: String, config: AutomationConfig) {
+        self.repo_automation.insert(repo_id, config);
+    }
 }
 
 /// 設定を JSON ファイルから読み込む。ファイルが存在しない場合はデフォルト値を返す。
@@ -362,6 +381,7 @@ mod tests {
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
             },
+            ..Default::default()
         };
 
         save_config(&config_path, &config).unwrap();
@@ -430,5 +450,212 @@ mod tests {
         assert!(config.automation.enabled);
         assert!(!config.automation.enable_auto_merge);
         assert_eq!(config.automation.auto_merge_method, MergeMethod::Merge);
+    }
+
+    // ── リポジトリ別設定テスト ──────────────────────────────────────────
+
+    #[test]
+    fn test_app_config_default_has_empty_repo_automation() {
+        let config = AppConfig::default();
+        assert!(config.repo_automation.is_empty());
+    }
+
+    #[test]
+    fn test_get_automation_config_fallback_to_global() {
+        let config = AppConfig {
+            automation: AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let result = config.get_automation_config("owner/repo");
+        assert!(result.enabled);
+        assert_eq!(result.auto_approve_max_risk, AutoApproveMaxRisk::Medium);
+    }
+
+    #[test]
+    fn test_get_automation_config_returns_repo_specific() {
+        let mut config = AppConfig {
+            automation: AutomationConfig {
+                enabled: false,
+                auto_approve_max_risk: AutoApproveMaxRisk::Low,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        config.repo_automation.insert(
+            "owner/repo".to_string(),
+            AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                enable_auto_merge: true,
+                auto_merge_method: MergeMethod::Squash,
+            },
+        );
+
+        // リポジトリ別設定が返される
+        let result = config.get_automation_config("owner/repo");
+        assert!(result.enabled);
+        assert_eq!(result.auto_approve_max_risk, AutoApproveMaxRisk::Medium);
+        assert!(result.enable_auto_merge);
+        assert_eq!(result.auto_merge_method, MergeMethod::Squash);
+
+        // 別のリポジトリはグローバル設定にフォールバック
+        let fallback = config.get_automation_config("other/repo");
+        assert!(!fallback.enabled);
+        assert_eq!(fallback.auto_approve_max_risk, AutoApproveMaxRisk::Low);
+    }
+
+    #[test]
+    fn test_set_repo_automation_config() {
+        let mut config = AppConfig::default();
+        let repo_config = AutomationConfig {
+            enabled: true,
+            auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+            enable_auto_merge: true,
+            auto_merge_method: MergeMethod::Rebase,
+        };
+        config.set_repo_automation_config("owner/repo".to_string(), repo_config.clone());
+
+        assert_eq!(config.repo_automation.len(), 1);
+        assert_eq!(config.repo_automation["owner/repo"], repo_config);
+    }
+
+    #[test]
+    fn test_set_repo_automation_config_overwrite() {
+        let mut config = AppConfig::default();
+        config.set_repo_automation_config(
+            "owner/repo".to_string(),
+            AutomationConfig {
+                enabled: true,
+                ..Default::default()
+            },
+        );
+        config.set_repo_automation_config(
+            "owner/repo".to_string(),
+            AutomationConfig {
+                enabled: false,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(config.repo_automation.len(), 1);
+        assert!(!config.repo_automation["owner/repo"].enabled);
+        assert_eq!(
+            config.repo_automation["owner/repo"].auto_approve_max_risk,
+            AutoApproveMaxRisk::Medium
+        );
+    }
+
+    #[test]
+    fn test_backward_compat_load_without_repo_automation_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // repo_automationフィールドなしの旧形式JSON
+        let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r","automation":{"enabled":true,"auto_approve_max_risk":"Low","enable_auto_merge":false,"auto_merge_method":"Merge"}}"#;
+        std::fs::write(&config_path, old_json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert_eq!(config.github_token, "tok");
+        assert!(config.automation.enabled);
+        assert!(config.repo_automation.is_empty());
+    }
+
+    #[test]
+    fn test_save_and_load_config_with_repo_automation() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+
+        let mut repo_automation = std::collections::HashMap::new();
+        repo_automation.insert(
+            "org/repo-a".to_string(),
+            AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                enable_auto_merge: true,
+                auto_merge_method: MergeMethod::Squash,
+            },
+        );
+        repo_automation.insert(
+            "org/repo-b".to_string(),
+            AutomationConfig {
+                enabled: false,
+                auto_approve_max_risk: AutoApproveMaxRisk::Low,
+                enable_auto_merge: false,
+                auto_merge_method: MergeMethod::Merge,
+            },
+        );
+
+        let config = AppConfig {
+            github_token: "ghp_test".to_string(),
+            default_owner: "org".to_string(),
+            default_repo: "repo-a".to_string(),
+            llm: LlmConfig::default(),
+            automation: AutomationConfig::default(),
+            repo_automation,
+        };
+
+        save_config(&config_path, &config).unwrap();
+        let loaded = load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+        assert_eq!(loaded.repo_automation.len(), 2);
+        assert!(loaded.repo_automation["org/repo-a"].enabled);
+        assert!(!loaded.repo_automation["org/repo-b"].enabled);
+    }
+
+    #[test]
+    fn test_repo_automation_serializes() {
+        let mut config = AppConfig::default();
+        config.set_repo_automation_config(
+            "owner/repo".to_string(),
+            AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                enable_auto_merge: true,
+                auto_merge_method: MergeMethod::Rebase,
+            },
+        );
+
+        let json = serde_json::to_value(&config).unwrap();
+        let repo_auto = &json["repo_automation"]["owner/repo"];
+        assert_eq!(repo_auto["enabled"], true);
+        assert_eq!(repo_auto["auto_approve_max_risk"], "Medium");
+        assert_eq!(repo_auto["enable_auto_merge"], true);
+        assert_eq!(repo_auto["auto_merge_method"], "Rebase");
+    }
+
+    #[test]
+    fn test_multiple_repos_get_automation_config() {
+        let mut config = AppConfig::default();
+        config.set_repo_automation_config(
+            "org/alpha".to_string(),
+            AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Low,
+                ..Default::default()
+            },
+        );
+        config.set_repo_automation_config(
+            "org/beta".to_string(),
+            AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                enable_auto_merge: true,
+                auto_merge_method: MergeMethod::Squash,
+            },
+        );
+
+        let alpha = config.get_automation_config("org/alpha");
+        assert_eq!(alpha.auto_approve_max_risk, AutoApproveMaxRisk::Low);
+
+        let beta = config.get_automation_config("org/beta");
+        assert_eq!(beta.auto_approve_max_risk, AutoApproveMaxRisk::Medium);
+        assert!(beta.enable_auto_merge);
+
+        // 未設定リポジトリはグローバルにフォールバック
+        let unknown = config.get_automation_config("other/unknown");
+        assert_eq!(*unknown, AutomationConfig::default());
     }
 }
