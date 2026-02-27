@@ -44,7 +44,9 @@ export const Loading: Story = {
         }),
     });
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    const button = canvas.getByRole("button", {
+      name: "この変更の要約をAIで生成",
+    });
     await userEvent.click(button);
     // ストリーミングテキストをシミュレート
     await new Promise((r) => setTimeout(r, 100));
@@ -64,7 +66,9 @@ export const WithSummary: Story = {
       summarize_pull_request: () => fixtures.prSummary,
     });
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    const button = canvas.getByRole("button", {
+      name: "この変更の要約をAIで生成",
+    });
     await userEvent.click(button);
     await waitFor(() => {
       canvas.getByText("全体要約");
@@ -79,7 +83,9 @@ export const Error: Story = {
       summarize_pull_request: () => Promise.reject("LLM API connection failed"),
     });
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    const button = canvas.getByRole("button", {
+      name: "この変更の要約をAIで生成",
+    });
     await userEvent.click(button);
     await waitFor(() => {
       canvas.getByText(/LLM API connection failed/);
@@ -94,7 +100,9 @@ export const DiffExpanded: Story = {
       summarize_pull_request: () => fixtures.prSummary,
     });
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    const button = canvas.getByRole("button", {
+      name: "この変更の要約をAIで生成",
+    });
     await userEvent.click(button);
     await waitFor(() => {
       canvas.getByText("全体要約");
@@ -120,7 +128,9 @@ export const WithCategoryFilter: Story = {
       summarize_pull_request: () => fixtures.diversePrSummary,
     });
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    const button = canvas.getByRole("button", {
+      name: "この変更の要約をAIで生成",
+    });
     await userEvent.click(button);
     await waitFor(() => {
       canvas.getByText("全体要約");
@@ -138,7 +148,9 @@ export const FilteredByLogic: Story = {
       summarize_pull_request: () => fixtures.diversePrSummary,
     });
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button", { name: "AI要約を生成" });
+    const button = canvas.getByRole("button", {
+      name: "この変更の要約をAIで生成",
+    });
     await userEvent.click(button);
     await waitFor(() => {
       canvas.getByText("全体要約");

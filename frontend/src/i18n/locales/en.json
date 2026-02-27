@@ -106,6 +106,7 @@
     "prSummary": "PR Summary",
     "aiSummary": "AI Summary",
     "generateSummary": "Generate AI Summary",
+    "generateSummaryAction": "Generate AI summary for this change",
     "generatingSummary": "Generating summary…",
     "overallSummary": "Overall Summary",
     "changeReason": "Estimated Change Reason",
@@ -259,6 +260,15 @@
     "diffOverview": "Diff Overview",
     "diffOverviewFiles": "{{count}} files changed"
   },
+  "reviewHistory": {
+    "title": "Review History",
+    "empty": "No review history.",
+    "count": "{{count}} reviews",
+    "approve": "Approve",
+    "requestChanges": "Request Changes",
+    "pr": "PR #{{number}}",
+    "categories": "Categories"
+  },
   "theme": {
     "label": "Theme",
     "light": "Light",
@@ -282,5 +292,13 @@
     "groupCount": "{{count}} items",
     "expandAll": "Expand All",
     "collapseAll": "Collapse All"
+  },
+  "worktree": {
+    "title": "Worktrees",
+    "empty": "No worktrees found.",
+    "count": "{{count}} items",
+    "main": "Main",
+    "sub": "Sub",
+    "locked": "Locked"
   }
 }

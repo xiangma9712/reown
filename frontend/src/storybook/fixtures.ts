@@ -22,6 +22,7 @@ import type {
   HybridAnalysisResult,
   TodoItem,
   ReviewSuggestion,
+  ReviewRecord,
   AutoApproveCandidate,
   AutoApproveWithMergeResult,
 } from "../types";
@@ -576,6 +577,49 @@ const autoApproveWithMergeResultMixed: AutoApproveWithMergeResult = {
   merge_method: "Squash",
 };
 
+const reviewRecords: ReviewRecord[] = [
+  {
+    pr_number: 42,
+    repository: "example/reown",
+    action: "APPROVE",
+    risk_level: "Medium",
+    timestamp: "2025-01-15T10:30:00Z",
+    categories: ["Logic", "Test"],
+  },
+  {
+    pr_number: 38,
+    repository: "example/reown",
+    action: "REQUEST_CHANGES",
+    risk_level: "High",
+    timestamp: "2025-01-14T08:00:00Z",
+    categories: ["Logic"],
+  },
+  {
+    pr_number: 35,
+    repository: "example/reown",
+    action: "APPROVE",
+    risk_level: "Low",
+    timestamp: "2025-01-13T12:00:00Z",
+    categories: ["Dependency"],
+  },
+  {
+    pr_number: 30,
+    repository: "example/other-project",
+    action: "APPROVE",
+    risk_level: "Low",
+    timestamp: "2025-01-12T09:00:00Z",
+    categories: ["Documentation", "Config"],
+  },
+  {
+    pr_number: 28,
+    repository: "example/reown",
+    action: "REQUEST_CHANGES",
+    risk_level: "Medium",
+    timestamp: "2025-01-11T15:00:00Z",
+    categories: ["CI", "Refactor"],
+  },
+];
+
 export const fixtures = {
   worktrees,
   branches,
@@ -601,4 +645,5 @@ export const fixtures = {
   autoApproveCandidates,
   autoApproveWithMergeResult,
   autoApproveWithMergeResultMixed,
+  reviewRecords,
 };

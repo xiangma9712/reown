@@ -106,6 +106,7 @@
     "prSummary": "PR要約",
     "aiSummary": "AI要約",
     "generateSummary": "AI要約を生成",
+    "generateSummaryAction": "この変更の要約をAIで生成",
     "generatingSummary": "要約を生成中…",
     "overallSummary": "全体要約",
     "changeReason": "変更理由（推定）",
@@ -259,6 +260,15 @@
     "diffOverview": "差分概要",
     "diffOverviewFiles": "{{count}} ファイル変更"
   },
+  "reviewHistory": {
+    "title": "レビュー履歴",
+    "empty": "レビュー履歴がありません",
+    "count": "{{count}} 件",
+    "approve": "Approve",
+    "requestChanges": "Request Changes",
+    "pr": "PR #{{number}}",
+    "categories": "カテゴリ"
+  },
   "theme": {
     "label": "テーマ切替",
     "light": "Light",
@@ -282,5 +292,13 @@
     "groupCount": "{{count}} 件",
     "expandAll": "全て展開",
     "collapseAll": "全て折りたたみ"
+  },
+  "worktree": {
+    "title": "ワークツリー",
+    "empty": "ワークツリーがありません。",
+    "count": "{{count}} 件",
+    "main": "メイン",
+    "sub": "サブ",
+    "locked": "ロック"
   }
 }

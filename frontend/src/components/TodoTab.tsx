@@ -7,6 +7,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { Loading } from "./Loading";
+import { WorktreeList } from "./WorktreeList";
 
 type FilterKind = "all" | "Todo" | "Fixme";
 
@@ -175,7 +176,8 @@ export function TodoTab() {
   );
 
   return (
-    <div>
+    <div className="space-y-6">
+      <WorktreeList />
       <Card className="flex flex-col">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
           {t("todo.title")}

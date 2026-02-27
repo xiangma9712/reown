@@ -11,6 +11,7 @@ import type {
   AppConfig,
   LlmConfig,
   AutomationConfig,
+  RiskConfig,
   RepoInfo,
   PrSummary,
   ConsistencyResult,
@@ -130,6 +131,18 @@ export type Commands = {
     args?: { owner?: string; repo?: string };
     ret: AutomationConfig;
   };
+  load_risk_config: {
+    args?: { owner?: string; repo?: string };
+    ret: RiskConfig;
+  };
+  save_risk_config: {
+    args: {
+      riskConfig: RiskConfig;
+      owner?: string;
+      repo?: string;
+    };
+    ret: void;
+  };
   evaluate_auto_approve_candidates: {
     args: { owner: string; repo: string; token: string };
     ret: AutoApproveCandidate[];
@@ -153,6 +166,7 @@ export type Commands = {
     args: { owner: string; repo: string; prNumber: number; token: string };
     ret: ReviewSuggestion[];
   };
+  list_review_history: { args?: Record<string, unknown>; ret: ReviewRecord[] };
   add_review_record: {
     args: { record: ReviewRecord };
     ret: void;

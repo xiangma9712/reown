@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use crate::analysis::ChangeCategory;
+
 /// 自動approveの最大リスクレベル
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AutoApproveMaxRisk {
@@ -20,6 +22,87 @@ pub enum MergeMethod {
     Rebase,
 }
 
+/// リスクしきい値（Low/Medium/High の境界スコア）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RiskThresholds {
+    /// Low の上限スコア（このスコア以下は Low）
+    pub low_max: u32,
+    /// Medium の上限スコア（このスコア以下は Medium、超えると High）
+    pub medium_max: u32,
+}
+
+impl Default for RiskThresholds {
+    fn default() -> Self {
+        Self {
+            low_max: 25,
+            medium_max: 55,
+        }
+    }
+}
+
+/// リスク設定（スコアリングルールのカスタマイズ）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RiskConfig {
+    /// カテゴリ別リスク重み
+    #[serde(default = "default_category_weights")]
+    pub category_weights: HashMap<ChangeCategory, f64>,
+    /// sensitive path パターンのリスト
+    #[serde(default = "default_sensitive_paths")]
+    pub sensitive_paths: Vec<String>,
+    /// Low/Medium/High の境界スコア
+    #[serde(default)]
+    pub risk_thresholds: RiskThresholds,
+}
+
+fn default_category_weights() -> HashMap<ChangeCategory, f64> {
+    let mut weights = HashMap::new();
+    weights.insert(ChangeCategory::Logic, 1.0);
+    weights.insert(ChangeCategory::Test, 1.0);
+    weights.insert(ChangeCategory::Config, 1.0);
+    weights.insert(ChangeCategory::CI, 1.0);
+    weights.insert(ChangeCategory::Documentation, 1.0);
+    weights.insert(ChangeCategory::Dependency, 1.0);
+    weights.insert(ChangeCategory::Refactor, 1.0);
+    weights.insert(ChangeCategory::Other, 1.0);
+    weights
+}
+
+fn default_sensitive_paths() -> Vec<String> {
+    vec![
+        "auth".to_string(),
+        "security".to_string(),
+        "permission".to_string(),
+        "credential".to_string(),
+        "token".to_string(),
+        "secret".to_string(),
+        "encrypt".to_string(),
+        "password".to_string(),
+        "migration".to_string(),
+        "schema".to_string(),
+        "database".to_string(),
+        "db/".to_string(),
+        "api/".to_string(),
+        "endpoint".to_string(),
+        "route".to_string(),
+        "deploy".to_string(),
+        "infra".to_string(),
+        "terraform".to_string(),
+        "docker".to_string(),
+        "k8s".to_string(),
+        "kubernetes".to_string(),
+    ]
+}
+
+impl Default for RiskConfig {
+    fn default() -> Self {
+        Self {
+            category_weights: default_category_weights(),
+            sensitive_paths: default_sensitive_paths(),
+            risk_thresholds: RiskThresholds::default(),
+        }
+    }
+}
+
 /// オートメーション設定
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AutomationConfig {
@@ -35,6 +118,9 @@ pub struct AutomationConfig {
     /// auto mergeのマージ方法
     #[serde(default)]
     pub auto_merge_method: MergeMethod,
+    /// リスク設定
+    #[serde(default)]
+    pub risk_config: RiskConfig,
 }
 
 impl Default for AutomationConfig {
@@ -44,6 +130,7 @@ impl Default for AutomationConfig {
             auto_approve_max_risk: AutoApproveMaxRisk::Low,
             enable_auto_merge: false,
             auto_merge_method: MergeMethod::Merge,
+            risk_config: RiskConfig::default(),
         }
     }
 }
@@ -153,6 +240,7 @@ pub fn default_config_path(app_data_dir: &Path) -> PathBuf {
 
 const KEYRING_SERVICE: &str = "com.reown.app";
 const KEYRING_LLM_API_KEY: &str = "llm_api_key";
+const KEYRING_GITHUB_TOKEN: &str = "github_token";
 
 /// LLM APIキーをOS keychainに保存する
 pub fn save_llm_api_key(api_key: &str) -> Result<()> {
@@ -180,6 +268,35 @@ pub fn delete_llm_api_key() -> Result<()> {
     entry
         .delete_credential()
         .context("keychainからのAPIキー削除に失敗")?;
+    Ok(())
+}
+
+/// GitHubトークンをOS keychainに保存する
+pub fn save_github_token(token: &str) -> Result<()> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_GITHUB_TOKEN)
+        .context("keychainエントリの作成に失敗")?;
+    entry
+        .set_password(token)
+        .context("keychainへのGitHubトークン保存に失敗")?;
+    Ok(())
+}
+
+/// GitHubトークンをOS keychainから読み込む
+pub fn load_github_token() -> Result<String> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_GITHUB_TOKEN)
+        .context("keychainエントリの作成に失敗")?;
+    entry
+        .get_password()
+        .context("keychainからのGitHubトークン読み込みに失敗")
+}
+
+/// GitHubトークンをOS keychainから削除する
+pub fn delete_github_token() -> Result<()> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_GITHUB_TOKEN)
+        .context("keychainエントリの作成に失敗")?;
+    entry
+        .delete_credential()
+        .context("keychainからのGitHubトークン削除に失敗")?;
     Ok(())
 }
 
@@ -380,6 +497,7 @@ mod tests {
                 auto_approve_max_risk: AutoApproveMaxRisk::Medium,
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
+                ..Default::default()
             },
             ..Default::default()
         };
@@ -403,6 +521,7 @@ mod tests {
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
             enable_auto_merge: true,
             auto_merge_method: MergeMethod::Rebase,
+            ..Default::default()
         };
         let json = serde_json::to_value(&config).unwrap();
         assert_eq!(json["enabled"], true);
@@ -492,6 +611,7 @@ mod tests {
                 auto_approve_max_risk: AutoApproveMaxRisk::Medium,
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
+                risk_config: RiskConfig::default(),
             },
         );
 
@@ -516,6 +636,7 @@ mod tests {
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
             enable_auto_merge: true,
             auto_merge_method: MergeMethod::Rebase,
+            risk_config: RiskConfig::default(),
         };
         config.set_repo_automation_config("owner/repo".to_string(), repo_config.clone());
 
@@ -576,6 +697,7 @@ mod tests {
                 auto_approve_max_risk: AutoApproveMaxRisk::Medium,
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
+                risk_config: RiskConfig::default(),
             },
         );
         repo_automation.insert(
@@ -585,6 +707,7 @@ mod tests {
                 auto_approve_max_risk: AutoApproveMaxRisk::Low,
                 enable_auto_merge: false,
                 auto_merge_method: MergeMethod::Merge,
+                risk_config: RiskConfig::default(),
             },
         );
 
@@ -615,6 +738,7 @@ mod tests {
                 auto_approve_max_risk: AutoApproveMaxRisk::Medium,
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Rebase,
+                risk_config: RiskConfig::default(),
             },
         );
 
@@ -644,6 +768,7 @@ mod tests {
                 auto_approve_max_risk: AutoApproveMaxRisk::Medium,
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
+                risk_config: RiskConfig::default(),
             },
         );
 
@@ -657,5 +782,143 @@ mod tests {
         // 未設定リポジトリはグローバルにフォールバック
         let unknown = config.get_automation_config("other/unknown");
         assert_eq!(*unknown, AutomationConfig::default());
+    }
+
+    // ── RiskConfig テスト ───────────────────────────────────────────────
+
+    #[test]
+    fn test_risk_thresholds_default() {
+        let thresholds = RiskThresholds::default();
+        assert_eq!(thresholds.low_max, 25);
+        assert_eq!(thresholds.medium_max, 55);
+    }
+
+    #[test]
+    fn test_risk_config_default() {
+        let config = RiskConfig::default();
+        assert_eq!(config.category_weights.len(), 8);
+        assert_eq!(
+            config
+                .category_weights
+                .get(&crate::analysis::ChangeCategory::Logic),
+            Some(&1.0)
+        );
+        assert_eq!(
+            config
+                .category_weights
+                .get(&crate::analysis::ChangeCategory::Test),
+            Some(&1.0)
+        );
+        assert!(!config.sensitive_paths.is_empty());
+        assert!(config.sensitive_paths.contains(&"auth".to_string()));
+        assert!(config.sensitive_paths.contains(&"migration".to_string()));
+        assert_eq!(config.risk_thresholds, RiskThresholds::default());
+    }
+
+    #[test]
+    fn test_automation_config_default_has_risk_config() {
+        let config = AutomationConfig::default();
+        assert_eq!(config.risk_config, RiskConfig::default());
+    }
+
+    #[test]
+    fn test_risk_config_serializes() {
+        let config = RiskConfig::default();
+        let json = serde_json::to_value(&config).unwrap();
+        assert!(json["category_weights"].is_object());
+        assert!(json["sensitive_paths"].is_array());
+        assert_eq!(json["risk_thresholds"]["low_max"], 25);
+        assert_eq!(json["risk_thresholds"]["medium_max"], 55);
+    }
+
+    #[test]
+    fn test_risk_thresholds_serializes() {
+        let thresholds = RiskThresholds {
+            low_max: 30,
+            medium_max: 60,
+        };
+        let json = serde_json::to_value(&thresholds).unwrap();
+        assert_eq!(json["low_max"], 30);
+        assert_eq!(json["medium_max"], 60);
+    }
+
+    #[test]
+    fn test_backward_compat_load_without_risk_config_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // risk_configフィールドなしの旧形式JSON
+        let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r","automation":{"enabled":true,"auto_approve_max_risk":"Low","enable_auto_merge":false,"auto_merge_method":"Merge"}}"#;
+        std::fs::write(&config_path, old_json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert!(config.automation.enabled);
+        assert_eq!(config.automation.risk_config, RiskConfig::default());
+    }
+
+    #[test]
+    fn test_save_and_load_config_with_risk_config() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+
+        let mut category_weights = HashMap::new();
+        category_weights.insert(crate::analysis::ChangeCategory::Logic, 2.0);
+        category_weights.insert(crate::analysis::ChangeCategory::Test, 0.5);
+
+        let config = AppConfig {
+            github_token: "ghp_test".to_string(),
+            default_owner: "org".to_string(),
+            default_repo: "repo".to_string(),
+            llm: LlmConfig::default(),
+            automation: AutomationConfig {
+                enabled: true,
+                auto_approve_max_risk: AutoApproveMaxRisk::Medium,
+                enable_auto_merge: false,
+                auto_merge_method: MergeMethod::Merge,
+                risk_config: RiskConfig {
+                    category_weights,
+                    sensitive_paths: vec!["custom/path".to_string()],
+                    risk_thresholds: RiskThresholds {
+                        low_max: 30,
+                        medium_max: 60,
+                    },
+                },
+            },
+            ..Default::default()
+        };
+
+        save_config(&config_path, &config).unwrap();
+        let loaded = load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+        assert_eq!(
+            loaded
+                .automation
+                .risk_config
+                .category_weights
+                .get(&crate::analysis::ChangeCategory::Logic),
+            Some(&2.0)
+        );
+        assert_eq!(
+            loaded.automation.risk_config.sensitive_paths,
+            vec!["custom/path".to_string()]
+        );
+        assert_eq!(loaded.automation.risk_config.risk_thresholds.low_max, 30);
+        assert_eq!(loaded.automation.risk_config.risk_thresholds.medium_max, 60);
+    }
+
+    // ── GitHub Token Keychain テスト ────────────────────────────────────
+
+    #[test]
+    fn test_save_and_delete_github_token() {
+        let save_result = save_github_token("gho_test-github-token-for-reown-test");
+        if save_result.is_err() {
+            eprintln!("Skipping keychain test: keychain not available in this environment");
+            return;
+        }
+
+        let token = load_github_token().unwrap();
+        assert_eq!(token, "gho_test-github-token-for-reown-test");
+
+        delete_github_token().unwrap();
+        let result = load_github_token();
+        assert!(result.is_err());
     }
 }

@@ -75,10 +75,10 @@ function CategoryFilter({
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         <button
-          className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded px-3 py-1 text-xs transition-colors ${
             isAllActive
-              ? "bg-accent text-bg-primary"
-              : "bg-bg-hover text-text-secondary hover:text-text-primary"
+              ? "bg-accent text-bg-primary font-bold shadow-sm ring-1 ring-accent"
+              : "bg-bg-hover text-text-secondary font-medium hover:text-text-primary"
           }`}
           onClick={onShowAll}
         >
@@ -89,10 +89,10 @@ function CategoryFilter({
           return (
             <button
               key={category}
-              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded px-3 py-1 text-xs transition-colors ${
                 isActive
-                  ? "bg-accent text-bg-primary"
-                  : "bg-bg-hover text-text-secondary hover:text-text-primary"
+                  ? "bg-accent text-bg-primary font-bold shadow-sm ring-1 ring-accent"
+                  : "bg-bg-hover text-text-secondary font-medium hover:text-text-primary"
               }`}
               onClick={() => onToggle(category)}
             >
@@ -352,11 +352,13 @@ export function ChangeSummaryList({
   if (!summary && !loading && !error) {
     return (
       <div className="py-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[0.85rem] text-text-secondary">
-            {t("pr.changeSummaryTitle")}
-          </span>
-          <Button onClick={handleGenerate}>{t("pr.generateSummary")}</Button>
+        <span className="text-[0.85rem] text-text-secondary">
+          {t("pr.changeSummaryTitle")}
+        </span>
+        <div className="mt-3">
+          <Button onClick={handleGenerate}>
+            {t("pr.generateSummaryAction")}
+          </Button>
         </div>
       </div>
     );
@@ -471,10 +473,8 @@ export function ChangeSummaryList({
                         </Badge>
                       )}
                       {diffIndex >= 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="ml-auto shrink-0"
+                        <button
+                          className="ml-auto shrink-0 cursor-pointer text-sm text-accent underline underline-offset-2 transition-colors hover:text-accent-hover"
                           onClick={() => {
                             setExpandedDiffs((prev) => {
                               const next = new Set(prev);
@@ -488,7 +488,7 @@ export function ChangeSummaryList({
                           }}
                         >
                           {isDiffExpanded ? t("pr.hideDiff") : t("pr.viewDiff")}
-                        </Button>
+                        </button>
                       )}
                     </div>
                     <p className="text-[0.8rem] text-text-secondary">
