@@ -10,7 +10,7 @@ import { Layout } from "./components/Layout";
 import { RepositoryProvider } from "./RepositoryContext";
 import { ThemeProvider } from "./ThemeContext";
 import { invoke } from "./invoke";
-import type { RepositoryEntry, RepoInfo } from "./types";
+import type { RepositoryEntry, RepoInfo, PrInfo } from "./types";
 import "./style.css";
 
 const NAV_ITEMS = [
@@ -27,6 +27,8 @@ export function App() {
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
+  const [prs, setPrs] = useState<PrInfo[]>([]);
+  const [loadingPrs, setLoadingPrs] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addingRepo, setAddingRepo] = useState(false);
   const [addRepoError, setAddRepoError] = useState<string | null>(null);
@@ -44,6 +46,48 @@ export function App() {
       .then(setRepoInfo)
       .catch(() => setRepoInfo(null));
   }, [selectedRepoPath]);
+
+  useEffect(() => {
+    if (!repoInfo?.github_owner || !repoInfo?.github_repo) {
+      setPrs([]);
+      return;
+    }
+    const owner = repoInfo.github_owner;
+    const repo = repoInfo.github_repo;
+    let cancelled = false;
+
+    (async () => {
+      setLoadingPrs(true);
+      try {
+        const config = await invoke("load_app_config");
+        if (cancelled) return;
+        if (!config.github_token) {
+          setPrs([]);
+          return;
+        }
+        const result = await invoke("list_pull_requests", {
+          owner,
+          repo,
+          token: config.github_token,
+        });
+        if (!cancelled) {
+          setPrs(result);
+        }
+      } catch {
+        if (!cancelled) {
+          setPrs([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingPrs(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [repoInfo]);
 
   const loadRepositories = useCallback(async () => {
     setLoadingRepos(true);
@@ -179,7 +223,9 @@ export function App() {
             </div>
           }
         >
-          {activeTab === "review" && <ReviewTab />}
+          {activeTab === "review" && (
+            <ReviewTab prs={prs} loadingPrs={loadingPrs} />
+          )}
           {activeTab === "next-action" && <TodoTab />}
           {activeTab === "automate" && <AutomationSettingsTab />}
         </Layout>
