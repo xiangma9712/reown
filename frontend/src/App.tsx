@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ReviewTab } from "./components/ReviewTab";
 import { TodoTab } from "./components/TodoTab";
+import { GithubSettingsTab } from "./components/GithubSettingsTab";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { Layout } from "./components/Layout";
@@ -172,6 +173,7 @@ export function App() {
           onToggleSettings={() => setSettingsOpen((prev) => !prev)}
           settingsContent={
             <div className="mx-auto max-w-xl space-y-8">
+              <GithubSettingsTab />
               <LlmSettingsTab />
               <AutomationSettingsTab />
             </div>

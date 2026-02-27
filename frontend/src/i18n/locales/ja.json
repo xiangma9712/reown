@@ -176,6 +176,23 @@
     "autoApproveMergeSkipped": "Auto Merge: スキップ",
     "autoApproveMergeFailed": "Auto Merge: 失敗"
   },
+  "githubSettings": {
+    "title": "GitHub設定",
+    "description": "GitHub Personal Access Tokenを設定します。PR取得・レビュー送信・オートメーションに必要です。",
+    "token": "Personal Access Token",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "tokenStoredPlaceholder": "保存済み（変更する場合は新しいトークンを入力）",
+    "tokenStored": "トークンは保存されています",
+    "deleteToken": "トークンを削除",
+    "tokenDeleted": "トークンを削除しました",
+    "showToken": "表示",
+    "hideToken": "非表示",
+    "save": "保存",
+    "reset": "リセット",
+    "saveSuccess": "GitHubトークンを保存しました",
+    "saveError": "GitHubトークンの保存に失敗しました: {{message}}",
+    "loadError": "設定の読み込みに失敗しました: {{message}}"
+  },
   "llmSettings": {
     "title": "LLM設定",
     "endpoint": "エンドポイントURL",
