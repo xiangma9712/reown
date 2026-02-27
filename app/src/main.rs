@@ -398,6 +398,8 @@ fn delete_llm_api_key() -> Result<(), AppError> {
 fn save_automation_config(
     app_handle: tauri::AppHandle,
     automation_config: reown::config::AutomationConfig,
+    owner: Option<String>,
+    repo: Option<String>,
 ) -> Result<(), AppError> {
     let app_data_dir = app_handle
         .path()
@@ -405,13 +407,23 @@ fn save_automation_config(
         .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
     let config_path = reown::config::default_config_path(&app_data_dir);
     let mut config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
-    config.automation = automation_config;
+    match (owner, repo) {
+        (Some(o), Some(r)) => {
+            let repo_id = format!("{o}/{r}");
+            config.set_repo_automation_config(repo_id, automation_config);
+        }
+        _ => {
+            config.automation = automation_config;
+        }
+    }
     reown::config::save_config(&config_path, &config).map_err(AppError::storage)
 }
 
 #[tauri::command]
 fn load_automation_config(
     app_handle: tauri::AppHandle,
+    owner: Option<String>,
+    repo: Option<String>,
 ) -> Result<reown::config::AutomationConfig, AppError> {
     let app_data_dir = app_handle
         .path()
@@ -419,7 +431,13 @@ fn load_automation_config(
         .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
     let config_path = reown::config::default_config_path(&app_data_dir);
     let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
-    Ok(config.automation)
+    match (owner, repo) {
+        (Some(o), Some(r)) => {
+            let repo_id = format!("{o}/{r}");
+            Ok(config.get_automation_config(&repo_id).clone())
+        }
+        _ => Ok(config.automation),
+    }
 }
 
 // ── Automation commands ───────────────────────────────────────────────────────
@@ -437,6 +455,8 @@ async fn evaluate_auto_approve_candidates(
         .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
     let config_path = reown::config::default_config_path(&app_data_dir);
     let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    let repo_id = format!("{owner}/{repo}");
+    let automation_config = config.get_automation_config(&repo_id);
 
     let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
         .await
@@ -453,7 +473,7 @@ async fn evaluate_auto_approve_candidates(
 
     Ok(reown::automation::evaluate_auto_approve(
         &analyses,
-        &config.automation,
+        automation_config,
     ))
 }
 
@@ -470,6 +490,8 @@ async fn run_auto_approve(
         .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
     let config_path = reown::config::default_config_path(&app_data_dir);
     let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    let repo_id = format!("{owner}/{repo}");
+    let automation_config = config.get_automation_config(&repo_id);
 
     let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
         .await
@@ -484,7 +506,7 @@ async fn run_auto_approve(
         analyses.push(reown::analysis::analyze_pr_risk(pr, &diffs));
     }
 
-    let candidates = reown::automation::evaluate_auto_approve(&analyses, &config.automation);
+    let candidates = reown::automation::evaluate_auto_approve(&analyses, automation_config);
     Ok(reown::automation::execute_auto_approve(&candidates, &owner, &repo, &token).await)
 }
 
