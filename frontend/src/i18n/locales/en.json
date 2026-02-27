@@ -176,6 +176,23 @@
     "autoApproveMergeSkipped": "Auto Merge: Skipped",
     "autoApproveMergeFailed": "Auto Merge: Failed"
   },
+  "githubSettings": {
+    "title": "GitHub Settings",
+    "description": "Configure your GitHub Personal Access Token. Required for PR fetching, review submission, and automation.",
+    "token": "Personal Access Token",
+    "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "tokenStoredPlaceholder": "Stored (enter a new token to update)",
+    "tokenStored": "Token is stored",
+    "deleteToken": "Delete token",
+    "tokenDeleted": "Token deleted",
+    "showToken": "Show",
+    "hideToken": "Hide",
+    "save": "Save",
+    "reset": "Reset",
+    "saveSuccess": "GitHub token saved successfully",
+    "saveError": "Failed to save GitHub token: {{message}}",
+    "loadError": "Failed to load settings: {{message}}"
+  },
   "llmSettings": {
     "title": "LLM Settings",
     "endpoint": "Endpoint URL",
