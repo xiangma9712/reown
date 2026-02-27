@@ -9,11 +9,11 @@ interface DiffViewerProps {
 
 const statusBadgeVariant: Record<
   FileDiff["status"],
-  "success" | "danger" | "warning" | "info" | "default"
+  "success" | "danger" | "info" | "default"
 > = {
   Added: "success",
   Deleted: "danger",
-  Modified: "warning",
+  Modified: "default",
   Renamed: "info",
   Other: "default",
 };
@@ -49,10 +49,10 @@ function ChunkView({ chunk }: { chunk: DiffChunk }) {
               : "text-text-secondary";
         return (
           <div key={li} className={`flex whitespace-pre ${lineClass}`}>
-            <span className="inline-block min-w-[3.5em] shrink-0 select-none border-r border-border px-2 text-right text-text-muted">
+            <span className="inline-block min-w-[3.5em] shrink-0 select-none border-r border-border px-2 text-right text-text-secondary">
               {line.old_lineno ?? ""}
             </span>
-            <span className="inline-block min-w-[3.5em] shrink-0 select-none border-r border-border px-2 text-right text-text-muted">
+            <span className="inline-block min-w-[3.5em] shrink-0 select-none border-r border-border px-2 text-right text-text-secondary">
               {line.new_lineno ?? ""}
             </span>
             <span className={`flex-1 px-2 ${textColor}`}>
