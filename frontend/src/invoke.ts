@@ -119,11 +119,15 @@ export type Commands = {
     ret: HybridAnalysisResult;
   };
   save_automation_config: {
-    args: { automationConfig: AutomationConfig };
+    args: {
+      automationConfig: AutomationConfig;
+      owner?: string;
+      repo?: string;
+    };
     ret: void;
   };
   load_automation_config: {
-    args?: Record<string, unknown>;
+    args?: { owner?: string; repo?: string };
     ret: AutomationConfig;
   };
   evaluate_auto_approve_candidates: {
