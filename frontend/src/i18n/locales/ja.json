@@ -102,6 +102,7 @@
     "warningInfraLayer": "この変更はインフラ・デプロイに影響します",
     "severityWarning": "警告",
     "severityCritical": "重大",
+    "prSummary": "PR要約",
     "aiSummary": "AI要約",
     "generateSummary": "AI要約を生成",
     "generatingSummary": "要約を生成中…",
