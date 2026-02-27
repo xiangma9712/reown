@@ -22,6 +22,7 @@ import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 import { ReviewSuggestionPanel } from "./ReviewSuggestionPanel";
 import { ReviewSubmit } from "./ReviewSubmit";
 import { AutomationPanel } from "./AutomationPanel";
+import { PrSummaryPanel } from "./PrSummaryPanel";
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -453,6 +454,16 @@ function PrAnalysisSection({
         loading={commitsLoading}
         error={commitsError}
       />
+
+      {/* PR Summary */}
+      {token && (
+        <PrSummaryPanel
+          owner={owner}
+          repo={repo}
+          prNumber={matchedPr.number}
+          token={token}
+        />
+      )}
 
       {/* Risk analysis */}
       {analysisResult && (

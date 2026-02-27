@@ -103,6 +103,7 @@
     "warningInfraLayer": "This change affects infrastructure/deployment",
     "severityWarning": "Warning",
     "severityCritical": "Critical",
+    "prSummary": "PR Summary",
     "aiSummary": "AI Summary",
     "generateSummary": "Generate AI Summary",
     "generatingSummary": "Generating summary…",
