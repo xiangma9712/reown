@@ -11,6 +11,7 @@ import type {
   CommitInfo,
 } from "../types";
 import { Badge } from "./Badge";
+import { BranchSelector } from "./BranchSelector";
 import { Card } from "./Card";
 import { Loading } from "./Loading";
 import { DiffViewer } from "./DiffViewer";
@@ -68,14 +69,11 @@ const categoryBadgeVariant: Record<
   Other: "default",
 };
 
-interface ReviewTabProps {
-  selectedBranch: string | null;
-  prs: PrInfo[];
-}
-
-export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
+export function ReviewTab() {
   const { t } = useTranslation();
   const { repoPath, repoInfo } = useRepository();
+  const [prs] = useState<PrInfo[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
@@ -200,27 +198,52 @@ export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
   // No branch selected
   if (!selectedBranch) {
     return (
-      <Card>
-        <p className="p-4 text-center text-text-secondary">
-          {t("review.noBranch")}
-        </p>
-      </Card>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <BranchSelector
+            prs={prs}
+            selectedBranch={selectedBranch}
+            onSelectBranch={setSelectedBranch}
+          />
+        </div>
+        <Card>
+          <p className="p-4 text-center text-text-secondary">
+            {t("review.noBranch")}
+          </p>
+        </Card>
+      </div>
     );
   }
 
   // Main branch selected
   if (selectedBranch === "main") {
     return (
-      <Card>
-        <p className="p-4 text-center text-text-secondary">
-          {t("review.mainBranch")}
-        </p>
-      </Card>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <BranchSelector
+            prs={prs}
+            selectedBranch={selectedBranch}
+            onSelectBranch={setSelectedBranch}
+          />
+        </div>
+        <Card>
+          <p className="p-4 text-center text-text-secondary">
+            {t("review.mainBranch")}
+          </p>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <BranchSelector
+          prs={prs}
+          selectedBranch={selectedBranch}
+          onSelectBranch={setSelectedBranch}
+        />
+      </div>
       {/* PR info section (if PR exists) */}
       {matchedPr && (
         <Card>
@@ -244,7 +267,28 @@ export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
         </Card>
       )}
 
-      {/* PR file diff section (when PR is matched) */}
+      {/* PR analysis panels — overview at the top (only shown if PR exists) */}
+      {matchedPr && repoInfo?.github_owner && repoInfo?.github_repo && (
+        <PrAnalysisSection
+          matchedPr={matchedPr}
+          owner={repoInfo.github_owner}
+          repo={repoInfo.github_repo}
+          analysisResult={analysisResult}
+          hybridResult={hybridResult}
+          prDiffs={prDiffs}
+        />
+      )}
+
+      {/* No PR message */}
+      {!matchedPr && (
+        <Card>
+          <p className="p-2 text-center text-sm text-text-secondary">
+            {t("review.noPr")}
+          </p>
+        </Card>
+      )}
+
+      {/* PR file diff section (when PR is matched) — detail below overview */}
       {matchedPr && (
         <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
           <Card className="flex flex-col">
@@ -360,27 +404,6 @@ export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
           </Card>
         </div>
       )}
-
-      {/* PR analysis panels (only shown if PR exists) */}
-      {matchedPr && repoInfo?.github_owner && repoInfo?.github_repo && (
-        <PrAnalysisSection
-          matchedPr={matchedPr}
-          owner={repoInfo.github_owner}
-          repo={repoInfo.github_repo}
-          analysisResult={analysisResult}
-          hybridResult={hybridResult}
-          prDiffs={prDiffs}
-        />
-      )}
-
-      {/* No PR message */}
-      {!matchedPr && (
-        <Card>
-          <p className="p-2 text-center text-sm text-text-secondary">
-            {t("review.noPr")}
-          </p>
-        </Card>
-      )}
     </div>
   );
 }
@@ -402,9 +425,14 @@ function PrAnalysisSection({
 }) {
   const { t } = useTranslation();
   const [token, setToken] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [commitsLoading, setCommitsLoading] = useState(false);
   const [commitsError, setCommitsError] = useState<string | null>(null);
+
+  const handleInsertComment = useCallback((text: string) => {
+    setReviewComment((prev) => (prev ? `${prev}\n\n${text}` : text));
+  }, []);
 
   useEffect(() => {
     invoke("load_app_config")
@@ -478,6 +506,7 @@ function PrAnalysisSection({
           repo={repo}
           prNumber={matchedPr.number}
           token={token}
+          onInsertComment={handleInsertComment}
         />
       )}
 
@@ -490,6 +519,8 @@ function PrAnalysisSection({
           token={token}
           analysisResult={analysisResult}
           prDiffs={prDiffs}
+          comment={reviewComment}
+          onCommentChange={setReviewComment}
         />
       )}
 

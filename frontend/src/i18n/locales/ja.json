@@ -29,6 +29,7 @@
   "tabs": {
     "review": "Review",
     "nextAction": "Next Action",
+    "automate": "Automate",
     "settings": "Settings",
     "settingsAriaLabel": "設定を開く",
     "settingsCloseAriaLabel": "設定を閉じる",
@@ -120,7 +121,9 @@
     "approve": "Approve",
     "requestChanges": "Request Changes",
     "reviewComment": "コメント（任意）",
+    "reviewCommentPlaceholder": "レビューコメントを入力…",
     "reviewCommentRequired": "Request Changesにはコメントが必要です。",
+    "insertToComment": "コメントに挿入",
     "confirmApprove": "このPRをApproveしますか？",
     "confirmRequestChanges": "このPRにRequest Changesを送信しますか？",
     "reviewSubmitting": "レビューを送信中…",
