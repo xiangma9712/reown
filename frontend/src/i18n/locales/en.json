@@ -233,7 +233,9 @@
     "prFiles": "PR Files",
     "prFilesEmpty": "No changed files.",
     "prFilesLoading": "Loading PR file diffs…",
-    "noPr": "No PR associated with this branch."
+    "noPr": "No PR associated with this branch.",
+    "diffOverview": "Diff Overview",
+    "diffOverviewFiles": "{{count}} files changed"
   },
   "theme": {
     "label": "Theme",

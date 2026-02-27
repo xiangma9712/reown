@@ -52,6 +52,7 @@ test.describe("ReviewTab", () => {
     await page.goto(
       "/iframe.html?id=components-reviewtab--with-diffs&viewMode=story"
     );
+    await page.waitForSelector("text=差分概要", { timeout: 10_000 });
     await page.waitForSelector("text=src/auth.ts", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "with-diffs.png"
@@ -63,6 +64,7 @@ test.describe("ReviewTab", () => {
       "/iframe.html?id=components-reviewtab--with-pr-info&viewMode=story"
     );
     await page.waitForSelector("text=PR情報", { timeout: 10_000 });
+    await page.waitForSelector("text=8 ファイル変更", { timeout: 10_000 });
     await page.waitForSelector("text=コミット一覧", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "with-pr-info.png"
