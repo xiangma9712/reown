@@ -26,6 +26,11 @@ export const Default: Story = {
           auto_approve_max_risk: "Low" as const,
           enable_auto_merge: false,
           auto_merge_method: "Squash" as const,
+          risk_config: {
+            category_weights: {},
+            sensitive_paths: [],
+            risk_thresholds: { low_max: 25, medium_max: 55 },
+          },
         }),
       });
       return <Story />;
@@ -43,6 +48,11 @@ export const Enabled: Story = {
           auto_approve_max_risk: "Medium" as const,
           enable_auto_merge: false,
           auto_merge_method: "Squash" as const,
+          risk_config: {
+            category_weights: {},
+            sensitive_paths: [],
+            risk_thresholds: { low_max: 25, medium_max: 55 },
+          },
         }),
       });
       return <Story />;
@@ -60,6 +70,11 @@ export const EnabledWithAutoMerge: Story = {
           auto_approve_max_risk: "Low" as const,
           enable_auto_merge: true,
           auto_merge_method: "Squash" as const,
+          risk_config: {
+            category_weights: {},
+            sensitive_paths: [],
+            risk_thresholds: { low_max: 25, medium_max: 55 },
+          },
         }),
       });
       return <Story />;

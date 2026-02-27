@@ -9,6 +9,7 @@ import type {
   HybridAnalysisResult,
   CategorizedFileDiff,
   CommitInfo,
+  ReviewRecord,
 } from "../types";
 import { Badge } from "./Badge";
 import { BranchSelector } from "./BranchSelector";
@@ -23,6 +24,7 @@ import { ReviewSuggestionPanel } from "./ReviewSuggestionPanel";
 import { ReviewSubmit } from "./ReviewSubmit";
 import { AutomationPanel } from "./AutomationPanel";
 import { PrSummaryPanel } from "./PrSummaryPanel";
+import { ReviewHistoryPanel } from "./ReviewHistoryPanel";
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -95,6 +97,16 @@ export function ReviewTab({ prs = [], loadingPrs = false }: ReviewTabProps) {
   const [prDiffsLoading, setPrDiffsLoading] = useState(false);
   const [prDiffsError, setPrDiffsError] = useState<string | null>(null);
   const [selectedPrFileIndex, setSelectedPrFileIndex] = useState(-1);
+
+  // Review history state
+  const [reviewHistory, setReviewHistory] = useState<ReviewRecord[]>([]);
+
+  // Load review history on mount
+  useEffect(() => {
+    invoke("list_review_history")
+      .then(setReviewHistory)
+      .catch(() => {});
+  }, []);
 
   // TODO: implement PR loading logic — matchedPr is always null until then
   const [matchedPr] = useState<PrInfo | null>(null);
@@ -215,11 +227,14 @@ export function ReviewTab({ prs = [], loadingPrs = false }: ReviewTabProps) {
 
       {/* No branch selected */}
       {!selectedBranch && (
-        <Card>
-          <p className="p-4 text-center text-text-secondary">
-            {t("review.noBranch")}
-          </p>
-        </Card>
+        <>
+          <Card>
+            <p className="p-4 text-center text-text-secondary">
+              {t("review.noBranch")}
+            </p>
+          </Card>
+          <ReviewHistoryPanel records={reviewHistory} />
+        </>
       )}
 
       {/* Main branch selected */}

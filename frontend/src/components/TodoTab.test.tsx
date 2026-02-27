@@ -58,6 +58,9 @@ describe("TodoTab", () => {
       if (command === "extract_todos") {
         return Promise.resolve(fixtures.todoItems);
       }
+      if (command === "list_worktrees") {
+        return Promise.resolve([]);
+      }
       return Promise.reject(new Error(`Unhandled command: ${command}`));
     });
   });
@@ -75,7 +78,10 @@ describe("TodoTab", () => {
 
   it("shows loading state while fetching", async () => {
     const user = userEvent.setup();
-    mockInvokeFn.mockImplementation(() => new Promise(() => {}));
+    mockInvokeFn.mockImplementation((command: string) => {
+      if (command === "list_worktrees") return Promise.resolve([]);
+      return new Promise(() => {});
+    });
     renderWithProvider(<TodoTab />);
     await user.click(screen.getByText("TODOを抽出"));
     expect(screen.getByRole("status")).toBeInTheDocument();
@@ -246,9 +252,10 @@ describe("TodoTab", () => {
 
   it("shows error state when load fails", async () => {
     const user = userEvent.setup();
-    mockInvokeFn.mockImplementation(() =>
-      Promise.reject(new Error("extract failed"))
-    );
+    mockInvokeFn.mockImplementation((command: string) => {
+      if (command === "list_worktrees") return Promise.resolve([]);
+      return Promise.reject(new Error("extract failed"));
+    });
     renderWithProvider(<TodoTab />);
     await user.click(screen.getByText("TODOを抽出"));
     await waitFor(() => {

@@ -1,3 +1,4 @@
+pub mod auth;
 #[allow(dead_code)]
 pub mod pull_request;
 #[allow(dead_code)]

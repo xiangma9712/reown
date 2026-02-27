@@ -122,6 +122,7 @@ mod tests {
             auto_approve_max_risk: AutoApproveMaxRisk::Medium,
             enable_auto_merge: enable_merge,
             auto_merge_method: ConfigMergeMethod::Squash,
+            ..Default::default()
         }
     }
 

@@ -7,6 +7,7 @@ import type {
   AutomationConfig,
   AutoApproveMaxRisk,
   ConfigMergeMethod,
+  RiskConfig,
 } from "../types";
 
 export function AutomationSettingsTab() {
@@ -17,6 +18,11 @@ export function AutomationSettingsTab() {
   const [autoMergeMethod, setAutoMergeMethod] =
     useState<ConfigMergeMethod>("Merge");
   const [loading, setLoading] = useState(true);
+  const [riskConfig, setRiskConfig] = useState<RiskConfig>({
+    category_weights: {},
+    sensitive_paths: [],
+    risk_thresholds: { low_max: 25, medium_max: 55 },
+  });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -31,6 +37,7 @@ export function AutomationSettingsTab() {
       setMaxRisk(config.auto_approve_max_risk);
       setEnableAutoMerge(config.enable_auto_merge);
       setAutoMergeMethod(config.auto_merge_method);
+      setRiskConfig(config.risk_config);
     } catch (e) {
       setMessage({
         type: "error",
@@ -57,6 +64,7 @@ export function AutomationSettingsTab() {
         auto_approve_max_risk: maxRisk,
         enable_auto_merge: enableAutoMerge,
         auto_merge_method: autoMergeMethod,
+        risk_config: riskConfig,
       };
       await invoke("save_automation_config", { automationConfig });
 
@@ -71,7 +79,7 @@ export function AutomationSettingsTab() {
     } finally {
       setSaving(false);
     }
-  }, [enabled, maxRisk, enableAutoMerge, autoMergeMethod, t]);
+  }, [enabled, maxRisk, enableAutoMerge, autoMergeMethod, riskConfig, t]);
 
   const handleReset = useCallback(() => {
     setMessage(null);

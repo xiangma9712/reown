@@ -440,6 +440,56 @@ fn load_automation_config(
     }
 }
 
+// ── Risk Config commands ─────────────────────────────────────────────────────
+
+#[tauri::command]
+fn load_risk_config(
+    app_handle: tauri::AppHandle,
+    owner: Option<String>,
+    repo: Option<String>,
+) -> Result<reown::config::RiskConfig, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    match (owner, repo) {
+        (Some(o), Some(r)) => {
+            let repo_id = format!("{o}/{r}");
+            Ok(config.get_automation_config(&repo_id).risk_config.clone())
+        }
+        _ => Ok(config.automation.risk_config),
+    }
+}
+
+#[tauri::command]
+fn save_risk_config(
+    app_handle: tauri::AppHandle,
+    risk_config: reown::config::RiskConfig,
+    owner: Option<String>,
+    repo: Option<String>,
+) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let mut config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    match (owner, repo) {
+        (Some(o), Some(r)) => {
+            let repo_id = format!("{o}/{r}");
+            let mut automation = config.get_automation_config(&repo_id).clone();
+            automation.risk_config = risk_config;
+            config.set_repo_automation_config(repo_id, automation);
+        }
+        _ => {
+            config.automation.risk_config = risk_config;
+        }
+    }
+    reown::config::save_config(&config_path, &config).map_err(AppError::storage)
+}
+
 // ── Automation commands ───────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -526,6 +576,36 @@ async fn run_auto_approve_with_merge(
         &automation_config,
     )
     .await)
+}
+
+// ── GitHub Auth commands ─────────────────────────────────────────────────────
+
+/// GitHub OAuth App の Client ID
+const GITHUB_CLIENT_ID: &str = "Ov23liYMR2IEcrxhGnRV";
+
+#[tauri::command]
+async fn start_github_device_flow() -> Result<reown::github::auth::DeviceFlowResponse, AppError> {
+    reown::github::auth::start_device_flow(GITHUB_CLIENT_ID)
+        .await
+        .map_err(AppError::github)
+}
+
+#[tauri::command]
+async fn poll_github_device_flow(device_code: String, interval: u64) -> Result<(), AppError> {
+    let token = reown::github::auth::poll_for_token(GITHUB_CLIENT_ID, &device_code, interval)
+        .await
+        .map_err(AppError::github)?;
+    reown::config::save_github_token(&token).map_err(AppError::storage)
+}
+
+#[tauri::command]
+fn get_github_auth_status() -> Result<bool, AppError> {
+    Ok(reown::config::load_github_token().is_ok())
+}
+
+#[tauri::command]
+fn github_logout() -> Result<(), AppError> {
+    reown::config::delete_github_token().map_err(AppError::storage)
 }
 
 // ── TODO extraction commands ─────────────────────────────────────────────────
@@ -657,6 +737,8 @@ fn main() {
             test_llm_connection,
             save_automation_config,
             load_automation_config,
+            load_risk_config,
+            save_risk_config,
             evaluate_auto_approve_candidates,
             run_auto_approve,
             run_auto_approve_with_merge,
@@ -665,6 +747,10 @@ fn main() {
             suggest_review_comments,
             list_review_history,
             add_review_record,
+            start_github_device_flow,
+            poll_github_device_flow,
+            get_github_auth_status,
+            github_logout,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

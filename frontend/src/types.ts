@@ -93,11 +93,23 @@ export type AutoApproveMaxRisk = "Low" | "Medium";
 
 export type ConfigMergeMethod = "Merge" | "Squash" | "Rebase";
 
+export interface RiskThresholds {
+  low_max: number;
+  medium_max: number;
+}
+
+export interface RiskConfig {
+  category_weights: Partial<Record<ChangeCategory, number>>;
+  sensitive_paths: string[];
+  risk_thresholds: RiskThresholds;
+}
+
 export interface AutomationConfig {
   enabled: boolean;
   auto_approve_max_risk: AutoApproveMaxRisk;
   enable_auto_merge: boolean;
   auto_merge_method: ConfigMergeMethod;
+  risk_config: RiskConfig;
 }
 
 export interface AppConfig {

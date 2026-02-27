@@ -50,6 +50,9 @@ const defaultHandlers: CommandHandlers = {
   suggest_review_comments: () => fixtures.reviewSuggestions,
   evaluate_auto_approve_candidates: () => [],
   run_auto_approve_with_merge: () => fixtures.autoApproveWithMergeResult,
+  load_risk_config: () => fixtures.automationConfig.risk_config,
+  save_risk_config: () => undefined as never,
+  list_review_history: () => fixtures.reviewRecords,
   add_review_record: () => undefined as never,
 };
 
