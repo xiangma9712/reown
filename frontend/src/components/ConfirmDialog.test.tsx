@@ -71,4 +71,22 @@ describe("ConfirmDialog", () => {
     );
     expect(screen.getByText("Extra content")).toBeInTheDocument();
   });
+
+  it("renders warning icon for destructive variant", () => {
+    render(<ConfirmDialog {...defaultProps} />);
+    const icon = document.querySelector("svg[aria-hidden='true']");
+    expect(icon).toBeInTheDocument();
+  });
+
+  it("does not render warning icon for primary variant", () => {
+    render(
+      <ConfirmDialog
+        {...defaultProps}
+        confirmVariant="primary"
+        confirmLabel="OK"
+      />
+    );
+    const icon = document.querySelector("svg[aria-hidden='true']");
+    expect(icon).not.toBeInTheDocument();
+  });
 });
