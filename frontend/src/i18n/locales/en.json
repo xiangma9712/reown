@@ -174,7 +174,8 @@
     "autoApproveResultFailed": "Failed",
     "autoApproveMergeEnabled": "Auto Merge: Enabled",
     "autoApproveMergeSkipped": "Auto Merge: Skipped",
-    "autoApproveMergeFailed": "Auto Merge: Failed"
+    "autoApproveMergeFailed": "Auto Merge: Failed",
+    "loadingPrs": "Loading PRs…"
   },
   "llmSettings": {
     "title": "LLM Settings",

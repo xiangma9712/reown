@@ -70,7 +70,12 @@ const categoryBadgeVariant: Record<
   Other: "default",
 };
 
-export function ReviewTab() {
+interface ReviewTabProps {
+  prs?: PrInfo[];
+  loadingPrs?: boolean;
+}
+
+export function ReviewTab({ prs = [], loadingPrs = false }: ReviewTabProps) {
   const { t } = useTranslation();
   const { repoPath, repoInfo } = useRepository();
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
@@ -199,10 +204,13 @@ export function ReviewTab() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <BranchSelector
-          prs={[]}
+          prs={prs}
           selectedBranch={selectedBranch}
           onSelectBranch={setSelectedBranch}
         />
+        {loadingPrs && (
+          <span className="text-xs text-text-muted">{t("pr.loadingPrs")}</span>
+        )}
       </div>
 
       {/* No branch selected */}

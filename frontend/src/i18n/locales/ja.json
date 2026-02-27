@@ -174,7 +174,8 @@
     "autoApproveResultFailed": "失敗",
     "autoApproveMergeEnabled": "Auto Merge: 有効",
     "autoApproveMergeSkipped": "Auto Merge: スキップ",
-    "autoApproveMergeFailed": "Auto Merge: 失敗"
+    "autoApproveMergeFailed": "Auto Merge: 失敗",
+    "loadingPrs": "PR取得中…"
   },
   "llmSettings": {
     "title": "LLM設定",
