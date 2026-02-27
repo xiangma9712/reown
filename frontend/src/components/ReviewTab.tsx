@@ -11,6 +11,7 @@ import type {
   CommitInfo,
 } from "../types";
 import { Badge } from "./Badge";
+import { BranchSelector } from "./BranchSelector";
 import { Card } from "./Card";
 import { Loading } from "./Loading";
 import { DiffViewer } from "./DiffViewer";
@@ -68,14 +69,10 @@ const categoryBadgeVariant: Record<
   Other: "default",
 };
 
-interface ReviewTabProps {
-  selectedBranch: string | null;
-  prs: PrInfo[];
-}
-
-export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
+export function ReviewTab() {
   const { t } = useTranslation();
   const { repoPath, repoInfo } = useRepository();
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
@@ -93,8 +90,8 @@ export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
   const [prDiffsError, setPrDiffsError] = useState<string | null>(null);
   const [selectedPrFileIndex, setSelectedPrFileIndex] = useState(-1);
 
-  // Find matching PR for the selected branch
-  const matchedPr = prs.find((pr) => pr.head_branch === selectedBranch) ?? null;
+  // TODO: implement PR loading logic — matchedPr is always null until then
+  const [matchedPr] = useState<PrInfo | null>(null);
 
   const loadDiff = useCallback(async () => {
     if (!repoPath || !selectedBranch) return;
@@ -197,189 +194,199 @@ export function ReviewTab({ selectedBranch, prs }: ReviewTabProps) {
   const selectedPrDiff =
     selectedPrFileIndex >= 0 ? prDiffs[selectedPrFileIndex] : null;
 
-  // No branch selected
-  if (!selectedBranch) {
-    return (
-      <Card>
-        <p className="p-4 text-center text-text-secondary">
-          {t("review.noBranch")}
-        </p>
-      </Card>
-    );
-  }
-
-  // Main branch selected
-  if (selectedBranch === "main") {
-    return (
-      <Card>
-        <p className="p-4 text-center text-text-secondary">
-          {t("review.mainBranch")}
-        </p>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      {/* PR info section (if PR exists) */}
-      {matchedPr && (
-        <Card>
-          <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
-            {t("review.prInfo")}
-          </h2>
-          <div className="space-y-1 text-sm">
-            <p className="font-medium text-text-primary">
-              {t("review.prTitle", {
-                number: matchedPr.number,
-                title: matchedPr.title,
-              })}
-            </p>
-            <p className="text-text-secondary">
-              {t("review.prAuthor", { author: matchedPr.author })}
-            </p>
-            <p className="text-text-secondary">
-              {t("review.prState", { state: matchedPr.state })}
-            </p>
-          </div>
-        </Card>
-      )}
-
-      {/* PR file diff section (when PR is matched) */}
-      {matchedPr && (
-        <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
-          <Card className="flex flex-col">
-            <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
-              {t("review.prFiles")}
-            </h2>
-            <div className="scrollbar-custom flex-1 overflow-y-auto">
-              {prDiffsLoading && <Loading />}
-              {prDiffsError && (
-                <p className="p-2 text-[0.9rem] text-danger">
-                  {t("common.error", { message: prDiffsError })}
-                </p>
-              )}
-              {!prDiffsLoading && !prDiffsError && prDiffs.length === 0 && (
-                <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                  {t("review.prFilesEmpty")}
-                </p>
-              )}
-              {prDiffs.map((diff, index) => (
-                <div
-                  key={diff.new_path ?? diff.old_path ?? index}
-                  className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                    selectedPrFileIndex === index
-                      ? "border-l-2 border-l-accent bg-bg-hover"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedPrFileIndex(index)}
-                >
-                  <Badge variant={statusVariant(diff.status)}>
-                    {statusLabel(diff.status)}
-                  </Badge>
-                  <span
-                    className="min-w-0 flex-1 truncate text-text-primary"
-                    title={diff.new_path ?? diff.old_path ?? ""}
-                  >
-                    {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                  </span>
-                  <Badge
-                    variant={categoryBadgeVariant[diff.category] ?? "default"}
-                  >
-                    {t(`pr.category${diff.category}`)}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </Card>
-          <Card className="flex flex-col overflow-hidden">
-            <div className="scrollbar-custom flex-1 overflow-auto">
-              {prDiffsLoading && <Loading />}
-              {!prDiffsLoading && !selectedPrDiff && (
-                <p className="p-4 text-[0.9rem] italic text-text-secondary">
-                  {t("review.selectFile")}
-                </p>
-              )}
-              {selectedPrDiff && <DiffViewer diff={selectedPrDiff} />}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Branch diff section (when no PR is matched) */}
-      {!matchedPr && (
-        <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
-          <Card className="flex flex-col">
-            <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
-              {t("review.changedFiles")}
-            </h2>
-            <div className="scrollbar-custom flex-1 overflow-y-auto">
-              {loading && <Loading />}
-              {error && (
-                <p className="p-2 text-[0.9rem] text-danger">
-                  {t("common.error", { message: error })}
-                </p>
-              )}
-              {!loading && !error && diffs.length === 0 && (
-                <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                  {t("review.empty")}
-                </p>
-              )}
-              {diffs.map((diff, index) => (
-                <div
-                  key={diff.new_path ?? diff.old_path ?? index}
-                  className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                    selectedIndex === index
-                      ? "border-l-2 border-l-accent bg-bg-hover"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedIndex(index)}
-                >
-                  <Badge variant={statusVariant(diff.status)}>
-                    {statusLabel(diff.status)}
-                  </Badge>
-                  <span
-                    className="truncate text-text-primary"
-                    title={diff.new_path ?? diff.old_path ?? ""}
-                  >
-                    {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Card>
-          <Card className="flex flex-col overflow-hidden">
-            <div className="scrollbar-custom flex-1 overflow-auto">
-              {loading && <Loading />}
-              {!loading && !selectedDiff && (
-                <p className="p-4 text-[0.9rem] italic text-text-secondary">
-                  {t("review.selectFile")}
-                </p>
-              )}
-              {selectedDiff && <DiffViewer diff={selectedDiff} />}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* PR analysis panels (only shown if PR exists) */}
-      {matchedPr && repoInfo?.github_owner && repoInfo?.github_repo && (
-        <PrAnalysisSection
-          matchedPr={matchedPr}
-          owner={repoInfo.github_owner}
-          repo={repoInfo.github_repo}
-          analysisResult={analysisResult}
-          hybridResult={hybridResult}
-          prDiffs={prDiffs}
+      <div className="flex items-center gap-3">
+        <BranchSelector
+          prs={[]}
+          selectedBranch={selectedBranch}
+          onSelectBranch={setSelectedBranch}
         />
-      )}
+      </div>
 
-      {/* No PR message */}
-      {!matchedPr && (
+      {/* No branch selected */}
+      {!selectedBranch && (
         <Card>
-          <p className="p-2 text-center text-sm text-text-secondary">
-            {t("review.noPr")}
+          <p className="p-4 text-center text-text-secondary">
+            {t("review.noBranch")}
           </p>
         </Card>
+      )}
+
+      {/* Main branch selected */}
+      {selectedBranch === "main" && (
+        <Card>
+          <p className="p-4 text-center text-text-secondary">
+            {t("review.mainBranch")}
+          </p>
+        </Card>
+      )}
+
+      {selectedBranch && selectedBranch !== "main" && (
+        <>
+          {/* PR info section (if PR exists) */}
+          {matchedPr && (
+            <Card>
+              <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+                {t("review.prInfo")}
+              </h2>
+              <div className="space-y-1 text-sm">
+                <p className="font-medium text-text-primary">
+                  {t("review.prTitle", {
+                    number: matchedPr.number,
+                    title: matchedPr.title,
+                  })}
+                </p>
+                <p className="text-text-secondary">
+                  {t("review.prAuthor", { author: matchedPr.author })}
+                </p>
+                <p className="text-text-secondary">
+                  {t("review.prState", { state: matchedPr.state })}
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* PR analysis panels — overview at the top (only shown if PR exists) */}
+          {matchedPr && repoInfo?.github_owner && repoInfo?.github_repo && (
+            <PrAnalysisSection
+              matchedPr={matchedPr}
+              owner={repoInfo.github_owner}
+              repo={repoInfo.github_repo}
+              analysisResult={analysisResult}
+              hybridResult={hybridResult}
+              prDiffs={prDiffs}
+            />
+          )}
+
+          {/* No PR message */}
+          {!matchedPr && (
+            <Card>
+              <p className="p-2 text-center text-sm text-text-secondary">
+                {t("review.noPr")}
+              </p>
+            </Card>
+          )}
+
+          {/* PR file diff section (when PR is matched) — detail below overview */}
+          {matchedPr && (
+            <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
+              <Card className="flex flex-col">
+                <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
+                  {t("review.prFiles")}
+                </h2>
+                <div className="scrollbar-custom flex-1 overflow-y-auto">
+                  {prDiffsLoading && <Loading />}
+                  {prDiffsError && (
+                    <p className="p-2 text-[0.9rem] text-danger">
+                      {t("common.error", { message: prDiffsError })}
+                    </p>
+                  )}
+                  {!prDiffsLoading && !prDiffsError && prDiffs.length === 0 && (
+                    <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                      {t("review.prFilesEmpty")}
+                    </p>
+                  )}
+                  {prDiffs.map((diff, index) => (
+                    <div
+                      key={diff.new_path ?? diff.old_path ?? index}
+                      className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                        selectedPrFileIndex === index
+                          ? "border-l-2 border-l-accent bg-bg-hover"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedPrFileIndex(index)}
+                    >
+                      <Badge variant={statusVariant(diff.status)}>
+                        {statusLabel(diff.status)}
+                      </Badge>
+                      <span
+                        className="min-w-0 flex-1 truncate text-text-primary"
+                        title={diff.new_path ?? diff.old_path ?? ""}
+                      >
+                        {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                      </span>
+                      <Badge
+                        variant={
+                          categoryBadgeVariant[diff.category] ?? "default"
+                        }
+                      >
+                        {t(`pr.category${diff.category}`)}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card className="flex flex-col overflow-hidden">
+                <div className="scrollbar-custom flex-1 overflow-auto">
+                  {prDiffsLoading && <Loading />}
+                  {!prDiffsLoading && !selectedPrDiff && (
+                    <p className="p-4 text-[0.9rem] italic text-text-secondary">
+                      {t("review.selectFile")}
+                    </p>
+                  )}
+                  {selectedPrDiff && <DiffViewer diff={selectedPrDiff} />}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Branch diff section (when no PR is matched) */}
+          {!matchedPr && (
+            <div className="grid min-h-[500px] grid-cols-[280px_1fr] gap-4">
+              <Card className="flex flex-col">
+                <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
+                  {t("review.changedFiles")}
+                </h2>
+                <div className="scrollbar-custom flex-1 overflow-y-auto">
+                  {loading && <Loading />}
+                  {error && (
+                    <p className="p-2 text-[0.9rem] text-danger">
+                      {t("common.error", { message: error })}
+                    </p>
+                  )}
+                  {!loading && !error && diffs.length === 0 && (
+                    <p className="p-2 text-[0.9rem] italic text-text-secondary">
+                      {t("review.empty")}
+                    </p>
+                  )}
+                  {diffs.map((diff, index) => (
+                    <div
+                      key={diff.new_path ?? diff.old_path ?? index}
+                      className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
+                        selectedIndex === index
+                          ? "border-l-2 border-l-accent bg-bg-hover"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedIndex(index)}
+                    >
+                      <Badge variant={statusVariant(diff.status)}>
+                        {statusLabel(diff.status)}
+                      </Badge>
+                      <span
+                        className="truncate text-text-primary"
+                        title={diff.new_path ?? diff.old_path ?? ""}
+                      >
+                        {diff.new_path ?? diff.old_path ?? "(unknown)"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card className="flex flex-col overflow-hidden">
+                <div className="scrollbar-custom flex-1 overflow-auto">
+                  {loading && <Loading />}
+                  {!loading && !selectedDiff && (
+                    <p className="p-4 text-[0.9rem] italic text-text-secondary">
+                      {t("review.selectFile")}
+                    </p>
+                  )}
+                  {selectedDiff && <DiffViewer diff={selectedDiff} />}
+                </div>
+              </Card>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -402,9 +409,14 @@ function PrAnalysisSection({
 }) {
   const { t } = useTranslation();
   const [token, setToken] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [commitsLoading, setCommitsLoading] = useState(false);
   const [commitsError, setCommitsError] = useState<string | null>(null);
+
+  const handleInsertComment = useCallback((text: string) => {
+    setReviewComment((prev) => (prev ? `${prev}\n\n${text}` : text));
+  }, []);
 
   useEffect(() => {
     invoke("load_app_config")
@@ -478,6 +490,7 @@ function PrAnalysisSection({
           repo={repo}
           prNumber={matchedPr.number}
           token={token}
+          onInsertComment={handleInsertComment}
         />
       )}
 
@@ -490,6 +503,8 @@ function PrAnalysisSection({
           token={token}
           analysisResult={analysisResult}
           prDiffs={prDiffs}
+          comment={reviewComment}
+          onCommentChange={setReviewComment}
         />
       )}
 

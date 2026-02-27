@@ -18,6 +18,8 @@ interface ReviewSubmitProps {
   token: string;
   analysisResult: AnalysisResult | null;
   prDiffs: CategorizedFileDiff[];
+  comment?: string;
+  onCommentChange?: (comment: string) => void;
 }
 
 export function ReviewSubmit({
@@ -27,13 +29,28 @@ export function ReviewSubmit({
   token,
   analysisResult,
   prDiffs,
+  comment: externalComment,
+  onCommentChange,
 }: ReviewSubmitProps) {
   const { t } = useTranslation();
-  const [selectedEvent, setSelectedEvent] = useState<ReviewEvent | null>(null);
-  const [comment, setComment] = useState("");
+  const [internalComment, setInternalComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const isControlled = externalComment !== undefined;
+  const comment = isControlled ? externalComment : internalComment;
+  const setComment = useCallback(
+    (value: string) => {
+      if (onCommentChange) {
+        onCommentChange(value);
+      }
+      if (!isControlled) {
+        setInternalComment(value);
+      }
+    },
+    [isControlled, onCommentChange]
+  );
 
   const clearMessages = useCallback(() => {
     setSuccessMessage(null);
@@ -87,7 +104,6 @@ export function ReviewSubmit({
         });
 
         setSuccessMessage(t("pr.reviewSuccess"));
-        setSelectedEvent(null);
         setComment("");
       } catch (err) {
         setErrorMessage(`${t("pr.reviewError")}: ${String(err)}`);
@@ -105,6 +121,7 @@ export function ReviewSubmit({
       analysisResult,
       t,
       clearMessages,
+      setComment,
     ]
   );
 
@@ -133,81 +150,44 @@ export function ReviewSubmit({
         </p>
       )}
 
+      {/* Comment textarea (always visible) */}
+      <div className="mb-3 space-y-2">
+        <label className="block text-sm text-text-secondary">
+          {t("pr.reviewComment")}
+        </label>
+        <textarea
+          className="w-full rounded border border-border bg-bg-primary px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-accent focus:outline-none"
+          rows={4}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          disabled={submitting}
+          placeholder={t("pr.reviewCommentPlaceholder")}
+        />
+      </div>
+
       {/* Action buttons */}
-      <div className="mb-3 flex gap-2">
+      <div className="flex gap-2">
         <Button
           variant="primary"
           disabled={submitting}
           onClick={() => {
             clearMessages();
-            if (selectedEvent === "APPROVE") {
-              handleSubmit("APPROVE");
-            } else {
-              setSelectedEvent("APPROVE");
-            }
+            handleSubmit("APPROVE");
           }}
         >
           {t("pr.approve")}
         </Button>
         <Button
           variant="destructive"
-          disabled={submitting}
+          disabled={submitting || !comment.trim()}
           onClick={() => {
             clearMessages();
-            setSelectedEvent("REQUEST_CHANGES");
+            handleSubmit("REQUEST_CHANGES");
           }}
         >
           {t("pr.requestChanges")}
         </Button>
       </div>
-
-      {/* Comment textarea (shown for Request Changes, optional for Approve) */}
-      {selectedEvent && (
-        <div className="space-y-2">
-          <label className="block text-sm text-text-secondary">
-            {selectedEvent === "REQUEST_CHANGES"
-              ? t("pr.reviewCommentRequired")
-              : t("pr.reviewComment")}
-          </label>
-          <textarea
-            className="w-full rounded border border-border bg-bg-primary px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-accent focus:outline-none"
-            rows={4}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            disabled={submitting}
-            placeholder={
-              selectedEvent === "REQUEST_CHANGES"
-                ? t("pr.reviewCommentRequired")
-                : t("pr.reviewComment")
-            }
-          />
-          <div className="flex gap-2">
-            <Button
-              variant="primary"
-              disabled={
-                submitting ||
-                (selectedEvent === "REQUEST_CHANGES" && !comment.trim())
-              }
-              onClick={() => handleSubmit(selectedEvent)}
-            >
-              {selectedEvent === "APPROVE"
-                ? t("pr.approve")
-                : t("pr.requestChanges")}
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={submitting}
-              onClick={() => {
-                setSelectedEvent(null);
-                setComment("");
-                clearMessages();
-              }}
-            >
-              {t("common.cancel")}
-            </Button>
-          </div>
-        </div>
-      )}
     </Card>
   );
 }

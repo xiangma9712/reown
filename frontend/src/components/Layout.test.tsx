@@ -80,24 +80,6 @@ describe("Layout", () => {
     expect(screen.queryByText("Content")).not.toBeInTheDocument();
   });
 
-  it("renders branch selector when provided", () => {
-    render(
-      <Layout {...defaultProps} branchSelector={<div>Branch Selector</div>}>
-        <div>Content</div>
-      </Layout>
-    );
-    expect(screen.getByText("Branch Selector")).toBeInTheDocument();
-  });
-
-  it("does not render branch selector when not provided", () => {
-    render(
-      <Layout {...defaultProps}>
-        <div>Content</div>
-      </Layout>
-    );
-    expect(screen.queryByText("Branch Selector")).not.toBeInTheDocument();
-  });
-
   it("renders tabpanel with correct aria attributes", () => {
     render(
       <Layout {...defaultProps} activeTabId="review">

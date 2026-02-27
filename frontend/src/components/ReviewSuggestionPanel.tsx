@@ -12,6 +12,7 @@ interface ReviewSuggestionPanelProps {
   repo: string;
   prNumber: number;
   token: string;
+  onInsertComment?: (text: string) => void;
 }
 
 const severityBadgeVariant: Record<
@@ -34,6 +35,7 @@ export function ReviewSuggestionPanel({
   repo,
   prNumber,
   token,
+  onInsertComment,
 }: ReviewSuggestionPanelProps) {
   const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<ReviewSuggestion[] | null>(
@@ -129,7 +131,7 @@ export function ReviewSuggestionPanel({
                       >
                         {t(`pr.severity${suggestion.severity}`)}
                       </Badge>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <span className="text-text-primary">
                           {suggestion.message}
                         </span>
@@ -137,6 +139,16 @@ export function ReviewSuggestionPanel({
                           ({suggestion.source})
                         </span>
                       </div>
+                      {onInsertComment && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => onInsertComment(suggestion.message)}
+                        >
+                          {t("pr.insertToComment")}
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>

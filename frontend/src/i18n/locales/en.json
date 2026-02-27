@@ -29,6 +29,7 @@
   "tabs": {
     "review": "Review",
     "nextAction": "Next Action",
+    "automate": "Automate",
     "settings": "Settings",
     "settingsAriaLabel": "Open settings",
     "settingsCloseAriaLabel": "Close settings",
@@ -120,7 +121,9 @@
     "approve": "Approve",
     "requestChanges": "Request Changes",
     "reviewComment": "Comment (optional)",
+    "reviewCommentPlaceholder": "Enter review comment…",
     "reviewCommentRequired": "A comment is required for Request Changes.",
+    "insertToComment": "Insert",
     "confirmApprove": "Are you sure you want to approve this PR?",
     "confirmRequestChanges": "Are you sure you want to request changes on this PR?",
     "reviewSubmitting": "Submitting review…",
