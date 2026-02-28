@@ -70,20 +70,77 @@ step_ci() {
     # Don't attempt fix on the last attempt
     if [[ "$attempt" -lt "$CI_MAX_ATTEMPTS" ]]; then
       log "CI failed on attempt $attempt. Attempting fix..."
+
+      # Build detailed prompt for the CI fix agent
+      local ci_fix_prompt
+      ci_fix_prompt="CI checks failed for this PR on branch \`$BRANCH_NAME\`.
+
+## Step 1: Read the CI logs
+
+1. Get the latest failed run ID:
+   \`\`\`
+   gh run list --branch $BRANCH_NAME --limit 1 --json databaseId,status,conclusion --jq '.[0]'
+   \`\`\`
+2. View the failed logs:
+   \`\`\`
+   gh run view <run-id> --log-failed
+   \`\`\`
+
+## Step 2: Fix the issues
+
+Read the error messages carefully and fix the root cause in the source files.
+
+## Step 3: Run formatters
+
+After fixing, run the appropriate formatters:
+- Rust files: \`cargo fmt --all\`
+- Frontend files: \`cd frontend && npx prettier --write src/\`
+
+## Step 4: Commit and push
+
+You MUST commit and push your changes. This is critical — without this step the fix has no effect.
+
+\`\`\`bash
+git add -A
+git commit -m \"fix: address CI failures for #$TASK_ISSUE\"
+git push
+\`\`\`
+
+## Step 5: Verify
+
+Run \`git status\` to confirm the working tree is clean and all changes have been pushed."
+
       local fix_rc=0
       run_claude \
         --label "ci-fix-$TASK_ISSUE-attempt$attempt" \
         --timeout "$TIMEOUT_VERIFY_FIX" \
         --max-turns "$FIX_MAX_TURNS" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        -- "CI checks failed for this PR. Read the CI logs, fix the issues, commit, and push." \
+        -- "$ci_fix_prompt" \
         >/dev/null || fix_rc=$?
       if [[ "$fix_rc" -eq 2 ]]; then
         flag_rate_limit
         gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
         return 2
       fi
+
+      # ── Ensure agent's changes are committed and pushed ──────────────────
       cd "$REPO_ROOT"
+      if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
+        log "WARN: CI fix agent left uncommitted changes. Committing..."
+        git add -A
+        if ! git commit -m "fix: address CI failures for #$TASK_ISSUE" 2>/dev/null; then
+          # Pre-commit hook failed — run formatters and retry
+          log "WARN: Commit failed (pre-commit hook). Re-running formatters..."
+          cargo fmt --all 2>/dev/null || true
+          if has_frontend_changes; then
+            (cd "$REPO_ROOT/frontend" && npx prettier --write src/ 2>/dev/null) || true
+            (cd "$REPO_ROOT/frontend" && npx eslint --fix src/ 2>/dev/null) || true
+          fi
+          git add -A
+          git commit -m "fix: address CI failures for #$TASK_ISSUE" 2>/dev/null || true
+        fi
+      fi
       git push 2>/dev/null || true
     fi
   done
