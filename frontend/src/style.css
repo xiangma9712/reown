@@ -34,6 +34,7 @@
   --color-status-modified-bg: #fef3c7;
   --color-status-renamed-bg: #dbeafe;
   --color-pr-merged-bg: #f3e8ff;
+  --color-sidebar-selected: rgba(15, 118, 110, 0.1);
   --color-sidebar-bg: #f9fafb;
   --color-bg-tooltip: #1f2937;
   --color-text-tooltip: #f9fafb;
@@ -76,6 +77,7 @@ html.dark {
   --color-status-modified-bg: rgba(217, 119, 6, 0.2);
   --color-status-renamed-bg: rgba(37, 99, 235, 0.2);
   --color-pr-merged-bg: rgba(147, 51, 234, 0.2);
+  --color-sidebar-selected: rgba(20, 184, 166, 0.15);
   --color-sidebar-bg: #0f172a;
   --color-bg-tooltip: #f3f4f6;
   --color-text-tooltip: #1f2937;

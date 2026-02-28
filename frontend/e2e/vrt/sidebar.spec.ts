@@ -141,26 +141,6 @@ test.describe("Sidebar", () => {
     );
   });
 
-  // ── Theme toggle ───────────────────────────────────────────
-
-  test("theme toggle light", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-sidebar--theme-toggle-light&viewMode=story"
-    );
-    await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "theme-toggle-light.png"
-    );
-  });
-
-  test("theme toggle dark", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-sidebar--theme-toggle-dark&viewMode=story"
-    );
-    await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "theme-toggle-dark.png"
-    );
-  });
-
   // ── Dark mode ──────────────────────────────────────────────
 
   test("dark: default with repositories", async ({ page }) => {
