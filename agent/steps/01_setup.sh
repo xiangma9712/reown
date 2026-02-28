@@ -18,7 +18,7 @@ step_setup() {
     log "Fetched $raw_count open issues with label '$AGENT_LABEL' ($issue_count from allowed author '$ALLOWED_ISSUE_AUTHOR')"
   else
     log "ERROR: Failed to fetch GitHub issues. Cannot proceed without issue source."
-    sleep "$SLEEP_SECONDS"
+    interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
 
@@ -26,7 +26,7 @@ step_setup() {
     log "No open issues with label '$AGENT_LABEL'. Proposing new issues from INTENT.md gap analysis..."
     if ! propose_issues; then return 2; fi
     if is_rate_limited; then return 2; fi
-    sleep "$SLEEP_SECONDS"
+    interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
 
