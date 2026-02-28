@@ -36,4 +36,16 @@ test.describe("AutomationSettingsTab", () => {
       "enabled-with-auto-merge.png"
     );
   });
+
+  test("enabled with sensitive patterns", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-automationsettingstab--enabled-with-sensitive-patterns&viewMode=story"
+    );
+    await page.waitForSelector("text=センシティブパスパターン", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "enabled-with-sensitive-patterns.png"
+    );
+  });
 });

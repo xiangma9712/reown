@@ -143,6 +143,7 @@ export type Commands = {
     };
     ret: void;
   };
+  load_default_risk_config: { args?: Record<string, unknown>; ret: RiskConfig };
   evaluate_auto_approve_candidates: {
     args: { owner: string; repo: string };
     ret: AutoApproveCandidate[];
