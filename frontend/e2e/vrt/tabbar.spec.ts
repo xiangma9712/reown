@@ -38,12 +38,23 @@ test.describe("TabBar", () => {
     );
   });
 
+  test("shortcut badge visible on hover", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-tabbar--first-active&viewMode=story"
+    );
+    await page.locator('[role="tab"]').first().hover();
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "shortcut-on-hover.png"
+    );
+  });
+
   test("shortcut tooltip on hover", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=components-tabbar--first-active&viewMode=story"
     );
+    await page.locator('[role="tab"]').first().hover();
     await page.locator("kbd").first().hover();
-    await page.waitForSelector('[data-radix-popper-content-wrapper]');
+    await page.waitForSelector("[data-radix-popper-content-wrapper]");
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "shortcut-tooltip.png"
     );

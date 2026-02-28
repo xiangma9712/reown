@@ -33,13 +33,15 @@ describe("TabBar", () => {
     expect(screen.getByText("N")).toBeInTheDocument();
   });
 
-  it("highlights the active tab", () => {
+  it("highlights the active tab with border, background and bold", () => {
     const { container } = render(
       <TabBar items={items} activeId="next-action" onSelect={vi.fn()} />
     );
     const activeTab = container.querySelector(".border-b-accent");
     expect(activeTab).toBeInTheDocument();
     expect(activeTab?.textContent).toContain("Next Action");
+    expect(activeTab).toHaveClass("bg-bg-hover");
+    expect(activeTab).toHaveClass("font-bold");
   });
 
   it("calls onSelect when a tab is clicked", async () => {

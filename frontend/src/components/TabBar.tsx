@@ -63,9 +63,9 @@ export function TabBar({ items, activeId, onSelect }: Props) {
             id={`tab-${item.id}`}
             tabIndex={activeId === item.id ? 0 : -1}
             onClick={() => onSelect(item.id)}
-            className={`cursor-pointer border-none px-5 py-2.5 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
+            className={`group cursor-pointer border-none px-5 py-2.5 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
               activeId === item.id
-                ? "border-b-[3px] border-b-accent bg-transparent text-accent"
+                ? "border-b-[3px] border-b-accent bg-bg-hover font-bold text-accent"
                 : "border-b-[3px] border-b-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
             }`}
             aria-keyshortcuts={item.shortcut}
@@ -75,7 +75,7 @@ export function TabBar({ items, activeId, onSelect }: Props) {
               <Tooltip.Trigger asChild>
                 <kbd
                   aria-hidden="true"
-                  className="ml-2 inline-flex cursor-default items-center gap-0.5 rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted"
+                  className="ml-2 hidden cursor-default items-center gap-0.5 rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted group-hover:inline-flex"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

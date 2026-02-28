@@ -33,3 +33,13 @@ export const SecondActive: Story = {
 export const ThirdActive: Story = {
   args: { activeId: "settings" },
 };
+
+/** ホバー時にショートカットキーが表示される */
+export const HoverShowsShortcut: Story = {
+  play: async ({ canvasElement }) => {
+    const tab = canvasElement.querySelectorAll('[role="tab"]')[1];
+    if (tab) {
+      tab.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+    }
+  },
+};
