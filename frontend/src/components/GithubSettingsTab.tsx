@@ -44,10 +44,7 @@ export function GithubSettingsTab() {
       setSaving(true);
       setMessage(null);
 
-      const config = await invoke("load_app_config");
-      await invoke("save_app_config", {
-        config: { ...config },
-      });
+      await invoke("save_github_token", { token });
 
       setTokenStored(true);
       setToken("");
