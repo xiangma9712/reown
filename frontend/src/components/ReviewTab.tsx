@@ -236,9 +236,14 @@ function CollapseToggleButton({
 interface ReviewTabProps {
   prs?: PrInfo[];
   loadingPrs?: boolean;
+  navigateToBranch?: string | null;
 }
 
-export function ReviewTab({ prs = [], loadingPrs = false }: ReviewTabProps) {
+export function ReviewTab({
+  prs = [],
+  loadingPrs = false,
+  navigateToBranch,
+}: ReviewTabProps) {
   const { t } = useTranslation();
   const { repoPath, repoInfo } = useRepository();
   const {
@@ -249,6 +254,14 @@ export function ReviewTab({ prs = [], loadingPrs = false }: ReviewTabProps) {
     handleResizeStart: handleFileListResizeStart,
   } = useFileListPanel();
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+
+  // Accept external branch navigation requests
+  useEffect(() => {
+    if (navigateToBranch) {
+      setSelectedBranch(navigateToBranch);
+    }
+  }, [navigateToBranch]);
+
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);

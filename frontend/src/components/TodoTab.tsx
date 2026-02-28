@@ -73,7 +73,11 @@ function groupByModule(items: TodoItem[]): TodoGroup[] {
   return groups;
 }
 
-export function TodoTab() {
+interface TodoTabProps {
+  onNavigateToBranch?: (branch: string) => void;
+}
+
+export function TodoTab({ onNavigateToBranch }: TodoTabProps) {
   const { t } = useTranslation();
   const { repoPath } = useRepository();
   const [todos, setTodos] = useState<TodoItem[]>([]);
@@ -177,7 +181,7 @@ export function TodoTab() {
 
   return (
     <div className="space-y-6">
-      <WorktreeList />
+      <WorktreeList onNavigateToBranch={onNavigateToBranch} />
       <Card className="flex flex-col">
         <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
           {t("todo.title")}
