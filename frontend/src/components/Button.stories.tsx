@@ -64,3 +64,20 @@ export const Loading: Story = {
     children: "読み込み中",
   },
 };
+
+export const Filter: Story = {
+  args: {
+    variant: "filter",
+    size: "sm",
+    children: "フィルター",
+  },
+};
+
+export const FilterActive: Story = {
+  args: {
+    variant: "filter",
+    size: "sm",
+    active: true,
+    children: "フィルター（選択中）",
+  },
+};

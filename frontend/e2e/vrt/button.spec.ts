@@ -55,4 +55,22 @@ test.describe("Button", () => {
       { maxDiffPixelRatio: 0.08 }
     );
   });
+
+  test("filter variant", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--filter&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "filter.png"
+    );
+  });
+
+  test("filter active variant", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--filter-active&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "filter-active.png"
+    );
+  });
 });

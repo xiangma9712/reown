@@ -1,12 +1,13 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
-type Variant = "primary" | "secondary" | "destructive" | "ghost";
+type Variant = "primary" | "secondary" | "destructive" | "ghost" | "filter";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
   loading?: boolean;
+  active?: boolean;
 }
 
 const variantClasses: Record<Variant, string> = {
@@ -18,7 +19,12 @@ const variantClasses: Record<Variant, string> = {
     "bg-transparent text-danger border border-danger font-semibold hover:bg-danger hover:text-white",
   ghost:
     "bg-transparent text-text-primary border border-transparent hover:bg-bg-hover hover:border-border-hover",
+  filter:
+    "bg-bg-hover text-text-secondary font-medium border-none hover:text-text-primary",
 };
+
+const filterActiveClasses =
+  "bg-accent text-white font-bold shadow-sm ring-1 ring-accent";
 
 const sizeClasses: Record<Size, string> = {
   sm: "px-2 py-1 text-sm",
@@ -32,6 +38,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       loading = false,
+      active = false,
       disabled,
       className = "",
       children,
@@ -39,11 +46,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
+    const variantClass =
+      variant === "filter" && active
+        ? filterActiveClasses
+        : variantClasses[variant];
+
     return (
       <button
         ref={ref}
         disabled={disabled || loading}
-        className={`cursor-pointer rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+        className={`cursor-pointer rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${variantClass} ${sizeClasses[size]} ${className}`}
         {...props}
       >
         {loading ? (
