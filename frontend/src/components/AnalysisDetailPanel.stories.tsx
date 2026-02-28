@@ -22,3 +22,31 @@ export const WithHybridResult: Story = {
     hybridResult: fixtures.hybridAnalysisResult,
   },
 };
+
+/** リスクスコア Low（緑ゲージ） */
+export const RiskLow: Story = {
+  args: {
+    result: {
+      ...fixtures.analysisResult,
+      risk: {
+        ...fixtures.analysisResult.risk,
+        score: 15,
+        level: "Low",
+      },
+    },
+  },
+};
+
+/** リスクスコア High（赤ゲージ） */
+export const RiskHigh: Story = {
+  args: {
+    result: {
+      ...fixtures.analysisResult,
+      risk: {
+        ...fixtures.analysisResult.risk,
+        score: 80,
+        level: "High",
+      },
+    },
+  },
+};

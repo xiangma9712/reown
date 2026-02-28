@@ -3,6 +3,7 @@ import type {
   AnalysisResult,
   ChangeCategory,
   RiskFactor,
+  RiskLevel,
   FileAnalysis,
   HybridAnalysisResult,
 } from "../types";
@@ -96,6 +97,38 @@ function ImpactWarnings({ factors }: { factors: RiskFactor[] }) {
   );
 }
 
+const gaugeColorMap: Record<RiskLevel, string> = {
+  Low: "bg-success",
+  Medium: "bg-warning",
+  High: "bg-danger",
+};
+
+function RiskScoreGauge({ score, level }: { score: number; level: RiskLevel }) {
+  const { t } = useTranslation();
+  const clampedScore = Math.max(0, Math.min(100, score));
+
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-3">
+      <div
+        className="h-2 flex-1 overflow-hidden rounded-full bg-bg-secondary"
+        role="progressbar"
+        aria-valuenow={clampedScore}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={t("pr.riskScore", { score })}
+      >
+        <div
+          className={`h-full rounded-full transition-all ${gaugeColorMap[level]}`}
+          style={{ width: `${clampedScore}%` }}
+        />
+      </div>
+      <span className="shrink-0 text-[0.8rem] font-mono text-text-secondary">
+        {score}/100
+      </span>
+    </div>
+  );
+}
+
 function RiskFactorList({ factors }: { factors: RiskFactor[] }) {
   const { t } = useTranslation();
 
@@ -164,9 +197,10 @@ export function AnalysisDetailPanel({
         <RiskBadge
           level={hybridResult?.combined_risk_level ?? result.risk.level}
         />
-        <span className="text-[0.85rem] text-text-secondary">
-          {t("pr.riskScore", { score: result.risk.score })}
-        </span>
+        <RiskScoreGauge
+          score={result.risk.score}
+          level={hybridResult?.combined_risk_level ?? result.risk.level}
+        />
       </div>
 
       {/* Impact Warnings */}
