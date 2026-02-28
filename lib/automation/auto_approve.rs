@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::analysis::{AnalysisResult, RiskLevel};
+use crate::analysis::{AnalysisResult, ChangeCategory, RiskLevel};
 use crate::config::{AutoApproveMaxRisk, AutomationConfig};
-use crate::github::pull_request::{submit_review, ReviewEvent};
+use crate::github::pull_request::{add_labels, submit_review, ReviewEvent};
 
 /// approve対象PRの候補
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -11,6 +11,10 @@ pub struct AutoApproveCandidate {
     pub pr_number: u64,
     /// リスクレベル
     pub risk_level: RiskLevel,
+    /// リスクスコア（0〜100）
+    pub risk_score: u32,
+    /// 変更カテゴリ一覧
+    pub categories: Vec<ChangeCategory>,
     /// approve対象になった理由
     pub reason: String,
 }
@@ -56,31 +60,60 @@ pub fn evaluate_auto_approve(
     analyses
         .iter()
         .filter(|a| risk_within_threshold(&a.risk.level, &config.auto_approve_max_risk))
-        .map(|a| AutoApproveCandidate {
-            pr_number: a.pr_number,
-            risk_level: a.risk.level.clone(),
-            reason: format!(
-                "リスクレベル {:?} は自動approve閾値 {:?} 以下",
-                a.risk.level, config.auto_approve_max_risk
-            ),
+        .map(|a| {
+            let categories: Vec<ChangeCategory> = a
+                .summary
+                .categories
+                .iter()
+                .map(|c| c.category.clone())
+                .collect();
+            AutoApproveCandidate {
+                pr_number: a.pr_number,
+                risk_level: a.risk.level.clone(),
+                risk_score: a.risk.score,
+                categories,
+                reason: format!(
+                    "リスクレベル {:?} は自動approve閾値 {:?} 以下",
+                    a.risk.level, config.auto_approve_max_risk
+                ),
+            }
         })
         .collect()
 }
 
-/// approve対象PRリストに対して実際にGitHub APIでAPPROVEレビューを送信する
+/// approve対象のリスク情報を含むコメント本文を構築する
+fn build_approve_comment(candidate: &AutoApproveCandidate) -> String {
+    let categories_str = if candidate.categories.is_empty() {
+        "None".to_string()
+    } else {
+        candidate
+            .categories
+            .iter()
+            .map(|c| format!("{:?}", c))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    format!(
+        "\u{1f916} Auto-approved by reown\n\
+         Risk: {:?} (score: {}/100)\n\
+         Categories: {}",
+        candidate.risk_level, candidate.risk_score, categories_str
+    )
+}
+
+/// approve対象PRリストに対して実際にGitHub APIでAPPROVEレビューを送信し、ラベルを付与する
 pub async fn execute_auto_approve(
     candidates: &[AutoApproveCandidate],
     owner: &str,
     repo: &str,
     token: &str,
+    config: &AutomationConfig,
 ) -> AutoApproveResult {
     let mut outcomes = Vec::new();
 
     for candidate in candidates {
-        let body = format!(
-            "自動approve（リスクレベル: {:?}）\n\n{}",
-            candidate.risk_level, candidate.reason
-        );
+        let body = build_approve_comment(candidate);
 
         match submit_review(
             owner,
@@ -93,6 +126,22 @@ pub async fn execute_auto_approve(
         .await
         {
             Ok(()) => {
+                // ラベルを付与（失敗してもapprove自体は成功扱い）
+                if let Err(e) = add_labels(
+                    owner,
+                    repo,
+                    candidate.pr_number,
+                    &[config.auto_approve_label.clone()],
+                    token,
+                )
+                .await
+                {
+                    eprintln!(
+                        "Warning: ラベル付与に失敗 (PR #{}): {}",
+                        candidate.pr_number, e
+                    );
+                }
+
                 outcomes.push(ApproveOutcome {
                     pr_number: candidate.pr_number,
                     success: true,
@@ -115,9 +164,18 @@ pub async fn execute_auto_approve(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::{AnalysisResult, AnalysisSummary, RiskScore};
+    use crate::analysis::{AnalysisResult, AnalysisSummary, CategoryCount, RiskScore};
 
     fn make_analysis(pr_number: u64, level: RiskLevel, score: u32) -> AnalysisResult {
+        make_analysis_with_categories(pr_number, level, score, vec![])
+    }
+
+    fn make_analysis_with_categories(
+        pr_number: u64,
+        level: RiskLevel,
+        score: u32,
+        categories: Vec<CategoryCount>,
+    ) -> AnalysisResult {
         AnalysisResult {
             pr_number,
             risk: RiskScore {
@@ -131,7 +189,7 @@ mod tests {
                 total_additions: 10,
                 total_deletions: 0,
                 has_test_changes: false,
-                categories: vec![],
+                categories,
             },
         }
     }
@@ -268,11 +326,15 @@ mod tests {
         let candidate = AutoApproveCandidate {
             pr_number: 42,
             risk_level: RiskLevel::Low,
+            risk_score: 15,
+            categories: vec![ChangeCategory::Test, ChangeCategory::Documentation],
             reason: "低リスク".to_string(),
         };
         let json = serde_json::to_value(&candidate).unwrap();
         assert_eq!(json["pr_number"], 42);
         assert_eq!(json["risk_level"], "Low");
+        assert_eq!(json["risk_score"], 15);
+        assert_eq!(json["categories"].as_array().unwrap().len(), 2);
         assert_eq!(json["reason"], "低リスク");
     }
 
@@ -316,5 +378,96 @@ mod tests {
         };
         let json = serde_json::to_value(&result).unwrap();
         assert_eq!(json["outcomes"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_candidate_has_risk_score_and_categories() {
+        let analyses = vec![make_analysis_with_categories(
+            1,
+            RiskLevel::Low,
+            15,
+            vec![
+                CategoryCount {
+                    category: ChangeCategory::Test,
+                    count: 2,
+                },
+                CategoryCount {
+                    category: ChangeCategory::Documentation,
+                    count: 1,
+                },
+            ],
+        )];
+        let config = AutomationConfig {
+            enabled: true,
+            auto_approve_max_risk: AutoApproveMaxRisk::Low,
+            ..Default::default()
+        };
+
+        let candidates = evaluate_auto_approve(&analyses, &config);
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].risk_score, 15);
+        assert_eq!(candidates[0].categories.len(), 2);
+        assert_eq!(candidates[0].categories[0], ChangeCategory::Test);
+        assert_eq!(candidates[0].categories[1], ChangeCategory::Documentation);
+    }
+
+    #[test]
+    fn test_build_approve_comment_with_categories() {
+        let candidate = AutoApproveCandidate {
+            pr_number: 42,
+            risk_level: RiskLevel::Low,
+            risk_score: 15,
+            categories: vec![ChangeCategory::Test, ChangeCategory::Documentation],
+            reason: "低リスク".to_string(),
+        };
+
+        let comment = build_approve_comment(&candidate);
+        assert!(comment.contains("Auto-approved by reown"));
+        assert!(comment.contains("Risk: Low (score: 15/100)"));
+        assert!(comment.contains("Categories: Test, Documentation"));
+    }
+
+    #[test]
+    fn test_build_approve_comment_no_categories() {
+        let candidate = AutoApproveCandidate {
+            pr_number: 1,
+            risk_level: RiskLevel::Low,
+            risk_score: 5,
+            categories: vec![],
+            reason: "テスト".to_string(),
+        };
+
+        let comment = build_approve_comment(&candidate);
+        assert!(comment.contains("Categories: None"));
+    }
+
+    #[test]
+    fn test_build_approve_comment_medium_risk() {
+        let candidate = AutoApproveCandidate {
+            pr_number: 10,
+            risk_level: RiskLevel::Medium,
+            risk_score: 40,
+            categories: vec![ChangeCategory::Logic],
+            reason: "テスト".to_string(),
+        };
+
+        let comment = build_approve_comment(&candidate);
+        assert!(comment.contains("Risk: Medium (score: 40/100)"));
+        assert!(comment.contains("Categories: Logic"));
+    }
+
+    #[test]
+    fn test_auto_approve_label_default() {
+        let config = AutomationConfig::default();
+        assert_eq!(config.auto_approve_label, "auto-approved");
+    }
+
+    #[test]
+    fn test_auto_approve_label_custom() {
+        let config = AutomationConfig {
+            auto_approve_label: "bot-approved".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(config.auto_approve_label, "bot-approved");
     }
 }

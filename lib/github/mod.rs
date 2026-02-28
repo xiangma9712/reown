@@ -4,6 +4,7 @@ pub mod pull_request;
 #[allow(dead_code)]
 pub mod types;
 
+pub use pull_request::add_labels;
 pub use pull_request::get_pull_request_files;
 pub use pull_request::list_pr_commits;
 pub use pull_request::CommitInfo;

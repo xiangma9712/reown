@@ -205,6 +205,11 @@ impl Default for RiskConfig {
     }
 }
 
+/// auto-approve時にPRに付与するデフォルトラベル名
+fn default_auto_approve_label() -> String {
+    "auto-approved".to_string()
+}
+
 /// オートメーション設定
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AutomationConfig {
@@ -223,6 +228,9 @@ pub struct AutomationConfig {
     /// リスク設定
     #[serde(default)]
     pub risk_config: RiskConfig,
+    /// auto-approve時にPRに付与するラベル名
+    #[serde(default = "default_auto_approve_label")]
+    pub auto_approve_label: String,
 }
 
 impl Default for AutomationConfig {
@@ -233,6 +241,7 @@ impl Default for AutomationConfig {
             enable_auto_merge: false,
             auto_merge_method: MergeMethod::Merge,
             risk_config: RiskConfig::default(),
+            auto_approve_label: default_auto_approve_label(),
         }
     }
 }

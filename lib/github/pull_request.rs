@@ -515,6 +515,44 @@ pub async fn submit_review(
     Ok(())
 }
 
+/// Add labels to a pull request (via the Issues API).
+///
+/// Calls `POST /repos/{owner}/{repo}/issues/{issue_number}/labels` with
+/// the specified label names. Creates the labels if they don't exist.
+pub async fn add_labels(
+    owner: &str,
+    repo: &str,
+    issue_number: u64,
+    labels: &[String],
+    token: &str,
+) -> Result<()> {
+    let client = reqwest::Client::new();
+    let url = format!("https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/labels");
+
+    let body = serde_json::json!({ "labels": labels });
+
+    let response = client
+        .post(&url)
+        .header("Accept", "application/vnd.github+json")
+        .header("Authorization", format!("Bearer {token}"))
+        .header("User-Agent", "reown")
+        .header("X-GitHub-Api-Version", "2022-11-28")
+        .json(&body)
+        .send()
+        .await
+        .with_context(|| {
+            format!("Failed to add labels to issue/PR #{issue_number} in {owner}/{repo}")
+        })?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        anyhow::bail!("GitHub API returned {status}: {body}");
+    }
+
+    Ok(())
+}
+
 /// GraphQL response for fetching a PR's node ID.
 #[derive(Debug, Deserialize)]
 struct GhGraphQlResponse<T> {

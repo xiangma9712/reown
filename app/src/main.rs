@@ -588,7 +588,14 @@ async fn run_auto_approve(
     }
 
     let candidates = reown::automation::evaluate_auto_approve(&analyses, automation_config);
-    Ok(reown::automation::execute_auto_approve(&candidates, &owner, &repo, &token).await)
+    Ok(reown::automation::execute_auto_approve(
+        &candidates,
+        &owner,
+        &repo,
+        &token,
+        automation_config,
+    )
+    .await)
 }
 
 #[tauri::command]
