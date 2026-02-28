@@ -1,6 +1,12 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
-type Variant = "primary" | "secondary" | "destructive" | "ghost" | "filter";
+type Variant =
+  | "primary"
+  | "secondary"
+  | "destructive"
+  | "ghost"
+  | "filter"
+  | "tab";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,10 +27,14 @@ const variantClasses: Record<Variant, string> = {
     "bg-transparent text-text-primary border border-transparent hover:bg-bg-hover hover:border-border-hover",
   filter:
     "bg-bg-hover text-text-secondary font-medium border-none hover:text-text-primary",
+  tab: "rounded-none rounded-t border-b-2 border-b-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary",
 };
 
 const filterActiveClasses =
   "bg-accent text-white font-bold shadow-sm ring-1 ring-accent";
+
+const tabActiveClasses =
+  "rounded-none rounded-t border-b-2 border-b-accent bg-accent/10 font-bold text-accent";
 
 const sizeClasses: Record<Size, string> = {
   sm: "px-2 py-1 text-sm",
@@ -49,13 +59,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const variantClass =
       variant === "filter" && active
         ? filterActiveClasses
-        : variantClasses[variant];
+        : variant === "tab" && active
+          ? tabActiveClasses
+          : variantClasses[variant];
+
+    const roundedClass = variant === "tab" ? "" : "rounded";
 
     return (
       <button
         ref={ref}
         disabled={disabled || loading}
-        className={`cursor-pointer rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${variantClass} ${sizeClasses[size]} ${className}`}
+        className={`cursor-pointer ${roundedClass} transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${variantClass} ${sizeClasses[size]} ${className}`}
         {...props}
       >
         {loading ? (
