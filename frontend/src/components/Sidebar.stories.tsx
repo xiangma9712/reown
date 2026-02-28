@@ -124,21 +124,6 @@ export const CollapsedSettingsOpen: Story = {
   },
 };
 
-// ── Theme toggle variants ────────────────────────────────────
-
-export const ThemeToggleLight: Story = {
-  args: {
-    repositories: [],
-  },
-};
-
-export const ThemeToggleDark: Story = {
-  args: {
-    repositories: [],
-  },
-  globals: { theme: "dark" },
-};
-
 // ── Dark mode variants ──────────────────────────────────────
 
 export const DarkDefault: Story = {

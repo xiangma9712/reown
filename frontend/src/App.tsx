@@ -6,6 +6,7 @@ import { TodoTab } from "./components/TodoTab";
 import { GithubSettingsTab } from "./components/GithubSettingsTab";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
+import { ThemeSettingsTab } from "./components/ThemeSettingsTab";
 import { Layout } from "./components/Layout";
 import { Loading } from "./components/Loading";
 import { OnboardingPlaceholder } from "./components/OnboardingPlaceholder";
@@ -264,6 +265,7 @@ export function App() {
           onToggleSettings={() => setSettingsOpen((prev) => !prev)}
           settingsContent={
             <div className="mx-auto max-w-xl space-y-8">
+              <ThemeSettingsTab />
               <GithubSettingsTab />
               <LlmSettingsTab />
               <AutomationSettingsTab />
