@@ -6,7 +6,34 @@
 setup → triage → select → implement → verify → review → push → ci → complete
 ```
 
-9ステップの直列パイプライン。各ステップは `0=ok, 1=skip(次のイテレーションへ), 2=break(ループ終了)` を返す。
+9ステップの直列パイプライン。各ステップは return code でループの制御フローを決定する（後述）。
+
+## ステップの return code convention
+
+各ステップ関数（`step_*`）は以下の return code を返す。この規約は全ステップ共通。
+
+| return code | 意味 | ループの動作 |
+|-------------|------|-------------|
+| `0` | 成功（ok） | 次のステップへ進む |
+| `1` | スキップ（skip） | 残りのステップを飛ばし、次のイテレーションへ |
+| `2` | 中断（break） | ループ全体を終了する |
+
+### `_skip_is_benign` フラグ
+
+`return 1`（skip）は通常「失敗」として `record_iteration_result "fail"` に記録されるが、
+issue が既に実装済み・タスクが見つからない等の「問題のないスキップ」も存在する。
+
+この区別のために `_skip_is_benign` フラグを使う:
+
+- 各イテレーション開始時に `false` にリセットされる（`loop.sh`）
+- ステップが `return 1` する前に `_skip_is_benign=true` を設定すると、そのスキップは「成功」扱い（`record_iteration_result "success" "skip_benign"`）になる
+- `_skip_is_benign` が `false` のまま `return 1` すると「失敗」として記録され、失敗率の計算に影響する
+
+使用例:
+- **setup**: open issue が 0 件 → 新規 issue を提案した後 benign skip
+- **select**: planned タスクが 0 件 → 同上
+- **implement**: 事前チェックで要件が既に満たされている → issue をクローズして benign skip
+- **implement**: 実装エージェント実行後に差分なし（既に実装済み）→ benign skip
 
 ## ステップ詳細
 
