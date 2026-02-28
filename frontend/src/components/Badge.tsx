@@ -10,7 +10,7 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<Variant, string> = {
-  success: "bg-status-added-bg text-accent",
+  success: "bg-success-bg text-success",
   warning: "bg-status-modified-bg text-warning",
   danger: "bg-status-deleted-bg text-danger",
   info: "bg-status-renamed-bg text-info",
