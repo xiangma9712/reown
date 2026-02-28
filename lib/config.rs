@@ -272,7 +272,8 @@ impl Default for LlmConfig {
 /// アプリ設定（GitHub トークン等を永続化する）
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AppConfig {
-    /// GitHub トークン
+    /// GitHub トークン（Keychain マイグレーション済みの場合は空文字列）
+    #[serde(default)]
     pub github_token: String,
     /// デフォルトの GitHub owner
     pub default_owner: String,
@@ -305,6 +306,48 @@ impl AppConfig {
     pub fn set_repo_automation_config(&mut self, repo_id: String, config: AutomationConfig) {
         self.repo_automation.insert(repo_id, config);
     }
+}
+
+/// config.json の github_token を Keychain にマイグレーションする。
+///
+/// - `github_token` が存在し、非空の場合は Keychain に保存し、config.json から削除する
+/// - `github_token` が空またはフィールドが存在しない場合は何もしない
+/// - Keychain への保存が失敗した場合はエラーを返す（config.json は変更されない）
+pub fn migrate_github_token_to_keychain(config_path: &Path) -> Result<()> {
+    if !config_path.exists() {
+        return Ok(());
+    }
+
+    let content = std::fs::read_to_string(config_path)
+        .with_context(|| format!("設定ファイルの読み込みに失敗: {}", config_path.display()))?;
+
+    let mut json: serde_json::Value =
+        serde_json::from_str(&content).with_context(|| "設定ファイルの JSON パースに失敗")?;
+
+    let token = json
+        .get("github_token")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
+    if token.is_empty() {
+        return Ok(());
+    }
+
+    // Keychain に保存
+    save_github_token(token).with_context(|| "GitHubトークンのKeychainへの保存に失敗")?;
+
+    // config.json から github_token を削除（空文字列にする）
+    if let Some(obj) = json.as_object_mut() {
+        obj.remove("github_token");
+    }
+
+    let new_content =
+        serde_json::to_string_pretty(&json).with_context(|| "設定の JSON シリアライズに失敗")?;
+
+    std::fs::write(config_path, new_content)
+        .with_context(|| format!("設定ファイルの保存に失敗: {}", config_path.display()))?;
+
+    Ok(())
 }
 
 /// 設定を JSON ファイルから読み込む。ファイルが存在しない場合はデフォルト値を返す。
@@ -1055,6 +1098,99 @@ mod tests {
         let loaded = load_config(&config_path).unwrap();
         assert_eq!(loaded, config);
         assert!(loaded.onboarding_completed);
+    }
+
+    // ── GitHub Token マイグレーションテスト ──────────────────────────────
+
+    #[test]
+    fn test_migrate_github_token_no_file() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // ファイルが存在しない場合は何も起きない
+        let result = migrate_github_token_to_keychain(&config_path);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_migrate_github_token_empty_token() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // github_token が空文字列の場合は何も起きない
+        let json = r#"{"github_token":"","default_owner":"o","default_repo":"r"}"#;
+        std::fs::write(&config_path, json).unwrap();
+        let result = migrate_github_token_to_keychain(&config_path);
+        assert!(result.is_ok());
+        // config.json は変更されない（github_token フィールドが残ったまま）
+        let content = std::fs::read_to_string(&config_path).unwrap();
+        assert!(content.contains("github_token"));
+    }
+
+    #[test]
+    fn test_migrate_github_token_missing_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // github_token フィールドがない場合は何も起きない
+        let json = r#"{"default_owner":"o","default_repo":"r"}"#;
+        std::fs::write(&config_path, json).unwrap();
+        let result = migrate_github_token_to_keychain(&config_path);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_migrate_github_token_to_keychain_success() {
+        // keychainが利用可能かチェック
+        let test_result = save_github_token("gho_migration-test-probe");
+        if test_result.is_err() {
+            eprintln!("Skipping keychain test: keychain not available in this environment");
+            return;
+        }
+        let _ = delete_github_token();
+
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        let json = r#"{"github_token":"ghp_migrate_me","default_owner":"o","default_repo":"r"}"#;
+        std::fs::write(&config_path, json).unwrap();
+
+        // マイグレーション実行
+        migrate_github_token_to_keychain(&config_path).unwrap();
+
+        // Keychain にトークンが保存されていることを確認
+        let token = match load_github_token() {
+            Ok(t) => t,
+            Err(_) => {
+                eprintln!(
+                    "Skipping keychain test: saved token could not be loaded (CI environment)"
+                );
+                return;
+            }
+        };
+        assert_eq!(token, "ghp_migrate_me");
+
+        // config.json から github_token が削除されていることを確認
+        let content = std::fs::read_to_string(&config_path).unwrap();
+        assert!(!content.contains("github_token"));
+
+        // load_config でも正常に読み込めることを確認
+        let config = load_config(&config_path).unwrap();
+        assert_eq!(config.github_token, ""); // デフォルト値
+        assert_eq!(config.default_owner, "o");
+        assert_eq!(config.default_repo, "r");
+
+        // クリーンアップ
+        let _ = delete_github_token();
+    }
+
+    #[test]
+    fn test_backward_compat_load_without_github_token_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // github_token フィールドなしのJSON（マイグレーション済みの状態）
+        let json = r#"{"default_owner":"o","default_repo":"r"}"#;
+        std::fs::write(&config_path, json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert_eq!(config.github_token, "");
+        assert_eq!(config.default_owner, "o");
+        assert_eq!(config.default_repo, "r");
     }
 
     // ── GitHub Token Keychain テスト ────────────────────────────────────

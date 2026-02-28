@@ -735,6 +735,16 @@ fn add_review_record(
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // config.json の github_token を Keychain にマイグレーション
+            if let Ok(app_data_dir) = app.path().app_data_dir() {
+                let config_path = reown::config::default_config_path(&app_data_dir);
+                if let Err(e) = reown::config::migrate_github_token_to_keychain(&config_path) {
+                    eprintln!("GitHubトークンのマイグレーションに失敗: {e:#}");
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             list_branches,
             list_enriched_branches,
