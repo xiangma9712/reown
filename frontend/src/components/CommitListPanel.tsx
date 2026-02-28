@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { CommitInfo } from "../types";
 import { Card } from "./Card";
+import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
 
 interface CommitListPanelProps {
@@ -44,9 +45,7 @@ export function CommitListPanel({
       )}
 
       {!loading && !error && commits.length === 0 && (
-        <p className="p-4 text-center text-sm italic text-text-secondary">
-          {t("pr.commitsEmpty")}
-        </p>
+        <EmptyState message={t("pr.commitsEmpty")} />
       )}
 
       {!loading &&

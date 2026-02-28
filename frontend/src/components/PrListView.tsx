@@ -5,6 +5,7 @@ import { invoke } from "../invoke";
 import { Badge } from "./Badge";
 import { Card } from "./Card";
 import { CommitListPanel } from "./CommitListPanel";
+import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
 import { RiskBadge } from "./RiskBadge";
 
@@ -169,9 +170,7 @@ export function PrListView({
       )}
 
       {!loading && !error && filteredPrs.length === 0 && (
-        <p className="p-4 text-center text-sm italic text-text-secondary">
-          {t("pr.empty")}
-        </p>
+        <EmptyState message={t("pr.empty")} />
       )}
 
       {!loading &&

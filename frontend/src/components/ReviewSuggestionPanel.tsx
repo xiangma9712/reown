@@ -5,6 +5,7 @@ import type { ReviewSuggestion, SuggestionSeverity } from "../types";
 import { Card } from "./Card";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { EmptyState } from "./EmptyState";
 import { Spinner } from "./Loading";
 
 interface ReviewSuggestionPanelProps {
@@ -112,9 +113,7 @@ export function ReviewSuggestionPanel({
           {suggestions && !loading && (
             <>
               {suggestions.length === 0 ? (
-                <p className="text-[0.85rem] italic text-text-secondary">
-                  {t("pr.reviewSuggestionsEmpty")}
-                </p>
+                <EmptyState message={t("pr.reviewSuggestionsEmpty")} />
               ) : (
                 <div className="space-y-2">
                   {suggestions.map((suggestion, i) => (
