@@ -16,6 +16,7 @@ import { BranchSelector } from "./BranchSelector";
 import { Card } from "./Card";
 import { Loading } from "./Loading";
 import { DiffViewer } from "./DiffViewer";
+import { FileListPanel } from "./FileListPanel";
 import { AnalysisDetailPanel } from "./AnalysisDetailPanel";
 import { ChangeSummaryList } from "./ChangeSummaryList";
 import { CommitListPanel } from "./CommitListPanel";
@@ -31,36 +32,6 @@ const FILE_LIST_COLLAPSED_KEY = "reown-filelist-collapsed";
 const DEFAULT_FILE_LIST_WIDTH = 280;
 const MIN_FILE_LIST_WIDTH = 180;
 const MAX_FILE_LIST_WIDTH = 480;
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case "Added":
-      return "A";
-    case "Deleted":
-      return "D";
-    case "Modified":
-      return "M";
-    case "Renamed":
-      return "R";
-    default:
-      return "?";
-  }
-}
-
-function statusAriaLabel(status: string): string {
-  switch (status) {
-    case "Added":
-      return "Added";
-    case "Deleted":
-      return "Deleted";
-    case "Modified":
-      return "Modified";
-    case "Renamed":
-      return "Renamed";
-    default:
-      return "Unknown";
-  }
-}
 
 function useFileListPanel() {
   const [fileListWidth, setFileListWidth] = useState(() => {
@@ -156,23 +127,6 @@ function useFileListPanel() {
   };
 }
 
-function statusVariant(
-  status: string
-): "success" | "danger" | "warning" | "info" | "default" {
-  switch (status) {
-    case "Added":
-      return "success";
-    case "Deleted":
-      return "danger";
-    case "Modified":
-      return "warning";
-    case "Renamed":
-      return "info";
-    default:
-      return "default";
-  }
-}
-
 const categoryBadgeVariant: Record<
   string,
   "success" | "danger" | "warning" | "info" | "default" | "purple"
@@ -186,52 +140,6 @@ const categoryBadgeVariant: Record<
   Dependency: "default",
   Other: "default",
 };
-
-function CollapseToggleButton({
-  collapsed,
-  onToggle,
-}: {
-  collapsed: boolean;
-  onToggle: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <button
-      onClick={onToggle}
-      className="shrink-0 cursor-pointer rounded border-none bg-transparent p-0.5 text-text-muted transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-      aria-label={
-        collapsed ? t("review.expandFileList") : t("review.collapseFileList")
-      }
-      title={
-        collapsed ? t("review.expandFileList") : t("review.collapseFileList")
-      }
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {collapsed ? (
-          <>
-            <polyline points="13 17 18 12 13 7" />
-            <polyline points="6 17 11 12 6 7" />
-          </>
-        ) : (
-          <>
-            <polyline points="11 17 6 12 11 7" />
-            <polyline points="18 17 13 12 18 7" />
-          </>
-        )}
-      </svg>
-    </button>
-  );
-}
 
 interface ReviewTabProps {
   prs?: PrInfo[];
@@ -529,207 +437,65 @@ export function ReviewTab({
 
           {/* PR file diff section (when PR is matched) */}
           {matchedPr && (
-            <div
-              className={`flex min-h-[500px] gap-0${fileListResizing ? " select-none" : ""}`}
+            <FileListPanel
+              title={t("review.prFiles")}
+              files={prDiffs}
+              selectedIndex={selectedPrFileIndex}
+              onSelectFile={setSelectedPrFileIndex}
+              loading={prDiffsLoading}
+              error={prDiffsError}
+              emptyMessage={t("review.prFilesEmpty")}
+              renderFileExtra={(diff) => (
+                <Badge
+                  variant={
+                    categoryBadgeVariant[
+                      (diff as CategorizedFileDiff).category
+                    ] ?? "default"
+                  }
+                >
+                  {t(`pr.category${(diff as CategorizedFileDiff).category}`)}
+                </Badge>
+              )}
+              fileListWidth={fileListWidth}
+              collapsed={fileListCollapsed}
+              resizing={fileListResizing}
+              onToggleCollapse={toggleFileListCollapse}
+              onResizeStart={handleFileListResizeStart}
             >
-              {!fileListCollapsed && (
-                <>
-                  <Card
-                    className="flex shrink-0 flex-col"
-                    style={{ width: fileListWidth }}
-                  >
-                    <div className="mb-4 flex items-center justify-between border-b border-border pb-2">
-                      <h2 className="text-lg text-text-heading">
-                        {t("review.prFiles")}
-                      </h2>
-                      <CollapseToggleButton
-                        collapsed={false}
-                        onToggle={toggleFileListCollapse}
-                      />
-                    </div>
-                    <div className="scrollbar-custom flex-1 overflow-y-auto">
-                      {prDiffsLoading && <Loading />}
-                      {prDiffsError && (
-                        <p className="p-2 text-[0.9rem] text-danger">
-                          {t("common.error", { message: prDiffsError })}
-                        </p>
-                      )}
-                      {!prDiffsLoading &&
-                        !prDiffsError &&
-                        prDiffs.length === 0 && (
-                          <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                            {t("review.prFilesEmpty")}
-                          </p>
-                        )}
-                      {prDiffs.map((diff, index) => (
-                        <div
-                          key={diff.new_path ?? diff.old_path ?? index}
-                          className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                            selectedPrFileIndex === index
-                              ? "border-l-2 border-l-accent bg-bg-hover"
-                              : ""
-                          }`}
-                          onClick={() => setSelectedPrFileIndex(index)}
-                        >
-                          <Badge
-                            variant={statusVariant(diff.status)}
-                            className="status-badge"
-                            aria-label={statusAriaLabel(diff.status)}
-                          >
-                            {statusLabel(diff.status)}
-                          </Badge>
-                          <span
-                            className="min-w-0 flex-1 truncate text-text-primary"
-                            title={diff.new_path ?? diff.old_path ?? ""}
-                          >
-                            {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                          </span>
-                          <Badge
-                            variant={
-                              categoryBadgeVariant[diff.category] ?? "default"
-                            }
-                          >
-                            {t(`pr.category${diff.category}`)}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                  <div
-                    role="separator"
-                    aria-orientation="vertical"
-                    aria-label={t("review.resizeFileList")}
-                    className={`group flex w-2 shrink-0 cursor-col-resize items-center justify-center hover:bg-accent/20 active:bg-accent/30 ${
-                      fileListResizing ? "bg-accent/30" : ""
-                    }`}
-                    onMouseDown={handleFileListResizeStart}
-                  >
-                    <div
-                      className={`h-8 w-0.5 rounded-full bg-border group-hover:bg-accent/60 group-active:bg-accent ${
-                        fileListResizing ? "bg-accent" : ""
-                      }`}
-                    />
-                  </div>
-                </>
+              {prDiffsLoading && <Loading />}
+              {!prDiffsLoading && !selectedPrDiff && (
+                <p className="p-4 text-[0.9rem] italic text-text-secondary">
+                  {t("review.selectFile")}
+                </p>
               )}
-              {fileListCollapsed && (
-                <div className="flex shrink-0 flex-col items-center gap-2 py-2 pr-2">
-                  <CollapseToggleButton
-                    collapsed={true}
-                    onToggle={toggleFileListCollapse}
-                  />
-                </div>
-              )}
-              <Card className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="scrollbar-custom flex-1 overflow-auto">
-                  {prDiffsLoading && <Loading />}
-                  {!prDiffsLoading && !selectedPrDiff && (
-                    <p className="p-4 text-[0.9rem] italic text-text-secondary">
-                      {t("review.selectFile")}
-                    </p>
-                  )}
-                  {selectedPrDiff && <DiffViewer diff={selectedPrDiff} />}
-                </div>
-              </Card>
-            </div>
+              {selectedPrDiff && <DiffViewer diff={selectedPrDiff} />}
+            </FileListPanel>
           )}
 
           {/* Branch diff section (when no PR is matched) */}
           {!matchedPr && (
-            <div
-              className={`flex min-h-[500px] gap-0${fileListResizing ? " select-none" : ""}`}
+            <FileListPanel
+              title={t("review.changedFiles")}
+              files={diffs}
+              selectedIndex={selectedIndex}
+              onSelectFile={setSelectedIndex}
+              loading={loading}
+              error={error}
+              emptyMessage={t("review.empty")}
+              fileListWidth={fileListWidth}
+              collapsed={fileListCollapsed}
+              resizing={fileListResizing}
+              onToggleCollapse={toggleFileListCollapse}
+              onResizeStart={handleFileListResizeStart}
             >
-              {!fileListCollapsed && (
-                <>
-                  <Card
-                    className="flex shrink-0 flex-col"
-                    style={{ width: fileListWidth }}
-                  >
-                    <div className="mb-4 flex items-center justify-between border-b border-border pb-2">
-                      <h2 className="text-lg text-text-heading">
-                        {t("review.changedFiles")}
-                      </h2>
-                      <CollapseToggleButton
-                        collapsed={false}
-                        onToggle={toggleFileListCollapse}
-                      />
-                    </div>
-                    <div className="scrollbar-custom flex-1 overflow-y-auto">
-                      {loading && <Loading />}
-                      {error && (
-                        <p className="p-2 text-[0.9rem] text-danger">
-                          {t("common.error", { message: error })}
-                        </p>
-                      )}
-                      {!loading && !error && diffs.length === 0 && (
-                        <p className="p-2 text-[0.9rem] italic text-text-secondary">
-                          {t("review.empty")}
-                        </p>
-                      )}
-                      {diffs.map((diff, index) => (
-                        <div
-                          key={diff.new_path ?? diff.old_path ?? index}
-                          className={`flex cursor-pointer items-center gap-2 border-b border-border px-3 py-1.5 font-mono text-[0.8rem] transition-colors last:border-b-0 hover:bg-bg-primary ${
-                            selectedIndex === index
-                              ? "border-l-2 border-l-accent bg-bg-hover"
-                              : ""
-                          }`}
-                          onClick={() => setSelectedIndex(index)}
-                        >
-                          <Badge
-                            variant={statusVariant(diff.status)}
-                            className="status-badge"
-                            aria-label={statusAriaLabel(diff.status)}
-                          >
-                            {statusLabel(diff.status)}
-                          </Badge>
-                          <span
-                            className="truncate text-text-primary"
-                            title={diff.new_path ?? diff.old_path ?? ""}
-                          >
-                            {diff.new_path ?? diff.old_path ?? "(unknown)"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                  <div
-                    role="separator"
-                    aria-orientation="vertical"
-                    aria-label={t("review.resizeFileList")}
-                    className={`group flex w-2 shrink-0 cursor-col-resize items-center justify-center hover:bg-accent/20 active:bg-accent/30 ${
-                      fileListResizing ? "bg-accent/30" : ""
-                    }`}
-                    onMouseDown={handleFileListResizeStart}
-                  >
-                    <div
-                      className={`h-8 w-0.5 rounded-full bg-border group-hover:bg-accent/60 group-active:bg-accent ${
-                        fileListResizing ? "bg-accent" : ""
-                      }`}
-                    />
-                  </div>
-                </>
+              {loading && <Loading />}
+              {!loading && !selectedDiff && (
+                <p className="p-4 text-[0.9rem] italic text-text-secondary">
+                  {t("review.selectFile")}
+                </p>
               )}
-              {fileListCollapsed && (
-                <div className="flex shrink-0 flex-col items-center gap-2 py-2 pr-2">
-                  <CollapseToggleButton
-                    collapsed={true}
-                    onToggle={toggleFileListCollapse}
-                  />
-                </div>
-              )}
-              <Card className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="scrollbar-custom flex-1 overflow-auto">
-                  {loading && <Loading />}
-                  {!loading && !selectedDiff && (
-                    <p className="p-4 text-[0.9rem] italic text-text-secondary">
-                      {t("review.selectFile")}
-                    </p>
-                  )}
-                  {selectedDiff && <DiffViewer diff={selectedDiff} />}
-                </div>
-              </Card>
-            </div>
+              {selectedDiff && <DiffViewer diff={selectedDiff} />}
+            </FileListPanel>
           )}
         </>
       )}
