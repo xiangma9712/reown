@@ -132,7 +132,7 @@ export function ReviewSubmit({
 
       {/* Feedback messages */}
       {successMessage && (
-        <div className="mb-3 rounded bg-green-100 px-3 py-2 text-sm text-green-800 dark:bg-green-900/30 dark:text-green-300">
+        <div className="mb-3 rounded border border-success-border bg-success-bg px-3 py-2 text-sm text-success">
           {successMessage}
         </div>
       )}

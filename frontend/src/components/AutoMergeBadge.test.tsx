@@ -34,7 +34,7 @@ describe("AutoMergeBadge", () => {
       render(<AutoMergeBadge status="Enabled" />);
       const badge = screen.getByText("Auto Merge: Enabled");
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass("bg-status-added-bg");
+      expect(badge).toHaveClass("bg-success-bg");
     });
 
     it("i18n ラベルが正しく表示される", () => {
@@ -82,7 +82,7 @@ describe("AutoMergeBadge", () => {
       {
         status: "Enabled",
         expectedText: "Auto Merge: Enabled",
-        expectedClass: "bg-status-added-bg",
+        expectedClass: "bg-success-bg",
       },
       {
         status: { Failed: "error" },
