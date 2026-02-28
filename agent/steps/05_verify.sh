@@ -74,7 +74,33 @@ step_verify() {
 
     log "WARN: Working tree not clean (attempt $verify_attempt). Committing remaining changes..."
     git add -A
-    git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
+
+    # Try commit — capture hook errors if it fails
+    local commit_output=""
+    local commit_rc=0
+    commit_output=$(git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>&1) || commit_rc=$?
+
+    if [[ "$commit_rc" -ne 0 ]]; then
+      log "WARN: git commit failed (rc=$commit_rc). Likely pre-commit hook failure. Invoking fix agent..."
+      local fix_rc=0
+      run_claude \
+        --label "verify-hook-fix-$TASK_ISSUE" \
+        --timeout "$TIMEOUT_VERIFY_FIX" \
+        --max-turns "$FIX_MAX_TURNS" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+        -- "git commit failed due to pre-commit hook. Here is the error output:
+
+$commit_output
+
+Fix the issues (run formatters like 'cd frontend && npx prettier --write ...', 'cargo fmt', etc.), then stage and commit all changes." \
+        >/dev/null || fix_rc=$?
+      if [[ "$fix_rc" -eq 2 ]]; then
+        flag_rate_limit
+        gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+        cleanup_branch "$BRANCH_NAME"
+        return 2
+      fi
+    fi
 
     # Re-run tests/clippy after committing leftover changes (only on first attempt, only if Rust files)
     if [[ "$verify_attempt" -eq 1 ]] && has_rust_changes; then
