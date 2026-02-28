@@ -18,4 +18,22 @@ test.describe("AnalysisDetailPanel", () => {
       "with-hybrid-result.png"
     );
   });
+
+  test("risk low", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-analysisdetailpanel--risk-low&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "risk-low.png"
+    );
+  });
+
+  test("risk high", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-analysisdetailpanel--risk-high&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "risk-high.png"
+    );
+  });
 });
