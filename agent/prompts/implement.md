@@ -26,6 +26,14 @@ Implement exactly **one task** from a GitHub issue.
 - **Minimal changes** — don't refactor unrelated code
 - **No secrets** — never commit tokens, keys, or credentials
 
+## Frontend Changes
+
+フロントエンドコンポーネント (`frontend/src/components/*.tsx`) を変更・追加した場合、以下を必ず実施すること:
+
+- 対応する Stories ファイル (`*.stories.tsx`) を更新・追加する
+- VRT スナップショットを更新する: `cd frontend && npx playwright test --update-snapshots`
+- アニメーション系テスト（Loading, Spinner等）には `maxDiffPixelRatio: 0.08` を設定する
+
 ## Commit
 
 When done, stage and commit your changes with a conventional commit message.
