@@ -157,6 +157,24 @@ function RiskFactorList({ factors }: { factors: RiskFactor[] }) {
   );
 }
 
+function FileDiffLegend() {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex items-center gap-3 text-[0.75rem] text-text-secondary">
+      <span>{t("pr.fileDiffLegend")}</span>
+      <span className="flex items-center gap-1">
+        <span className="inline-block h-2 w-2 rounded-full bg-accent" />
+        <span>+ {t("pr.fileDiffLegendAdditions")}</span>
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="inline-block h-2 w-2 rounded-full bg-danger" />
+        <span>- {t("pr.fileDiffLegendDeletions")}</span>
+      </span>
+    </div>
+  );
+}
+
 function FileAnalysisList({ files }: { files: FileAnalysis[] }) {
   const { t } = useTranslation();
 
@@ -172,10 +190,26 @@ function FileAnalysisList({ files }: { files: FileAnalysis[] }) {
           >
             {file.path}
           </span>
-          <span className="ml-auto shrink-0 font-mono text-accent">
+          <span
+            className="ml-auto shrink-0 font-mono text-accent"
+            aria-label={t("pr.fileAdditionsAriaLabel", {
+              count: file.additions,
+            })}
+          >
+            <span className="mr-0.5 text-[0.7rem]" aria-hidden="true">
+              {t("pr.fileAdditions")}
+            </span>
             +{file.additions}
           </span>
-          <span className="shrink-0 font-mono text-danger">
+          <span
+            className="shrink-0 font-mono text-danger"
+            aria-label={t("pr.fileDeletionsAriaLabel", {
+              count: file.deletions,
+            })}
+          >
+            <span className="mr-0.5 text-[0.7rem]" aria-hidden="true">
+              {t("pr.fileDeletions")}
+            </span>
             -{file.deletions}
           </span>
         </div>
@@ -191,7 +225,7 @@ export function AnalysisDetailPanel({
   const { t } = useTranslation();
 
   return (
-    <Card className="mt-4 space-y-4">
+    <Card className="mt-4 space-y-6">
       {/* Risk Score Overview */}
       <div className="flex items-center gap-4">
         <RiskBadge
@@ -209,7 +243,7 @@ export function AnalysisDetailPanel({
       {/* LLM Warnings (if available) */}
       {hybridResult && hybridResult.llm_analysis.risk_warnings.length > 0 && (
         <Panel>
-          <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+          <h3 className="mb-2 border-b border-border pb-2 text-[0.85rem] font-semibold text-text-heading">
             {t("pr.riskWarnings")}
           </h3>
           <div className="space-y-1">
@@ -230,7 +264,7 @@ export function AnalysisDetailPanel({
       {hybridResult &&
         hybridResult.llm_analysis.breaking_changes.length > 0 && (
           <Panel>
-            <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+            <h3 className="mb-2 border-b border-border pb-2 text-[0.85rem] font-semibold text-text-heading">
               {t("pr.breakingChanges")}
             </h3>
             <div className="space-y-2">
@@ -265,7 +299,7 @@ export function AnalysisDetailPanel({
       {hybridResult &&
         hybridResult.llm_analysis.affected_modules.length > 0 && (
           <Panel>
-            <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+            <h3 className="mb-2 border-b border-border pb-2 text-[0.85rem] font-semibold text-text-heading">
               {t("pr.affectedModules")}
             </h3>
             <div className="space-y-1">
@@ -288,7 +322,7 @@ export function AnalysisDetailPanel({
 
       {/* Risk Factors Breakdown */}
       <Panel>
-        <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
+        <h3 className="mb-2 border-b border-border pb-2 text-[0.85rem] font-semibold text-text-heading">
           {t("pr.riskFactors")}
         </h3>
         <RiskFactorList factors={result.risk.factors} />
@@ -296,9 +330,12 @@ export function AnalysisDetailPanel({
 
       {/* File Analysis */}
       <Panel>
-        <h3 className="mb-2 text-[0.85rem] font-semibold text-text-heading">
-          {t("pr.fileSummary")}
-        </h3>
+        <div className="mb-2 flex items-center justify-between border-b border-border pb-2">
+          <h3 className="text-[0.85rem] font-semibold text-text-heading">
+            {t("pr.fileSummary")}
+          </h3>
+          <FileDiffLegend />
+        </div>
         <FileAnalysisList files={result.files} />
       </Panel>
     </Card>

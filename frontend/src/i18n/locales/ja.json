@@ -176,7 +176,14 @@
     "autoApproveMergeEnabled": "Auto Merge: 有効",
     "autoApproveMergeSkipped": "Auto Merge: スキップ",
     "autoApproveMergeFailed": "Auto Merge: 失敗",
-    "loadingPrs": "PR取得中…"
+    "loadingPrs": "PR取得中…",
+    "fileAdditions": "追加",
+    "fileDeletions": "削除",
+    "fileAdditionsAriaLabel": "{{count}} 行追加",
+    "fileDeletionsAriaLabel": "{{count}} 行削除",
+    "fileDiffLegend": "凡例:",
+    "fileDiffLegendAdditions": "追加",
+    "fileDiffLegendDeletions": "削除"
   },
   "githubSettings": {
     "title": "GitHub設定",

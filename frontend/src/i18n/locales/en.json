@@ -176,7 +176,14 @@
     "autoApproveMergeEnabled": "Auto Merge: Enabled",
     "autoApproveMergeSkipped": "Auto Merge: Skipped",
     "autoApproveMergeFailed": "Auto Merge: Failed",
-    "loadingPrs": "Loading PRs…"
+    "loadingPrs": "Loading PRs…",
+    "fileAdditions": "Add",
+    "fileDeletions": "Del",
+    "fileAdditionsAriaLabel": "{{count}} additions",
+    "fileDeletionsAriaLabel": "{{count}} deletions",
+    "fileDiffLegend": "Legend:",
+    "fileDiffLegendAdditions": "Additions",
+    "fileDiffLegendDeletions": "Deletions"
   },
   "githubSettings": {
     "title": "GitHub Settings",
