@@ -143,6 +143,10 @@ export function App() {
     setSettingsOpen(false);
   }, []);
 
+  const handleNavigateConsumed = useCallback(() => {
+    setNavigateToBranch(null);
+  }, []);
+
   const dismissAddRepoError = useCallback(() => {
     setAddRepoError(null);
     clearTimeout(addErrorTimerRef.current);
@@ -271,6 +275,7 @@ export function App() {
               prs={prs}
               loadingPrs={loadingPrs}
               navigateToBranch={navigateToBranch}
+              onNavigateConsumed={handleNavigateConsumed}
             />
           )}
           {activeTab === "next-action" && (
