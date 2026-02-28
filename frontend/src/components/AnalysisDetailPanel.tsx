@@ -157,7 +157,7 @@ function RiskFactorList({ factors }: { factors: RiskFactor[] }) {
   );
 }
 
-function FileDiffLegend() {
+export function FileDiffLegend() {
   const { t } = useTranslation();
 
   return (
