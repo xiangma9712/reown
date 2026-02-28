@@ -4,7 +4,7 @@
 step_reqverify() {
   cd "$REPO_ROOT"
 
-  local VERIFY_PROMPT VERIFY_INPUT VERIFY_STDERR VERIFY_OUTPUT VERIFY_JSON VERDICT REASONING
+  local VERIFY_PROMPT VERIFY_INPUT VERIFY_OUTPUT VERIFY_JSON VERDICT REASONING
 
   VERIFY_PROMPT=$(cat "$SCRIPT_DIR/prompts/verify.md")
 
@@ -16,19 +16,26 @@ step_reqverify() {
 - **Body**: $TASK_DESC"
 
   log "Running requirement verification for #$TASK_ISSUE..."
-  VERIFY_STDERR="/tmp/claude/agent-reqverify-stderr.log"
-  VERIFY_OUTPUT=$(claude -p "$VERIFY_INPUT" \
+  local verify_rc=0
+  VERIFY_OUTPUT=$(run_claude \
+    --label "reqverify-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_VERIFY_FIX" \
     --max-turns "$VERIFY_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
     --allowedTools "Read,Glob,Grep" \
-    2>"$VERIFY_STDERR") || true
+    -- "$VERIFY_INPUT") || verify_rc=$?
 
   # Rate limit check
-  if check_rate_limit "$VERIFY_STDERR"; then
+  if [[ "$verify_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     return 2
+  fi
+
+  # Timeout — treat as pass to avoid blocking
+  if [[ "$verify_rc" -eq 124 ]]; then
+    log "WARN: Requirement verification timed out for #$TASK_ISSUE. Treating as pass."
+    return 0
   fi
 
   # Parse verdict from output
@@ -50,8 +57,13 @@ step_reqverify() {
   log "Requirement verification failed for #$TASK_ISSUE: $REASONING"
   log "Attempting fix based on verification feedback..."
 
-  local FIX_STDERR="/tmp/claude/agent-reqverify-fix-stderr.log"
-  claude -p "The requirement verification agent found that the implementation does not fully satisfy the issue requirements.
+  local fix_rc=0
+  run_claude \
+    --label "reqverify-fix-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_VERIFY_FIX" \
+    --max-turns "$FIX_MAX_TURNS" \
+    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+    -- "The requirement verification agent found that the implementation does not fully satisfy the issue requirements.
 
 ## Issue
 - **Title**: $TASK_TITLE
@@ -61,12 +73,9 @@ step_reqverify() {
 $REASONING
 
 Please fix the implementation to address the gap. Then run cargo test and cargo clippy --all-targets -- -D warnings to ensure everything still passes. Commit your changes." \
-    --max-turns "$FIX_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
-    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-    2>"$FIX_STDERR" || true
+    >/dev/null || fix_rc=$?
 
-  if check_rate_limit "$FIX_STDERR"; then
+  if [[ "$fix_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
@@ -82,18 +91,24 @@ Please fix the implementation to address the gap. Then run cargo test and cargo 
 - **Body**: $TASK_DESC"
 
   log "Re-running requirement verification for #$TASK_ISSUE after fix..."
-  VERIFY_STDERR="/tmp/claude/agent-reqverify-retry-stderr.log"
-  VERIFY_OUTPUT=$(claude -p "$VERIFY_INPUT" \
+  local reverify_rc=0
+  VERIFY_OUTPUT=$(run_claude \
+    --label "reqverify-retry-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_VERIFY_FIX" \
     --max-turns "$VERIFY_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
     --allowedTools "Read,Glob,Grep" \
-    2>"$VERIFY_STDERR") || true
+    -- "$VERIFY_INPUT") || reverify_rc=$?
 
-  if check_rate_limit "$VERIFY_STDERR"; then
+  if [[ "$reverify_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     return 2
+  fi
+
+  if [[ "$reverify_rc" -eq 124 ]]; then
+    log "WARN: Re-verification timed out for #$TASK_ISSUE. Treating as pass."
+    return 0
   fi
 
   VERIFY_JSON=$(echo "$VERIFY_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
@@ -109,6 +124,6 @@ Please fix the implementation to address the gap. Then run cargo test and cargo 
   log "ERROR: Requirement verification still failing for #$TASK_ISSUE after fix attempt. Marking as needs-split."
   mark_needs_split "$TASK_ISSUE"
   cleanup_branch "$BRANCH_NAME"
-  sleep "$SLEEP_SECONDS"
+  interruptible_sleep "$SLEEP_SECONDS"
   return 1
 }

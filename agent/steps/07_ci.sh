@@ -10,10 +10,10 @@ step_ci() {
     # Wait before checking — CI needs time to be queued and started
     if [[ "$attempt" -eq 1 ]]; then
       log "Waiting ${CI_INITIAL_WAIT}s for CI to start..."
-      sleep "$CI_INITIAL_WAIT"
+      interruptible_sleep "$CI_INITIAL_WAIT"
     else
       log "Waiting ${CI_INITIAL_WAIT}s for new CI run to start..."
-      sleep "$CI_INITIAL_WAIT"
+      interruptible_sleep "$CI_INITIAL_WAIT"
     fi
 
     # Poll CI status until it reaches a terminal state (with timeout)
@@ -35,14 +35,14 @@ step_ci() {
 
       if [[ -z "$CI_STATUS" ]]; then
         log "No CI checks found yet (poll $poll, ${elapsed}s elapsed). Waiting..."
-        sleep "$CI_POLL_INTERVAL"
+        interruptible_sleep "$CI_POLL_INTERVAL"
         continue
       fi
 
       # Check if any checks are still pending or in progress
       if echo "$CI_STATUS" | grep -qiE "pending|in_progress|queued|running"; then
         log "CI still running (poll $poll, ${elapsed}s elapsed)..."
-        sleep "$CI_POLL_INTERVAL"
+        interruptible_sleep "$CI_POLL_INTERVAL"
         continue
       fi
 
@@ -70,13 +70,15 @@ step_ci() {
     # Don't attempt fix on the last attempt
     if [[ "$attempt" -lt "$CI_MAX_ATTEMPTS" ]]; then
       log "CI failed on attempt $attempt. Attempting fix..."
-      local FIX_STDERR="/tmp/claude/agent-fix-stderr.log"
-      claude -p "CI checks failed for this PR. Read the CI logs, fix the issues, commit, and push." \
+      local fix_rc=0
+      run_claude \
+        --label "ci-fix-$TASK_ISSUE-attempt$attempt" \
+        --timeout "$TIMEOUT_VERIFY_FIX" \
         --max-turns "$FIX_MAX_TURNS" \
-        --max-budget-usd "$MAX_BUDGET_USD" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        2>"$FIX_STDERR" || true
-      if check_rate_limit "$FIX_STDERR"; then
+        -- "CI checks failed for this PR. Read the CI logs, fix the issues, commit, and push." \
+        >/dev/null || fix_rc=$?
+      if [[ "$fix_rc" -eq 2 ]]; then
         flag_rate_limit
         gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
         return 2
@@ -93,7 +95,7 @@ step_ci() {
     git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
     mark_pend "$TASK_ISSUE" "CIが${CI_MAX_ATTEMPTS}回の修正試行後も失敗しています"
     cleanup_branch "$BRANCH_NAME"
-    sleep "$SLEEP_SECONDS"
+    interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
 

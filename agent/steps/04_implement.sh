@@ -14,14 +14,14 @@ step_implement() {
   if ! verify_main_is_latest; then
     log "ERROR: Cannot verify main is latest for #$TASK_ISSUE. Skipping iteration."
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
-    sleep "$SLEEP_SECONDS"
+    interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
 
   git checkout -b "$BRANCH_NAME"
 
   # ── Pre-check: verify if requirements are already met ────────────────────
-  local PRECHECK_PROMPT PRECHECK_INPUT PRECHECK_STDERR PRECHECK_OUTPUT PRECHECK_JSON PRECHECK_VERDICT
+  local PRECHECK_PROMPT PRECHECK_INPUT PRECHECK_OUTPUT PRECHECK_JSON PRECHECK_VERDICT
 
   PRECHECK_PROMPT=$(cat "$SCRIPT_DIR/prompts/verify.md")
   PRECHECK_INPUT="$PRECHECK_PROMPT
@@ -32,46 +32,50 @@ step_implement() {
 - **Body**: $TASK_DESC"
 
   log "Running pre-implementation verification for #$TASK_ISSUE..."
-  PRECHECK_STDERR="/tmp/claude/agent-precheck-stderr.log"
-  PRECHECK_OUTPUT=$(claude -p "$PRECHECK_INPUT" \
+  local precheck_rc=0
+  PRECHECK_OUTPUT=$(run_claude \
+    --label "precheck-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_VERIFY_FIX" \
     --max-turns "$VERIFY_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
     --allowedTools "Read,Glob,Grep" \
-    2>"$PRECHECK_STDERR") || true
+    -- "$PRECHECK_INPUT") || precheck_rc=$?
 
-  if check_rate_limit "$PRECHECK_STDERR"; then
+  if [[ "$precheck_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     return 2
   fi
 
-  PRECHECK_JSON=$(echo "$PRECHECK_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
-  PRECHECK_VERDICT=$(echo "$PRECHECK_JSON" | jq -r '.verdict' 2>/dev/null || echo "")
+  # Timeout or error on pre-check → proceed with implementation (non-fatal)
+  if [[ "$precheck_rc" -eq 0 ]]; then
+    PRECHECK_JSON=$(echo "$PRECHECK_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
+    PRECHECK_VERDICT=$(echo "$PRECHECK_JSON" | jq -r '.verdict' 2>/dev/null || echo "")
 
-  if [[ "$PRECHECK_VERDICT" == "pass" ]]; then
-    local PRECHECK_REASONING
-    PRECHECK_REASONING=$(echo "$PRECHECK_JSON" | jq -r '.reasoning' 2>/dev/null || echo "")
-    log "Pre-check passed: requirements already met for #$TASK_ISSUE. Skipping implementation."
-    gh issue edit "$TASK_ISSUE" --add-label "done" --remove-label "doing" --remove-label "planned" 2>/dev/null || true
-    gh issue comment "$TASK_ISSUE" \
-      --body "このissueの機能は既にmainに実装済みです。エージェントが確認しクローズしました。
+    if [[ "$PRECHECK_VERDICT" == "pass" ]]; then
+      local PRECHECK_REASONING
+      PRECHECK_REASONING=$(echo "$PRECHECK_JSON" | jq -r '.reasoning' 2>/dev/null || echo "")
+      log "Pre-check passed: requirements already met for #$TASK_ISSUE. Skipping implementation."
+      gh issue edit "$TASK_ISSUE" --add-label "done" --remove-label "doing" --remove-label "planned" 2>/dev/null || true
+      gh issue comment "$TASK_ISSUE" \
+        --body "このissueの機能は既にmainに実装済みです。エージェントが確認しクローズしました。
 
 **検証結果**: $PRECHECK_REASONING
 
 ---
 _Automatically posted by agent/loop.sh_" 2>/dev/null || true
-    gh issue close "$TASK_ISSUE" 2>/dev/null || true
-    log "Issue #$TASK_ISSUE closed as already implemented (pre-check)."
-    cleanup_branch "$BRANCH_NAME"
-    sleep "$SLEEP_SECONDS"
-    return 1
+      gh issue close "$TASK_ISSUE" 2>/dev/null || true
+      log "Issue #$TASK_ISSUE closed as already implemented (pre-check)."
+      cleanup_branch "$BRANCH_NAME"
+      interruptible_sleep "$SLEEP_SECONDS"
+      return 1
+    fi
   fi
 
   log "Pre-check: requirements not yet met for #$TASK_ISSUE. Proceeding with implementation."
 
   # ── Run implementation agent ─────────────────────────────────────────────
-  local IMPLEMENT_PROMPT IMPLEMENT_INPUT CLAUDE_STDERR CLAUDE_EXIT
+  local IMPLEMENT_PROMPT IMPLEMENT_INPUT
   IMPLEMENT_PROMPT=$(cat "$SCRIPT_DIR/prompts/implement.md")
   IMPLEMENT_INPUT="$IMPLEMENT_PROMPT
 
@@ -83,31 +87,40 @@ _Automatically posted by agent/loop.sh_" 2>/dev/null || true
 - **Description**: $TASK_DESC"
 
   log "Running implementation agent for #$TASK_ISSUE..."
-  CLAUDE_STDERR="/tmp/claude/agent-implement-stderr.log"
-  claude -p "$IMPLEMENT_INPUT" \
-       --max-turns "$IMPLEMENT_MAX_TURNS" \
-       --max-budget-usd "$MAX_BUDGET_USD" \
-       --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-       2>"$CLAUDE_STDERR"
-  CLAUDE_EXIT=$?
+  local impl_rc=0
+  run_claude \
+    --label "implement-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_IMPLEMENT" \
+    --max-turns "$IMPLEMENT_MAX_TURNS" \
+    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+    -- "$IMPLEMENT_INPUT" >/dev/null || impl_rc=$?
 
-  # Rate limit check — stop the entire loop
-  if check_rate_limit "$CLAUDE_STDERR"; then
+  if [[ "$impl_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     return 2
   fi
 
-  if [[ $CLAUDE_EXIT -ne 0 ]] || grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
-    if grep -qi "max turns\|max budget" "$CLAUDE_STDERR" 2>/dev/null; then
+  if [[ "$impl_rc" -eq 124 ]]; then
+    log "ERROR: Implementation agent timed out for #$TASK_ISSUE. Marking as needs-split."
+    mark_needs_split "$TASK_ISSUE"
+    cleanup_branch "$BRANCH_NAME"
+    interruptible_sleep "$SLEEP_SECONDS"
+    return 1
+  fi
+
+  local impl_stderr
+  impl_stderr=$(run_claude_stderr "implement-$TASK_ISSUE")
+  if [[ "$impl_rc" -ne 0 ]] || grep -qi "max turns\|max budget" "$impl_stderr" 2>/dev/null; then
+    if grep -qi "max turns\|max budget" "$impl_stderr" 2>/dev/null; then
       log "ERROR: Implementation agent hit resource limit for #$TASK_ISSUE. Needs split."
     else
-      log "ERROR: Implementation agent failed for #$TASK_ISSUE (exit=$CLAUDE_EXIT)"
+      log "ERROR: Implementation agent failed for #$TASK_ISSUE (exit=$impl_rc)"
     fi
     mark_needs_split "$TASK_ISSUE"
     cleanup_branch "$BRANCH_NAME"
-    sleep "$SLEEP_SECONDS"
+    interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
 
@@ -129,7 +142,7 @@ _Automatically posted by agent/loop.sh_" 2>/dev/null || true
     gh issue close "$TASK_ISSUE" 2>/dev/null || true
     log "Issue #$TASK_ISSUE closed as already implemented."
     cleanup_branch "$BRANCH_NAME"
-    sleep "$SLEEP_SECONDS"
+    interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
 

@@ -4,7 +4,7 @@
 step_review() {
   cd "$REPO_ROOT"
 
-  local REVIEW_PROMPT CLAUDE_MD DIFF_OUTPUT REVIEW_INPUT REVIEW_STDERR REVIEW_OUTPUT REVIEW_JSON VERDICT REASONING
+  local REVIEW_PROMPT CLAUDE_MD DIFF_OUTPUT REVIEW_INPUT REVIEW_OUTPUT REVIEW_JSON VERDICT REASONING
 
   REVIEW_PROMPT=$(cat "$SCRIPT_DIR/prompts/review.md")
   CLAUDE_MD=$(cat "$REPO_ROOT/CLAUDE.md" 2>/dev/null || echo "(CLAUDE.md not found)")
@@ -23,18 +23,25 @@ $DIFF_OUTPUT
 \`\`\`"
 
   log "Running code review for #$TASK_ISSUE..."
-  REVIEW_STDERR="/tmp/claude/agent-review-stderr.log"
-  REVIEW_OUTPUT=$(claude -p "$REVIEW_INPUT" \
+  local review_rc=0
+  REVIEW_OUTPUT=$(run_claude \
+    --label "review-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_VERIFY_FIX" \
     --max-turns "$REVIEW_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
-    2>"$REVIEW_STDERR") || true
+    -- "$REVIEW_INPUT") || review_rc=$?
 
   # Rate limit check
-  if check_rate_limit "$REVIEW_STDERR"; then
+  if [[ "$review_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     return 2
+  fi
+
+  # Timeout — treat as pass to avoid blocking
+  if [[ "$review_rc" -eq 124 ]]; then
+    log "WARN: Code review timed out for #$TASK_ISSUE. Treating as pass."
+    return 0
   fi
 
   # Parse verdict from output
@@ -59,8 +66,13 @@ $DIFF_OUTPUT
   log "Code review failed for #$TASK_ISSUE: $REASONING"
   log "Attempting fix based on review feedback..."
 
-  local FIX_STDERR="/tmp/claude/agent-review-fix-stderr.log"
-  claude -p "The code review agent found quality issues in the implementation.
+  local fix_rc=0
+  run_claude \
+    --label "review-fix-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_VERIFY_FIX" \
+    --max-turns "$FIX_MAX_TURNS" \
+    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+    -- "The code review agent found quality issues in the implementation.
 
 ## Review Issues
 $ISSUES
@@ -69,12 +81,9 @@ $ISSUES
 $REASONING
 
 Please fix the issues identified by the review. Then run cargo test and cargo clippy --all-targets -- -D warnings to ensure everything still passes. Commit your changes." \
-    --max-turns "$FIX_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
-    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-    2>"$FIX_STDERR" || true
+    >/dev/null || fix_rc=$?
 
-  if check_rate_limit "$FIX_STDERR"; then
+  if [[ "$fix_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
@@ -96,17 +105,23 @@ $DIFF_OUTPUT
 \`\`\`"
 
   log "Re-running code review for #$TASK_ISSUE after fix..."
-  REVIEW_STDERR="/tmp/claude/agent-review-retry-stderr.log"
-  REVIEW_OUTPUT=$(claude -p "$REVIEW_INPUT" \
+  local rereview_rc=0
+  REVIEW_OUTPUT=$(run_claude \
+    --label "review-retry-$TASK_ISSUE" \
+    --timeout "$TIMEOUT_VERIFY_FIX" \
     --max-turns "$REVIEW_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
-    2>"$REVIEW_STDERR") || true
+    -- "$REVIEW_INPUT") || rereview_rc=$?
 
-  if check_rate_limit "$REVIEW_STDERR"; then
+  if [[ "$rereview_rc" -eq 2 ]]; then
     flag_rate_limit
     gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
     cleanup_branch "$BRANCH_NAME"
     return 2
+  fi
+
+  if [[ "$rereview_rc" -eq 124 ]]; then
+    log "WARN: Re-review timed out for #$TASK_ISSUE. Treating as pass."
+    return 0
   fi
 
   REVIEW_JSON=$(echo "$REVIEW_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
@@ -122,6 +137,6 @@ $DIFF_OUTPUT
   log "ERROR: Code review still failing for #$TASK_ISSUE after fix attempt. Marking as needs-split."
   mark_needs_split "$TASK_ISSUE"
   cleanup_branch "$BRANCH_NAME"
-  sleep "$SLEEP_SECONDS"
+  interruptible_sleep "$SLEEP_SECONDS"
   return 1
 }

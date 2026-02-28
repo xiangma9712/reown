@@ -34,13 +34,14 @@ $NEW_ISSUES
 \`\`\`"
 
     log "Running roadmap agent to triage $NEW_ISSUE_COUNT new issues..."
-    local ROADMAP_STDERR="/tmp/claude/agent-roadmap-stderr.log"
-    local ROADMAP_OUTPUT
-    ROADMAP_OUTPUT=$(claude -p "$ROADMAP_INPUT" \
+    local ROADMAP_OUTPUT rc=0
+    ROADMAP_OUTPUT=$(run_claude \
+      --label "triage-roadmap" \
+      --timeout "$TIMEOUT_VERIFY_FIX" \
       --max-turns "$ROADMAP_MAX_TURNS" \
-      --max-budget-usd "$MAX_BUDGET_USD" \
-      2>"$ROADMAP_STDERR") || true
-    if check_rate_limit "$ROADMAP_STDERR"; then flag_rate_limit; return 2; fi
+      -- "$ROADMAP_INPUT") || rc=$?
+    if [[ "$rc" -eq 2 ]]; then flag_rate_limit; return 2; fi
+    if [[ "$rc" -eq 124 ]]; then log "WARN: Roadmap agent timed out. Skipping triage."; return 0; fi
 
     # Extract JSON from output (between ```json and ```)
     local TRIAGE_JSON
@@ -134,7 +135,7 @@ _Automatically posted by agent/loop.sh_"
     INTENT_FOR_SPLIT=$(cat "$REPO_ROOT/docs/INTENT.md" 2>/dev/null || echo "(not found)")
 
     echo "$SPLIT_ISSUES" | jq -c '.[]' | while IFS= read -r split_issue; do
-      local S_NUM S_TITLE S_BODY SPLIT_INPUT SPLIT_STDERR SPLIT_OUTPUT SPLIT_JSON
+      local S_NUM S_TITLE S_BODY SPLIT_INPUT SPLIT_OUTPUT SPLIT_JSON
       S_NUM=$(echo "$split_issue" | jq -r '.number')
       S_TITLE=$(echo "$split_issue" | jq -r '.title')
       S_BODY=$(echo "$split_issue" | jq -r '.body // ""')
@@ -151,12 +152,14 @@ $INTENT_FOR_SPLIT
 - **Body**: $S_BODY"
 
       log "Splitting issue #$S_NUM..."
-      SPLIT_STDERR="/tmp/claude/agent-split-stderr.log"
-      SPLIT_OUTPUT=$(claude -p "$SPLIT_INPUT" \
+      local split_rc=0
+      SPLIT_OUTPUT=$(run_claude \
+        --label "triage-split-$S_NUM" \
+        --timeout "$TIMEOUT_VERIFY_FIX" \
         --max-turns "$ROADMAP_MAX_TURNS" \
-        --max-budget-usd "$MAX_BUDGET_USD" \
-        2>"$SPLIT_STDERR") || true
-      if check_rate_limit "$SPLIT_STDERR"; then flag_rate_limit; break; fi
+        -- "$SPLIT_INPUT") || split_rc=$?
+      if [[ "$split_rc" -eq 2 ]]; then flag_rate_limit; break; fi
+      if [[ "$split_rc" -eq 124 ]]; then log "WARN: Split agent timed out for #$S_NUM. Skipping."; continue; fi
 
       SPLIT_JSON=$(echo "$SPLIT_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
 
