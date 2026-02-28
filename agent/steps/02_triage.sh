@@ -163,8 +163,16 @@ $INTENT_FOR_SPLIT
 
       SPLIT_JSON=$(echo "$SPLIT_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
 
+      # Validate: must be a non-empty JSON array
+      local SPLIT_ARRAY_LEN=0
       if echo "$SPLIT_JSON" | jq empty 2>/dev/null; then
-        echo "$SPLIT_JSON" | jq -c '.[]' | while IFS= read -r sub; do
+        SPLIT_ARRAY_LEN=$(echo "$SPLIT_JSON" | jq 'if type == "array" then length else 0 end' 2>/dev/null || echo 0)
+      fi
+
+      if [[ "$SPLIT_ARRAY_LEN" -gt 0 ]]; then
+        local CREATED_COUNT=0
+        # Use process substitution to avoid subshell (pipe creates subshell, losing CREATED_COUNT)
+        while IFS= read -r sub; do
           local SUB_TITLE SUB_BODY SUB_LABELS
           SUB_TITLE=$(echo "$sub" | jq -r '.title')
           SUB_BODY=$(echo "$sub" | jq -r '.body')
@@ -172,18 +180,23 @@ $INTENT_FOR_SPLIT
 
           if gh issue create --title "$SUB_TITLE" --body "$SUB_BODY" --label "$SUB_LABELS" 2>/dev/null; then
             log "Created sub-issue: $SUB_TITLE"
+            CREATED_COUNT=$((CREATED_COUNT + 1))
           else
             log "WARN: Failed to create sub-issue: $SUB_TITLE"
           fi
-        done
+        done < <(echo "$SPLIT_JSON" | jq -c '.[]')
 
-        # Close parent issue
-        gh issue comment "$S_NUM" --body "Split into sub-issues by agent/loop.sh. Closing parent." 2>/dev/null || true
-        gh issue edit "$S_NUM" --add-label "done" --remove-label "needs-split" 2>/dev/null || true
-        gh issue close "$S_NUM" 2>/dev/null || true
-        log "Parent issue #$S_NUM closed after split"
+        # Only close parent if at least one sub-issue was actually created
+        if [[ "$CREATED_COUNT" -gt 0 ]]; then
+          gh issue comment "$S_NUM" --body "Split into sub-issues by agent/loop.sh. Closing parent." 2>/dev/null || true
+          gh issue edit "$S_NUM" --add-label "done" --remove-label "needs-split" 2>/dev/null || true
+          gh issue close "$S_NUM" 2>/dev/null || true
+          log "Parent issue #$S_NUM closed after split ($CREATED_COUNT sub-issues created)"
+        else
+          log "WARN: No sub-issues were created for #$S_NUM. Keeping parent open."
+        fi
       else
-        log "WARN: Split agent output invalid JSON for issue #$S_NUM. Skipping."
+        log "WARN: Split agent output invalid or empty for issue #$S_NUM. Skipping."
       fi
     done
   fi
