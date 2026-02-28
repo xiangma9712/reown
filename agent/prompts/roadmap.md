@@ -38,7 +38,7 @@ For each new GitHub Issue:
    - **middle** — Core feature requests, important improvements
    - **low** — Nice-to-haves, minor enhancements
 4. Write a brief implementation approach (2-3 sentences)
-5. If the issue is too large (scope > 1 module or > ~200 lines), note that it should be split
+5. Only mark `needs_split: true` if the issue is clearly too large for a single agent run — e.g., spans 4+ unrelated modules, requires 500+ lines of new code, or involves multiple independent features. Most issues (even those touching 2-3 files like component + stories + tests) should NOT be split.
 
 ## Priority Guidelines
 

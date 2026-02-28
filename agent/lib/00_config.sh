@@ -22,7 +22,7 @@ ALLOWED_ISSUE_AUTHOR="${ALLOWED_ISSUE_AUTHOR:-xiangma9712}"  # only process issu
 
 # ── Timeout settings for run_claude (seconds) ──────────────────────────────
 # Process-level timeout via `timeout` command. Exit code 124 = hung/killed.
-TIMEOUT_IMPLEMENT="${TIMEOUT_IMPLEMENT:-900}"       # 15min for implementation
+TIMEOUT_IMPLEMENT="${TIMEOUT_IMPLEMENT:-1800}"      # 30min for implementation
 TIMEOUT_VERIFY_FIX="${TIMEOUT_VERIFY_FIX:-300}"     # 5min for verify/review/CI fix
 
 # ── Iteration log settings ──────────────────────────────────────────────────
