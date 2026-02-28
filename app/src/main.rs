@@ -1520,7 +1520,6 @@ mod tests {
         let config_path = reown::config::default_config_path(tmp.path());
 
         let config = reown::config::AppConfig {
-            github_token: "ghp_test_token".to_string(),
             default_owner: "my-org".to_string(),
             default_repo: "my-repo".to_string(),
             ..Default::default()
@@ -1529,7 +1528,6 @@ mod tests {
         reown::config::save_config(&config_path, &config).unwrap();
         let loaded = reown::config::load_config(&config_path).unwrap();
         assert_eq!(loaded, config);
-        assert_eq!(loaded.github_token, "ghp_test_token");
         assert_eq!(loaded.default_owner, "my-org");
         assert_eq!(loaded.default_repo, "my-repo");
     }
@@ -1541,7 +1539,6 @@ mod tests {
 
         let config = reown::config::load_config(&config_path).unwrap();
         assert_eq!(config, reown::config::AppConfig::default());
-        assert_eq!(config.github_token, "");
         assert_eq!(config.default_owner, "");
     }
 
@@ -1551,7 +1548,6 @@ mod tests {
         let config_path = tmp.path().join("nested").join("dir").join("config.json");
 
         let config = reown::config::AppConfig {
-            github_token: "ghp_abc".to_string(),
             default_owner: "owner".to_string(),
             default_repo: "repo".to_string(),
             ..Default::default()
@@ -1568,7 +1564,6 @@ mod tests {
         let config_path = reown::config::default_config_path(tmp.path());
 
         let config1 = reown::config::AppConfig {
-            github_token: "old_token".to_string(),
             default_owner: "old_owner".to_string(),
             default_repo: "old_repo".to_string(),
             ..Default::default()
@@ -1576,7 +1571,6 @@ mod tests {
         reown::config::save_config(&config_path, &config1).unwrap();
 
         let config2 = reown::config::AppConfig {
-            github_token: "new_token".to_string(),
             default_owner: "new_owner".to_string(),
             default_repo: "new_repo".to_string(),
             ..Default::default()
@@ -1585,7 +1579,6 @@ mod tests {
 
         let loaded = reown::config::load_config(&config_path).unwrap();
         assert_eq!(loaded, config2);
-        assert_eq!(loaded.github_token, "new_token");
     }
 
     // ── LLM Config コマンドテスト ───────────────────────────────────────
@@ -1630,7 +1623,6 @@ mod tests {
 
         // まず他のフィールドを設定
         let initial_config = reown::config::AppConfig {
-            github_token: "ghp_existing".to_string(),
             default_owner: "existing_owner".to_string(),
             default_repo: "existing_repo".to_string(),
             ..Default::default()
@@ -1648,7 +1640,6 @@ mod tests {
 
         // 他のフィールドが保持されることを確認
         let loaded = reown::config::load_config(&config_path).unwrap();
-        assert_eq!(loaded.github_token, "ghp_existing");
         assert_eq!(loaded.default_owner, "existing_owner");
         assert_eq!(loaded.llm.llm_endpoint, "http://custom:8080");
     }
@@ -1748,7 +1739,6 @@ mod tests {
 
         // まず他のフィールドを設定
         let initial_config = reown::config::AppConfig {
-            github_token: "ghp_keep_this".to_string(),
             default_owner: "keep_owner".to_string(),
             default_repo: "keep_repo".to_string(),
             llm: reown::config::LlmConfig {
@@ -1773,7 +1763,6 @@ mod tests {
 
         // 他のフィールドが保持されることを確認
         let loaded = reown::config::load_config(&config_path).unwrap();
-        assert_eq!(loaded.github_token, "ghp_keep_this");
         assert_eq!(loaded.default_owner, "keep_owner");
         assert_eq!(loaded.llm.llm_endpoint, "http://keep:1234");
         assert!(loaded.automation.enabled);

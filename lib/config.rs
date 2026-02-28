@@ -281,9 +281,6 @@ impl Default for LlmConfig {
 /// アプリ設定（GitHub トークン等を永続化する）
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AppConfig {
-    /// GitHub トークン（Keychain マイグレーション済みの場合は空文字列）
-    #[serde(default)]
-    pub github_token: String,
     /// デフォルトの GitHub owner
     pub default_owner: String,
     /// デフォルトの GitHub リポジトリ名
@@ -468,7 +465,6 @@ mod tests {
         let config_path = tmp.path().join("config.json");
         let config = load_config(&config_path).unwrap();
         assert_eq!(config, AppConfig::default());
-        assert_eq!(config.github_token, "");
         assert_eq!(config.default_owner, "");
         assert_eq!(config.default_repo, "");
     }
@@ -479,7 +475,6 @@ mod tests {
         let config_path = tmp.path().join("config.json");
 
         let config = AppConfig {
-            github_token: "ghp_test123".to_string(),
             default_owner: "my-org".to_string(),
             default_repo: "my-repo".to_string(),
             ..Default::default()
@@ -496,7 +491,6 @@ mod tests {
         let config_path = tmp.path().join("nested").join("dir").join("config.json");
 
         let config = AppConfig {
-            github_token: "ghp_abc".to_string(),
             default_owner: "owner".to_string(),
             default_repo: "repo".to_string(),
             ..Default::default()
@@ -517,13 +511,11 @@ mod tests {
     #[test]
     fn test_app_config_serializes() {
         let config = AppConfig {
-            github_token: "ghp_token".to_string(),
             default_owner: "owner".to_string(),
             default_repo: "repo".to_string(),
             ..Default::default()
         };
         let json = serde_json::to_value(&config).unwrap();
-        assert_eq!(json["github_token"], "ghp_token");
         assert_eq!(json["default_owner"], "owner");
         assert_eq!(json["default_repo"], "repo");
     }
@@ -531,7 +523,6 @@ mod tests {
     #[test]
     fn test_app_config_default() {
         let config = AppConfig::default();
-        assert_eq!(config.github_token, "");
         assert_eq!(config.default_owner, "");
         assert_eq!(config.default_repo, "");
         assert!(!config.onboarding_completed);
@@ -572,7 +563,7 @@ mod tests {
         let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r"}"#;
         std::fs::write(&config_path, old_json).unwrap();
         let config = load_config(&config_path).unwrap();
-        assert_eq!(config.github_token, "tok");
+        assert_eq!(config.default_owner, "o");
         assert_eq!(config.llm, LlmConfig::default());
     }
 
@@ -582,7 +573,6 @@ mod tests {
         let config_path = tmp.path().join("config.json");
 
         let config = AppConfig {
-            github_token: "ghp_test".to_string(),
             default_owner: "org".to_string(),
             default_repo: "repo".to_string(),
             llm: LlmConfig {
@@ -636,7 +626,7 @@ mod tests {
         let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r","llm":{"llm_endpoint":"https://api.anthropic.com","llm_model":"claude-sonnet-4-5-20250929","llm_api_key_stored":false}}"#;
         std::fs::write(&config_path, old_json).unwrap();
         let config = load_config(&config_path).unwrap();
-        assert_eq!(config.github_token, "tok");
+        assert_eq!(config.default_owner, "o");
         assert_eq!(config.automation, AutomationConfig::default());
     }
 
@@ -646,7 +636,6 @@ mod tests {
         let config_path = tmp.path().join("config.json");
 
         let config = AppConfig {
-            github_token: "ghp_test".to_string(),
             default_owner: "org".to_string(),
             default_repo: "repo".to_string(),
             llm: LlmConfig::default(),
@@ -839,7 +828,7 @@ mod tests {
         let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r","automation":{"enabled":true,"auto_approve_max_risk":"Low","enable_auto_merge":false,"auto_merge_method":"Merge"}}"#;
         std::fs::write(&config_path, old_json).unwrap();
         let config = load_config(&config_path).unwrap();
-        assert_eq!(config.github_token, "tok");
+        assert_eq!(config.default_owner, "o");
         assert!(config.automation.enabled);
         assert!(config.repo_automation.is_empty());
     }
@@ -874,7 +863,6 @@ mod tests {
         );
 
         let config = AppConfig {
-            github_token: "ghp_test".to_string(),
             default_owner: "org".to_string(),
             default_repo: "repo-a".to_string(),
             llm: LlmConfig::default(),
@@ -1035,7 +1023,6 @@ mod tests {
         category_weights.insert(crate::analysis::ChangeCategory::Test, 0.5);
 
         let config = AppConfig {
-            github_token: "ghp_test".to_string(),
             default_owner: "org".to_string(),
             default_repo: "repo".to_string(),
             llm: LlmConfig::default(),
@@ -1093,7 +1080,7 @@ mod tests {
         let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r"}"#;
         std::fs::write(&config_path, old_json).unwrap();
         let config = load_config(&config_path).unwrap();
-        assert_eq!(config.github_token, "tok");
+        assert_eq!(config.default_owner, "o");
         assert!(!config.onboarding_completed);
     }
 
@@ -1103,7 +1090,6 @@ mod tests {
         let config_path = tmp.path().join("config.json");
 
         let config = AppConfig {
-            github_token: "ghp_test".to_string(),
             default_owner: "org".to_string(),
             default_repo: "repo".to_string(),
             onboarding_completed: true,
@@ -1188,7 +1174,6 @@ mod tests {
 
         // load_config でも正常に読み込めることを確認
         let config = load_config(&config_path).unwrap();
-        assert_eq!(config.github_token, ""); // デフォルト値
         assert_eq!(config.default_owner, "o");
         assert_eq!(config.default_repo, "r");
 
@@ -1204,7 +1189,6 @@ mod tests {
         let json = r#"{"default_owner":"o","default_repo":"r"}"#;
         std::fs::write(&config_path, json).unwrap();
         let config = load_config(&config_path).unwrap();
-        assert_eq!(config.github_token, "");
         assert_eq!(config.default_owner, "o");
         assert_eq!(config.default_repo, "r");
     }
