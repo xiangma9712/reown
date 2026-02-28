@@ -22,6 +22,7 @@ import type {
   TodoItem,
   ReviewSuggestion,
   AutoApproveCandidate,
+  AutoApproveResult,
   AutoApproveWithMergeResult,
   DeviceFlowResponse,
 } from "./types";
@@ -147,6 +148,10 @@ export type Commands = {
   evaluate_auto_approve_candidates: {
     args: { owner: string; repo: string };
     ret: AutoApproveCandidate[];
+  };
+  run_auto_approve: {
+    args: { owner: string; repo: string };
+    ret: AutoApproveResult;
   };
   run_auto_approve_with_merge: {
     args: {

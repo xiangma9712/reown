@@ -49,6 +49,7 @@ const defaultHandlers: CommandHandlers = {
   create_worktree_for_todo: () => fixtures.worktrees[1],
   suggest_review_comments: () => fixtures.reviewSuggestions,
   evaluate_auto_approve_candidates: () => [],
+  run_auto_approve: () => ({ outcomes: [] }),
   run_auto_approve_with_merge: () => fixtures.autoApproveWithMergeResult,
   load_risk_config: () => fixtures.automationConfig.risk_config,
   save_risk_config: () => undefined as never,
