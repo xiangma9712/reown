@@ -258,7 +258,10 @@
     "prFilesLoading": "PRのファイル差分を取得中…",
     "noPr": "このブランチに関連するPRはありません。",
     "diffOverview": "差分概要",
-    "diffOverviewFiles": "{{count}} ファイル変更"
+    "diffOverviewFiles": "{{count}} ファイル変更",
+    "collapseFileList": "ファイル一覧を折りたたむ",
+    "expandFileList": "ファイル一覧を展開する",
+    "resizeFileList": "ファイル一覧の幅を調整"
   },
   "reviewHistory": {
     "title": "レビュー履歴",

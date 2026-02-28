@@ -258,7 +258,10 @@
     "prFilesLoading": "Loading PR file diffs…",
     "noPr": "No PR associated with this branch.",
     "diffOverview": "Diff Overview",
-    "diffOverviewFiles": "{{count}} files changed"
+    "diffOverviewFiles": "{{count}} files changed",
+    "collapseFileList": "Collapse file list",
+    "expandFileList": "Expand file list",
+    "resizeFileList": "Resize file list"
   },
   "reviewHistory": {
     "title": "Review History",
