@@ -24,7 +24,7 @@ pub struct RiskScore {
 }
 
 /// スコアリング要素の内訳
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RiskFactor {
     /// 要素名
     pub name: String,

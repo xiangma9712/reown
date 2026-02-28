@@ -540,11 +540,23 @@ const autoApproveCandidates: AutoApproveCandidate[] = [
   {
     pr_number: 38,
     risk_level: "Low",
+    risk_score: 5,
+    categories: ["Test", "Documentation"],
+    factors: [
+      {
+        name: "file_count",
+        score: 0,
+        description: "2ファイルが変更されています",
+      },
+    ],
     reason: "テストとドキュメントのみの変更",
   },
   {
     pr_number: 35,
     risk_level: "Low",
+    risk_score: 0,
+    categories: ["Config"],
+    factors: [],
     reason: "依存関係の更新のみ",
   },
 ];

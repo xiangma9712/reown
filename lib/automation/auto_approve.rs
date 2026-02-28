@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::analysis::{AnalysisResult, ChangeCategory, RiskLevel};
+use crate::analysis::{AnalysisResult, ChangeCategory, RiskFactor, RiskLevel};
 use crate::config::{AutoApproveMaxRisk, AutomationConfig};
 use crate::github::pull_request::{add_labels, submit_review, ReviewEvent};
 
@@ -15,6 +15,9 @@ pub struct AutoApproveCandidate {
     pub risk_score: u32,
     /// 変更カテゴリ一覧
     pub categories: Vec<ChangeCategory>,
+    /// 主要リスク要因の内訳
+    #[serde(default)]
+    pub factors: Vec<RiskFactor>,
     /// approve対象になった理由
     pub reason: String,
 }
@@ -72,6 +75,7 @@ pub fn evaluate_auto_approve(
                 risk_level: a.risk.level.clone(),
                 risk_score: a.risk.score,
                 categories,
+                factors: a.risk.factors.clone(),
                 reason: format!(
                     "リスクレベル {:?} は自動approve閾値 {:?} 以下",
                     a.risk.level, config.auto_approve_max_risk
@@ -94,11 +98,22 @@ fn build_approve_comment(candidate: &AutoApproveCandidate) -> String {
             .join(", ")
     };
 
+    let factors_str = if candidate.factors.is_empty() {
+        String::new()
+    } else {
+        let items: Vec<String> = candidate
+            .factors
+            .iter()
+            .map(|f| format!("  - {} (+{}) — {}", f.name, f.score, f.description))
+            .collect();
+        format!("\nFactors:\n{}", items.join("\n"))
+    };
+
     format!(
         "\u{1f916} Auto-approved by reown\n\
          Risk: {:?} (score: {}/100)\n\
-         Categories: {}",
-        candidate.risk_level, candidate.risk_score, categories_str
+         Categories: {}{}",
+        candidate.risk_level, candidate.risk_score, categories_str, factors_str
     )
 }
 
@@ -164,7 +179,7 @@ pub async fn execute_auto_approve(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::{AnalysisResult, AnalysisSummary, CategoryCount, RiskScore};
+    use crate::analysis::{AnalysisResult, AnalysisSummary, CategoryCount, RiskFactor, RiskScore};
 
     fn make_analysis(pr_number: u64, level: RiskLevel, score: u32) -> AnalysisResult {
         make_analysis_with_categories(pr_number, level, score, vec![])
@@ -328,6 +343,11 @@ mod tests {
             risk_level: RiskLevel::Low,
             risk_score: 15,
             categories: vec![ChangeCategory::Test, ChangeCategory::Documentation],
+            factors: vec![RiskFactor {
+                name: "file_count".to_string(),
+                score: 5,
+                description: "2ファイルが変更されています".to_string(),
+            }],
             reason: "低リスク".to_string(),
         };
         let json = serde_json::to_value(&candidate).unwrap();
@@ -335,6 +355,8 @@ mod tests {
         assert_eq!(json["risk_level"], "Low");
         assert_eq!(json["risk_score"], 15);
         assert_eq!(json["categories"].as_array().unwrap().len(), 2);
+        assert_eq!(json["factors"].as_array().unwrap().len(), 1);
+        assert_eq!(json["factors"][0]["name"], "file_count");
         assert_eq!(json["reason"], "低リスク");
     }
 
@@ -409,6 +431,37 @@ mod tests {
         assert_eq!(candidates[0].categories.len(), 2);
         assert_eq!(candidates[0].categories[0], ChangeCategory::Test);
         assert_eq!(candidates[0].categories[1], ChangeCategory::Documentation);
+        // factors: vec![] が make_analysis_with_categories で設定されているため空
+        assert!(candidates[0].factors.is_empty());
+    }
+
+    #[test]
+    fn test_candidate_has_factors_from_analysis() {
+        let mut analysis = make_analysis(1, RiskLevel::Low, 10);
+        analysis.risk.factors = vec![
+            RiskFactor {
+                name: "file_count".to_string(),
+                score: 5,
+                description: "3ファイルが変更されています".to_string(),
+            },
+            RiskFactor {
+                name: "line_count".to_string(),
+                score: 5,
+                description: "合計20行の変更（+15 / -5）".to_string(),
+            },
+        ];
+        let config = AutomationConfig {
+            enabled: true,
+            auto_approve_max_risk: AutoApproveMaxRisk::Low,
+            ..Default::default()
+        };
+
+        let candidates = evaluate_auto_approve(&[analysis], &config);
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].factors.len(), 2);
+        assert_eq!(candidates[0].factors[0].name, "file_count");
+        assert_eq!(candidates[0].factors[0].score, 5);
+        assert_eq!(candidates[0].factors[1].name, "line_count");
     }
 
     #[test]
@@ -418,6 +471,18 @@ mod tests {
             risk_level: RiskLevel::Low,
             risk_score: 15,
             categories: vec![ChangeCategory::Test, ChangeCategory::Documentation],
+            factors: vec![
+                RiskFactor {
+                    name: "file_count".to_string(),
+                    score: 10,
+                    description: "5ファイルが変更されています".to_string(),
+                },
+                RiskFactor {
+                    name: "line_count".to_string(),
+                    score: 5,
+                    description: "合計50行の変更（+30 / -20）".to_string(),
+                },
+            ],
             reason: "低リスク".to_string(),
         };
 
@@ -425,6 +490,10 @@ mod tests {
         assert!(comment.contains("Auto-approved by reown"));
         assert!(comment.contains("Risk: Low (score: 15/100)"));
         assert!(comment.contains("Categories: Test, Documentation"));
+        assert!(comment.contains("Factors:"));
+        assert!(comment.contains("file_count (+10)"));
+        assert!(comment.contains("5ファイルが変更されています"));
+        assert!(comment.contains("line_count (+5)"));
     }
 
     #[test]
@@ -434,11 +503,13 @@ mod tests {
             risk_level: RiskLevel::Low,
             risk_score: 5,
             categories: vec![],
+            factors: vec![],
             reason: "テスト".to_string(),
         };
 
         let comment = build_approve_comment(&candidate);
         assert!(comment.contains("Categories: None"));
+        assert!(!comment.contains("Factors:"));
     }
 
     #[test]
@@ -448,12 +519,18 @@ mod tests {
             risk_level: RiskLevel::Medium,
             risk_score: 40,
             categories: vec![ChangeCategory::Logic],
+            factors: vec![RiskFactor {
+                name: "no_tests".to_string(),
+                score: 15,
+                description: "ロジック変更がありますが、テストの追加・更新がありません".to_string(),
+            }],
             reason: "テスト".to_string(),
         };
 
         let comment = build_approve_comment(&candidate);
         assert!(comment.contains("Risk: Medium (score: 40/100)"));
         assert!(comment.contains("Categories: Logic"));
+        assert!(comment.contains("no_tests (+15)"));
     }
 
     #[test]

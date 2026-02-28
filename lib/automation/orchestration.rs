@@ -114,6 +114,7 @@ mod tests {
             risk_level: RiskLevel::Low,
             risk_score: 10,
             categories: vec![],
+            factors: vec![],
             reason: "テスト用候補".to_string(),
         }
     }

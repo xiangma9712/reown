@@ -253,6 +253,9 @@ export interface HybridAnalysisResult {
 export interface AutoApproveCandidate {
   pr_number: number;
   risk_level: RiskLevel;
+  risk_score: number;
+  categories: ChangeCategory[];
+  factors: RiskFactor[];
   reason: string;
 }
 
