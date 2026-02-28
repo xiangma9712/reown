@@ -17,7 +17,6 @@ interface PrListViewProps {
   riskLevels?: Record<number, RiskLevel>;
   owner?: string;
   repo?: string;
-  token?: string;
   onSelectPr?: (pr: PrInfo) => void;
 }
 
@@ -88,7 +87,6 @@ export function PrListView({
   riskLevels = {},
   owner,
   repo,
-  token,
   onSelectPr,
 }: PrListViewProps) {
   const { t } = useTranslation();
@@ -119,7 +117,7 @@ export function PrListView({
 
       setExpandedPr(pr.number);
 
-      if (!owner || !repo || !token) return;
+      if (!owner || !repo) return;
 
       setCommitsLoading(true);
       setCommitsError(null);
@@ -129,7 +127,6 @@ export function PrListView({
           owner,
           repo,
           prNumber: pr.number,
-          token,
         });
         setCommits(result);
       } catch (err) {
@@ -138,7 +135,7 @@ export function PrListView({
         setCommitsLoading(false);
       }
     },
-    [owner, repo, token, expandedPr, onSelectPr]
+    [owner, repo, expandedPr, onSelectPr]
   );
 
   return (

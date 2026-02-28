@@ -10,7 +10,6 @@ const meta = {
     matchedPr: fixtures.pullRequests[0],
     owner: "example",
     repo: "reown",
-    token: "ghp_dummy",
     analysisResult: fixtures.analysisResult,
     prDiffs: fixtures.categorizedFileDiffs,
   },

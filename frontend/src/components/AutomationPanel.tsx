@@ -18,10 +18,9 @@ type Phase = "idle" | "evaluating" | "confirm" | "executing" | "done";
 interface AutomationPanelProps {
   owner: string;
   repo: string;
-  token: string;
 }
 
-export function AutomationPanel({ owner, repo, token }: AutomationPanelProps) {
+export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
   const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>("idle");
   const [candidates, setCandidates] = useState<AutoApproveCandidate[]>([]);
@@ -47,7 +46,6 @@ export function AutomationPanel({ owner, repo, token }: AutomationPanelProps) {
       const result = await invoke("evaluate_auto_approve_candidates", {
         owner,
         repo,
-        token,
       });
       setCandidates(result);
       if (result.length === 0) {
@@ -59,7 +57,7 @@ export function AutomationPanel({ owner, repo, token }: AutomationPanelProps) {
       setError(String(err));
       setPhase("idle");
     }
-  }, [owner, repo, token]);
+  }, [owner, repo]);
 
   const handleExecute = useCallback(async () => {
     if (!automationConfig || candidates.length === 0) return;
@@ -69,7 +67,6 @@ export function AutomationPanel({ owner, repo, token }: AutomationPanelProps) {
       const result = await invoke("run_auto_approve_with_merge", {
         owner,
         repo,
-        token,
         candidates,
         automationConfig,
       });
@@ -79,7 +76,7 @@ export function AutomationPanel({ owner, repo, token }: AutomationPanelProps) {
       setError(String(err));
       setPhase("done");
     }
-  }, [owner, repo, token, candidates, automationConfig]);
+  }, [owner, repo, candidates, automationConfig]);
 
   const approvedCount = outcomes.filter((o) => o.approve_success).length;
   const failedCount = outcomes.filter((o) => !o.approve_success).length;

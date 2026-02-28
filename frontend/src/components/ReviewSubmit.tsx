@@ -15,7 +15,6 @@ interface ReviewSubmitProps {
   matchedPr: PrInfo;
   owner: string;
   repo: string;
-  token: string;
   analysisResult: AnalysisResult | null;
   prDiffs: CategorizedFileDiff[];
   comment?: string;
@@ -26,7 +25,6 @@ export function ReviewSubmit({
   matchedPr,
   owner,
   repo,
-  token,
   analysisResult,
   prDiffs,
   comment: externalComment,
@@ -81,7 +79,6 @@ export function ReviewSubmit({
           prNumber: matchedPr.number,
           event,
           body: comment,
-          token,
         });
 
         // Record to review history
@@ -116,7 +113,6 @@ export function ReviewSubmit({
       owner,
       repo,
       matchedPr.number,
-      token,
       prDiffs,
       analysisResult,
       t,

@@ -157,54 +157,43 @@ export function ReviewTab({ prs = [], loadingPrs = false }: ReviewTabProps) {
     const owner = repoInfo.github_owner;
     const repo = repoInfo.github_repo;
 
-    // Load app config for token, then run analysis
-    invoke("load_app_config")
-      .then((config) => {
-        const ghToken = config.github_token;
-        if (!ghToken) return;
-
-        // Fetch PR files
-        setPrDiffsLoading(true);
-        setPrDiffsError(null);
-        invoke("get_pull_request_files", {
-          owner,
-          repo,
-          prNumber: matchedPr.number,
-          token: ghToken,
-        })
-          .then((files) => {
-            setPrDiffs(files);
-            if (files.length > 0) {
-              setSelectedPrFileIndex(0);
-            }
-          })
-          .catch((err) => {
-            setPrDiffsError(String(err));
-          })
-          .finally(() => {
-            setPrDiffsLoading(false);
-          });
-
-        // Run risk analysis
-        invoke("analyze_pr_risk", {
-          owner,
-          repo,
-          prNumber: matchedPr.number,
-          token: ghToken,
-        })
-          .then(setAnalysisResult)
-          .catch(() => {});
-
-        // Try hybrid analysis (may fail if LLM not configured)
-        invoke("analyze_pr_risk_with_llm", {
-          owner,
-          repo,
-          prNumber: matchedPr.number,
-          token: ghToken,
-        })
-          .then(setHybridResult)
-          .catch(() => {});
+    // Fetch PR files
+    setPrDiffsLoading(true);
+    setPrDiffsError(null);
+    invoke("get_pull_request_files", {
+      owner,
+      repo,
+      prNumber: matchedPr.number,
+    })
+      .then((files) => {
+        setPrDiffs(files);
+        if (files.length > 0) {
+          setSelectedPrFileIndex(0);
+        }
       })
+      .catch((err) => {
+        setPrDiffsError(String(err));
+      })
+      .finally(() => {
+        setPrDiffsLoading(false);
+      });
+
+    // Run risk analysis
+    invoke("analyze_pr_risk", {
+      owner,
+      repo,
+      prNumber: matchedPr.number,
+    })
+      .then(setAnalysisResult)
+      .catch(() => {});
+
+    // Try hybrid analysis (may fail if LLM not configured)
+    invoke("analyze_pr_risk_with_llm", {
+      owner,
+      repo,
+      prNumber: matchedPr.number,
+    })
+      .then(setHybridResult)
       .catch(() => {});
   }, [matchedPr, repoInfo]);
 
@@ -497,7 +486,6 @@ function PrAnalysisSection({
   prDiffs: CategorizedFileDiff[];
 }) {
   const { t } = useTranslation();
-  const [token, setToken] = useState("");
   const [reviewComment, setReviewComment] = useState("");
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [commitsLoading, setCommitsLoading] = useState(false);
@@ -508,26 +496,16 @@ function PrAnalysisSection({
   }, []);
 
   useEffect(() => {
-    invoke("load_app_config")
-      .then((config) => {
-        const ghToken = config.github_token;
-        setToken(ghToken);
-        if (!ghToken) return;
-
-        // Fetch PR commits
-        setCommitsLoading(true);
-        setCommitsError(null);
-        invoke("list_pr_commits", {
-          owner,
-          repo,
-          prNumber: matchedPr.number,
-          token: ghToken,
-        })
-          .then(setCommits)
-          .catch((err) => setCommitsError(String(err)))
-          .finally(() => setCommitsLoading(false));
-      })
-      .catch(() => {});
+    setCommitsLoading(true);
+    setCommitsError(null);
+    invoke("list_pr_commits", {
+      owner,
+      repo,
+      prNumber: matchedPr.number,
+    })
+      .then(setCommits)
+      .catch((err) => setCommitsError(String(err)))
+      .finally(() => setCommitsLoading(false));
   }, [owner, repo, matchedPr.number]);
 
   return (
@@ -544,14 +522,7 @@ function PrAnalysisSection({
       />
 
       {/* PR Summary */}
-      {token && (
-        <PrSummaryPanel
-          owner={owner}
-          repo={repo}
-          prNumber={matchedPr.number}
-          token={token}
-        />
-      )}
+      <PrSummaryPanel owner={owner} repo={repo} prNumber={matchedPr.number} />
 
       {/* Risk analysis */}
       {analysisResult && (
@@ -562,53 +533,41 @@ function PrAnalysisSection({
       )}
 
       {/* AI Summary */}
-      {token && (
-        <ChangeSummaryList
-          owner={owner}
-          repo={repo}
-          prNumber={matchedPr.number}
-          token={token}
-          diffs={prDiffs}
-        />
-      )}
+      <ChangeSummaryList
+        owner={owner}
+        repo={repo}
+        prNumber={matchedPr.number}
+        diffs={prDiffs}
+      />
 
       {/* Consistency check */}
-      {token && (
-        <ConsistencyCheckPanel
-          owner={owner}
-          repo={repo}
-          prNumber={matchedPr.number}
-          token={token}
-        />
-      )}
+      <ConsistencyCheckPanel
+        owner={owner}
+        repo={repo}
+        prNumber={matchedPr.number}
+      />
 
       {/* Review suggestions */}
-      {token && (
-        <ReviewSuggestionPanel
-          owner={owner}
-          repo={repo}
-          prNumber={matchedPr.number}
-          token={token}
-          onInsertComment={handleInsertComment}
-        />
-      )}
+      <ReviewSuggestionPanel
+        owner={owner}
+        repo={repo}
+        prNumber={matchedPr.number}
+        onInsertComment={handleInsertComment}
+      />
 
       {/* Review submit */}
-      {token && (
-        <ReviewSubmit
-          matchedPr={matchedPr}
-          owner={owner}
-          repo={repo}
-          token={token}
-          analysisResult={analysisResult}
-          prDiffs={prDiffs}
-          comment={reviewComment}
-          onCommentChange={setReviewComment}
-        />
-      )}
+      <ReviewSubmit
+        matchedPr={matchedPr}
+        owner={owner}
+        repo={repo}
+        analysisResult={analysisResult}
+        prDiffs={prDiffs}
+        comment={reviewComment}
+        onCommentChange={setReviewComment}
+      />
 
       {/* Automation panel */}
-      {token && <AutomationPanel owner={owner} repo={repo} token={token} />}
+      <AutomationPanel owner={owner} repo={repo} />
     </div>
   );
 }

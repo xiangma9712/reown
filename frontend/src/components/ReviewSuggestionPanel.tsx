@@ -11,7 +11,6 @@ interface ReviewSuggestionPanelProps {
   owner: string;
   repo: string;
   prNumber: number;
-  token: string;
   onInsertComment?: (text: string) => void;
 }
 
@@ -34,7 +33,6 @@ export function ReviewSuggestionPanel({
   owner,
   repo,
   prNumber,
-  token,
   onInsertComment,
 }: ReviewSuggestionPanelProps) {
   const { t } = useTranslation();
@@ -61,7 +59,6 @@ export function ReviewSuggestionPanel({
         owner: owner.trim(),
         repo: repo.trim(),
         prNumber,
-        token: token.trim(),
       });
       setSuggestions(result);
     } catch (err) {
@@ -69,7 +66,7 @@ export function ReviewSuggestionPanel({
     } finally {
       setLoading(false);
     }
-  }, [owner, repo, prNumber, token]);
+  }, [owner, repo, prNumber]);
 
   return (
     <Card className="mt-4 space-y-3">

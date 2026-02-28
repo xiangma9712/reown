@@ -49,15 +49,15 @@ export type Commands = {
     ret: FileDiff[];
   };
   list_pull_requests: {
-    args: { owner: string; repo: string; token: string };
+    args: { owner: string; repo: string };
     ret: PrInfo[];
   };
   get_pull_request_files: {
-    args: { owner: string; repo: string; prNumber: number; token: string };
+    args: { owner: string; repo: string; prNumber: number };
     ret: CategorizedFileDiff[];
   };
   list_pr_commits: {
-    args: { owner: string; repo: string; prNumber: number; token: string };
+    args: { owner: string; repo: string; prNumber: number };
     ret: CommitInfo[];
   };
   submit_pr_review: {
@@ -67,7 +67,6 @@ export type Commands = {
       prNumber: number;
       event: ReviewEvent;
       body: string;
-      token: string;
     };
     ret: void;
   };
@@ -90,11 +89,11 @@ export type Commands = {
   };
   load_app_config: { args?: Record<string, unknown>; ret: AppConfig };
   summarize_pull_request: {
-    args: { owner: string; repo: string; prNumber: number; token: string };
+    args: { owner: string; repo: string; prNumber: number };
     ret: PrSummary;
   };
   check_pr_consistency: {
-    args: { owner: string; repo: string; prNumber: number; token: string };
+    args: { owner: string; repo: string; prNumber: number };
     ret: ConsistencyResult;
   };
   save_llm_config: {
@@ -112,11 +111,11 @@ export type Commands = {
     ret: void;
   };
   analyze_pr_risk: {
-    args: { owner: string; repo: string; prNumber: number; token: string };
+    args: { owner: string; repo: string; prNumber: number };
     ret: AnalysisResult;
   };
   analyze_pr_risk_with_llm: {
-    args: { owner: string; repo: string; prNumber: number; token: string };
+    args: { owner: string; repo: string; prNumber: number };
     ret: HybridAnalysisResult;
   };
   save_automation_config: {
@@ -144,14 +143,13 @@ export type Commands = {
     ret: void;
   };
   evaluate_auto_approve_candidates: {
-    args: { owner: string; repo: string; token: string };
+    args: { owner: string; repo: string };
     ret: AutoApproveCandidate[];
   };
   run_auto_approve_with_merge: {
     args: {
       owner: string;
       repo: string;
-      token: string;
       candidates: AutoApproveCandidate[];
       automationConfig: AutomationConfig;
     };
@@ -163,7 +161,7 @@ export type Commands = {
     ret: WorktreeInfo;
   };
   suggest_review_comments: {
-    args: { owner: string; repo: string; prNumber: number; token: string };
+    args: { owner: string; repo: string; prNumber: number };
     ret: ReviewSuggestion[];
   };
   list_review_history: { args?: Record<string, unknown>; ret: ReviewRecord[] };

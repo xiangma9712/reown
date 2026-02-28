@@ -81,7 +81,6 @@ export const WithExpandedCommits: Story = {
     prs: allPrs,
     owner: "example",
     repo: "reown",
-    token: "dummy-token",
   },
 };
 
@@ -91,7 +90,6 @@ export const WithExpandedCommitsError: Story = {
     prs: allPrs,
     owner: "example",
     repo: "reown",
-    token: "dummy-token",
   },
   beforeEach: () => {
     overrideInvoke({

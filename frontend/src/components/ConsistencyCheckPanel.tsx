@@ -10,14 +10,12 @@ interface ConsistencyCheckPanelProps {
   owner: string;
   repo: string;
   prNumber: number;
-  token: string;
 }
 
 export function ConsistencyCheckPanel({
   owner,
   repo,
   prNumber,
-  token,
 }: ConsistencyCheckPanelProps) {
   const { t } = useTranslation();
   const [consistency, setConsistency] = useState<ConsistencyResult | null>(
@@ -42,7 +40,6 @@ export function ConsistencyCheckPanel({
         owner: owner.trim(),
         repo: repo.trim(),
         prNumber,
-        token: token.trim(),
       });
       setConsistency(result);
     } catch (err) {
@@ -50,7 +47,7 @@ export function ConsistencyCheckPanel({
     } finally {
       setLoading(false);
     }
-  }, [owner, repo, prNumber, token]);
+  }, [owner, repo, prNumber]);
 
   return (
     <Card className="mt-4 space-y-3">

@@ -74,12 +74,18 @@ fn diff_branches(
 
 // ── GitHub commands ─────────────────────────────────────────────────────────
 
+/// Keychainに保存されたGitHubトークンを取得する。未設定時はエラーを返す。
+fn load_github_token() -> Result<String, AppError> {
+    reown::config::load_github_token()
+        .map_err(|_| AppError::github(anyhow::anyhow!("GitHubにログインしてください")))
+}
+
 #[tauri::command]
 async fn list_pull_requests(
     owner: String,
     repo: String,
-    token: String,
 ) -> Result<Vec<reown::github::PrInfo>, AppError> {
+    let token = load_github_token()?;
     reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)
@@ -90,8 +96,8 @@ async fn get_pull_request_files(
     owner: String,
     repo: String,
     pr_number: u64,
-    token: String,
 ) -> Result<Vec<reown::analysis::CategorizedFileDiff>, AppError> {
+    let token = load_github_token()?;
     let diffs =
         reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
             .await
@@ -104,8 +110,8 @@ async fn list_pr_commits(
     owner: String,
     repo: String,
     pr_number: u64,
-    token: String,
 ) -> Result<Vec<reown::github::CommitInfo>, AppError> {
+    let token = load_github_token()?;
     reown::github::pull_request::list_pr_commits(&owner, &repo, pr_number, &token)
         .await
         .map_err(AppError::github)
@@ -118,8 +124,8 @@ async fn submit_pr_review(
     pr_number: u64,
     event: reown::github::ReviewEvent,
     body: String,
-    token: String,
 ) -> Result<(), AppError> {
+    let token = load_github_token()?;
     reown::github::pull_request::submit_review(&owner, &repo, pr_number, event, &body, &token)
         .await
         .map_err(AppError::github)
@@ -131,8 +137,8 @@ async fn enable_pr_auto_merge(
     repo: String,
     pr_number: u64,
     merge_method: reown::github::MergeMethod,
-    token: String,
 ) -> Result<(), AppError> {
+    let token = load_github_token()?;
     reown::github::pull_request::enable_auto_merge(&token, &owner, &repo, pr_number, merge_method)
         .await
         .map_err(AppError::github)
@@ -189,8 +195,8 @@ async fn analyze_pr_risk(
     owner: String,
     repo: String,
     pr_number: u64,
-    token: String,
 ) -> Result<reown::analysis::AnalysisResult, AppError> {
+    let token = load_github_token()?;
     let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)?;
@@ -213,9 +219,9 @@ async fn analyze_pr_risk_with_llm(
     owner: String,
     repo: String,
     pr_number: u64,
-    token: String,
     app_handle: tauri::AppHandle,
 ) -> Result<reown::analysis::HybridAnalysisResult, AppError> {
+    let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
 
     let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
@@ -271,9 +277,9 @@ async fn summarize_pull_request(
     owner: String,
     repo: String,
     pr_number: u64,
-    token: String,
     app_handle: tauri::AppHandle,
 ) -> Result<reown::llm::summary::PrSummary, AppError> {
+    let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
     reown::llm::summary::summarize_pr(&owner, &repo, pr_number, &token, &llm_client)
         .await
@@ -285,9 +291,9 @@ async fn check_pr_consistency(
     owner: String,
     repo: String,
     pr_number: u64,
-    token: String,
     app_handle: tauri::AppHandle,
 ) -> Result<reown::llm::summary::ConsistencyResult, AppError> {
+    let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
     reown::llm::summary::check_pr_consistency(&owner, &repo, pr_number, &token, &llm_client)
         .await
@@ -496,9 +502,9 @@ fn save_risk_config(
 async fn evaluate_auto_approve_candidates(
     owner: String,
     repo: String,
-    token: String,
     app_handle: tauri::AppHandle,
 ) -> Result<Vec<reown::automation::AutoApproveCandidate>, AppError> {
+    let token = load_github_token()?;
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
@@ -531,9 +537,9 @@ async fn evaluate_auto_approve_candidates(
 async fn run_auto_approve(
     owner: String,
     repo: String,
-    token: String,
     app_handle: tauri::AppHandle,
 ) -> Result<reown::automation::AutoApproveResult, AppError> {
+    let token = load_github_token()?;
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
@@ -564,10 +570,10 @@ async fn run_auto_approve(
 async fn run_auto_approve_with_merge(
     owner: String,
     repo: String,
-    token: String,
     candidates: Vec<reown::automation::AutoApproveCandidate>,
     automation_config: reown::config::AutomationConfig,
 ) -> Result<reown::automation::AutoApproveWithMergeResult, AppError> {
+    let token = load_github_token()?;
     Ok(reown::automation::execute_auto_approve_with_merge(
         &candidates,
         &owner,
@@ -633,8 +639,8 @@ async fn suggest_review_comments(
     owner: String,
     repo: String,
     pr_number: u64,
-    token: String,
 ) -> Result<Vec<reown::analysis::ReviewSuggestion>, AppError> {
+    let token = load_github_token()?;
     // 1. レビュー履歴を読み込む
     let app_data_dir = app_handle
         .path()
