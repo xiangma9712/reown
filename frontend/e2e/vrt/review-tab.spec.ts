@@ -94,4 +94,25 @@ test.describe("ReviewTab", () => {
       "pr-files-error.png"
     );
   });
+
+  test("file list collapsed", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-reviewtab--file-list-collapsed&viewMode=story"
+    );
+    await page.waitForSelector("text=差分概要", { timeout: 10_000 });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "file-list-collapsed.png"
+    );
+  });
+
+  test("file list resized", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-reviewtab--file-list-resized&viewMode=story"
+    );
+    await page.waitForSelector("text=差分概要", { timeout: 10_000 });
+    await page.waitForSelector("text=src/auth.ts", { timeout: 10_000 });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "file-list-resized.png"
+    );
+  });
 });

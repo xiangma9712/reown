@@ -180,3 +180,32 @@ export const PrFilesError: Story = {
     },
   ],
 };
+
+/** ファイルリスト折りたたみ状態 */
+export const FileListCollapsed: Story = {
+  decorators: [
+    (Story) => {
+      localStorage.setItem("reown-filelist-collapsed", "true");
+      overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
+        diff_branches: () => fixtures.fileDiffs,
+      });
+      return <Story />;
+    },
+  ],
+};
+
+/** ファイルリストリサイズ状態（幅400px） */
+export const FileListResized: Story = {
+  decorators: [
+    (Story) => {
+      localStorage.setItem("reown-filelist-width", "400");
+      localStorage.removeItem("reown-filelist-collapsed");
+      overrideInvoke({
+        list_enriched_branches: () => featureHeadBranches,
+        diff_branches: () => fixtures.fileDiffs,
+      });
+      return <Story />;
+    },
+  ],
+};
