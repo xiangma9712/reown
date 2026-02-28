@@ -66,35 +66,33 @@ step_verify() {
   cd "$REPO_ROOT"
   local VERIFY_CLEAN_PASSED=false
   local verify_attempt
-  for verify_attempt in 1 2; do
+  for verify_attempt in 1 2 3; do
     if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
       VERIFY_CLEAN_PASSED=true
       break
     fi
 
-    if [[ "$verify_attempt" -eq 1 ]]; then
-      log "WARN: Working tree not clean before push. Attempting to commit remaining changes..."
-      git add -A
-      git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
+    log "WARN: Working tree not clean (attempt $verify_attempt). Committing remaining changes..."
+    git add -A
+    git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
 
-      # Re-run tests/clippy after committing leftover changes (only if Rust files changed)
-      if has_rust_changes; then
-        if ! cargo test 2>/dev/null || ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
-          log "WARN: Tests/clippy failed after committing leftover changes. Invoking fix agent..."
-          local fix_rc=0
-          run_claude \
-            --label "verify-leftover-fix-$TASK_ISSUE" \
-            --timeout "$TIMEOUT_VERIFY_FIX" \
-            --max-turns "$FIX_MAX_TURNS" \
-            --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-            -- "There were uncommitted changes that have been staged and committed. Now cargo test or clippy is failing. Fix the issues, commit, and ensure the tree is clean." \
-            >/dev/null || fix_rc=$?
-          if [[ "$fix_rc" -eq 2 ]]; then
-            flag_rate_limit
-            gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
-            cleanup_branch "$BRANCH_NAME"
-            return 2
-          fi
+    # Re-run tests/clippy after committing leftover changes (only on first attempt, only if Rust files)
+    if [[ "$verify_attempt" -eq 1 ]] && has_rust_changes; then
+      if ! cargo test 2>/dev/null || ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
+        log "WARN: Tests/clippy failed after committing leftover changes. Invoking fix agent..."
+        local fix_rc=0
+        run_claude \
+          --label "verify-leftover-fix-$TASK_ISSUE" \
+          --timeout "$TIMEOUT_VERIFY_FIX" \
+          --max-turns "$FIX_MAX_TURNS" \
+          --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+          -- "There were uncommitted changes that have been staged and committed. Now cargo test or clippy is failing. Fix the issues, commit, and ensure the tree is clean." \
+          >/dev/null || fix_rc=$?
+        if [[ "$fix_rc" -eq 2 ]]; then
+          flag_rate_limit
+          gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
+          cleanup_branch "$BRANCH_NAME"
+          return 2
         fi
       fi
     fi
