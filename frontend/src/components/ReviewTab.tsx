@@ -145,12 +145,14 @@ interface ReviewTabProps {
   prs?: PrInfo[];
   loadingPrs?: boolean;
   navigateToBranch?: string | null;
+  onNavigateConsumed?: () => void;
 }
 
 export function ReviewTab({
   prs = [],
   loadingPrs = false,
   navigateToBranch,
+  onNavigateConsumed,
 }: ReviewTabProps) {
   const { t } = useTranslation();
   const { repoPath, repoInfo } = useRepository();
@@ -167,8 +169,9 @@ export function ReviewTab({
   useEffect(() => {
     if (navigateToBranch) {
       setSelectedBranch(navigateToBranch);
+      onNavigateConsumed?.();
     }
-  }, [navigateToBranch]);
+  }, [navigateToBranch, onNavigateConsumed]);
 
   const [diffs, setDiffs] = useState<FileDiff[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
