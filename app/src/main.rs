@@ -1520,7 +1520,6 @@ mod tests {
         let config_path = reown::config::default_config_path(tmp.path());
 
         let config = reown::config::AppConfig {
-            github_token: "ghp_test_token".to_string(),
             default_owner: "my-org".to_string(),
             default_repo: "my-repo".to_string(),
             ..Default::default()
@@ -1529,7 +1528,6 @@ mod tests {
         reown::config::save_config(&config_path, &config).unwrap();
         let loaded = reown::config::load_config(&config_path).unwrap();
         assert_eq!(loaded, config);
-        assert_eq!(loaded.github_token, "ghp_test_token");
         assert_eq!(loaded.default_owner, "my-org");
         assert_eq!(loaded.default_repo, "my-repo");
     }
@@ -1541,7 +1539,6 @@ mod tests {
 
         let config = reown::config::load_config(&config_path).unwrap();
         assert_eq!(config, reown::config::AppConfig::default());
-        assert_eq!(config.github_token, "");
         assert_eq!(config.default_owner, "");
     }
 
@@ -1551,7 +1548,6 @@ mod tests {
         let config_path = tmp.path().join("nested").join("dir").join("config.json");
 
         let config = reown::config::AppConfig {
-            github_token: "ghp_abc".to_string(),
             default_owner: "owner".to_string(),
             default_repo: "repo".to_string(),
             ..Default::default()
