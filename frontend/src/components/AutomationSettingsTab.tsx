@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card } from "./Card";
 import { Button } from "./Button";
 import { invoke } from "../invoke";
+import { useRepository } from "../RepositoryContext";
 import type {
   AutomationConfig,
   AutoApproveMaxRisk,
@@ -12,6 +13,9 @@ import type {
 
 export function AutomationSettingsTab() {
   const { t } = useTranslation();
+  const { repoInfo } = useRepository();
+  const owner = repoInfo?.github_owner ?? undefined;
+  const repo = repoInfo?.github_repo ?? undefined;
   const [enabled, setEnabled] = useState(false);
   const [maxRisk, setMaxRisk] = useState<AutoApproveMaxRisk>("Low");
   const [enableAutoMerge, setEnableAutoMerge] = useState(false);
@@ -35,7 +39,7 @@ export function AutomationSettingsTab() {
   const loadConfig = useCallback(async () => {
     try {
       setLoading(true);
-      const config = await invoke("load_automation_config");
+      const config = await invoke("load_automation_config", { owner, repo });
       setEnabled(config.enabled);
       setMaxRisk(config.auto_approve_max_risk);
       setEnableAutoMerge(config.enable_auto_merge);
@@ -51,7 +55,7 @@ export function AutomationSettingsTab() {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, owner, repo]);
 
   useEffect(() => {
     loadConfig();
@@ -69,7 +73,11 @@ export function AutomationSettingsTab() {
         auto_merge_method: autoMergeMethod,
         risk_config: riskConfig,
       };
-      await invoke("save_automation_config", { automationConfig });
+      await invoke("save_automation_config", {
+        automationConfig,
+        owner,
+        repo,
+      });
 
       setMessage({ type: "success", text: t("automation.saveSuccess") });
     } catch (e) {
@@ -82,7 +90,16 @@ export function AutomationSettingsTab() {
     } finally {
       setSaving(false);
     }
-  }, [enabled, maxRisk, enableAutoMerge, autoMergeMethod, riskConfig, t]);
+  }, [
+    enabled,
+    maxRisk,
+    enableAutoMerge,
+    autoMergeMethod,
+    riskConfig,
+    t,
+    owner,
+    repo,
+  ]);
 
   const handleReset = useCallback(() => {
     setMessage(null);
@@ -106,6 +123,11 @@ export function AutomationSettingsTab() {
         <p className="mt-1 text-[0.85rem] text-text-muted">
           {t("automation.description")}
         </p>
+        {owner && repo && (
+          <p className="mt-1 text-[0.8rem] text-text-muted">
+            {t("automation.repoLabel", { owner, repo })}
+          </p>
+        )}
       </div>
 
       <Card>

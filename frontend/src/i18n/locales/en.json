@@ -237,6 +237,7 @@
     "mergeRebase": "Rebase",
     "save": "Save",
     "reset": "Reset",
+    "repoLabel": "Repository: {{owner}}/{{repo}}",
     "saveSuccess": "Automation settings saved successfully",
     "saveError": "Failed to save automation settings: {{message}}",
     "loadError": "Failed to load automation settings: {{message}}"
