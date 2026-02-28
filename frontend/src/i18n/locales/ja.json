@@ -293,6 +293,11 @@
     "expandAll": "全て展開",
     "collapseAll": "全て折りたたみ"
   },
+  "onboarding": {
+    "title": "reown",
+    "placeholder": "セットアップウィザード（実装予定）",
+    "skip": "スキップ"
+  },
   "worktree": {
     "title": "ワークツリー",
     "empty": "ワークツリーがありません。",

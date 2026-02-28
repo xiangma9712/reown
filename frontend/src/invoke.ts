@@ -171,6 +171,8 @@ export type Commands = {
   };
   get_github_auth_status: { args?: Record<string, unknown>; ret: boolean };
   github_logout: { args?: Record<string, unknown>; ret: void };
+  check_onboarding_needed: { args?: Record<string, unknown>; ret: boolean };
+  complete_onboarding: { args?: Record<string, unknown>; ret: void };
 };
 
 export async function invoke<C extends keyof Commands>(

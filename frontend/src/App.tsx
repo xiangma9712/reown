@@ -7,6 +7,8 @@ import { GithubSettingsTab } from "./components/GithubSettingsTab";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { Layout } from "./components/Layout";
+import { Loading } from "./components/Loading";
+import { OnboardingPlaceholder } from "./components/OnboardingPlaceholder";
 import { RepositoryProvider } from "./RepositoryContext";
 import { ThemeProvider } from "./ThemeContext";
 import { invoke } from "./invoke";
@@ -23,6 +25,9 @@ type TabName = (typeof NAV_ITEMS)[number]["id"];
 
 export function App() {
   const { t } = useTranslation();
+  const [onboardingNeeded, setOnboardingNeeded] = useState<boolean | null>(
+    null
+  );
   const [activeTab, setActiveTab] = useState<TabName>("review");
   const [repositories, setRepositories] = useState<RepositoryEntry[]>([]);
   const [selectedRepoPath, setSelectedRepoPath] = useState<string | null>(null);
@@ -36,6 +41,21 @@ export function App() {
   const addErrorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
+
+  useEffect(() => {
+    invoke("check_onboarding_needed")
+      .then((needed) => setOnboardingNeeded(needed))
+      .catch(() => setOnboardingNeeded(false));
+  }, []);
+
+  const handleSkipOnboarding = useCallback(async () => {
+    try {
+      await invoke("complete_onboarding");
+    } catch {
+      // continue even if save fails
+    }
+    setOnboardingNeeded(false);
+  }, []);
 
   useEffect(() => {
     if (!selectedRepoPath) {
@@ -186,6 +206,24 @@ export function App() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  if (onboardingNeeded === null) {
+    return (
+      <ThemeProvider>
+        <div className="flex h-screen items-center justify-center bg-bg-primary">
+          <Loading />
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  if (onboardingNeeded) {
+    return (
+      <ThemeProvider>
+        <OnboardingPlaceholder onSkip={handleSkipOnboarding} />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>
