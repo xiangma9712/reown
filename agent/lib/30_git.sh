@@ -107,9 +107,16 @@ git_add_safe() {
   local untracked
   untracked=$(git ls-files --others --exclude-standard)
   if [[ -n "$untracked" ]]; then
-    echo "$untracked" | grep -E '\.(rs|toml|lock|ts|tsx|js|jsx|json|css|html|md|sh|yaml|yml|svg|png)$' | while IFS= read -r f; do
-      git add -- "$f"
-    done
+    local add_failed=0
+    while IFS= read -r f; do
+      if ! git add -- "$f"; then
+        log "WARN: git add failed for: $f"
+        add_failed=1
+      fi
+    done < <(echo "$untracked" | grep -E '\.(rs|toml|lock|ts|tsx|js|jsx|json|css|html|md|sh|yaml|yml|svg|png)$')
+    if [[ "$add_failed" -ne 0 ]]; then
+      log "WARN: Some files failed to stage"
+    fi
   fi
 }
 
