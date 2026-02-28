@@ -10,6 +10,7 @@
   --color-text-secondary: #4b5563;
   --color-text-muted: #6b7280;
   --color-text-heading: #111827;
+  /* accent は暗め、accent-hover は明るめ — コントラスト改善のため意図的に通常と逆方向 */
   --color-accent: #0f766e;
   --color-accent-hover: #0d9488;
   --color-danger: #dc2626;
@@ -51,6 +52,7 @@ html.dark {
   --color-text-secondary: #d1d5db;
   --color-text-muted: #9ca3af;
   --color-text-heading: #f9fafb;
+  /* accent は暗め、accent-hover は明るめ — コントラスト改善のため意図的に通常と逆方向 */
   --color-accent: #14b8a6;
   --color-accent-hover: #2dd4bf;
   --color-danger: #f87171;
