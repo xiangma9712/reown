@@ -19,6 +19,7 @@ ensure_labels() {
   ensure_label_exists "priority-high"   "b60205" "High priority"
   ensure_label_exists "priority-middle" "fbca04" "Middle priority"
   ensure_label_exists "priority-low"    "0e8a16" "Low priority"
+  ensure_label_exists "self-review"     "e99695" "Agent loop self-review"
 }
 
 # Mark an issue as needing split via label
@@ -31,7 +32,8 @@ mark_needs_split() {
   fi
 }
 
-# Mark an issue as pending (blocked, not a scope issue) via label
+# Mark an issue as pending (blocked, not a scope issue) via label.
+# Posts a detailed comment with the failure reason and log context.
 mark_pend() {
   local issue_num="$1"
   local reason="${2:-}"
@@ -40,16 +42,61 @@ mark_pend() {
   else
     log "WARN: Failed to mark issue #$issue_num as pend"
   fi
-  if [[ -n "$reason" ]]; then
-    gh issue comment "$issue_num" --body "## Pend
+
+  [[ -n "$reason" ]] || return 0
+
+  # Build comment with log context
+  local comment_body="## Pend
 
 このissueは一時的にブロックされています。
 
-**理由**: $reason
+**理由**: $reason"
+
+  # Append recent progress log for context
+  local recent_log
+  recent_log=$(tail -n 30 "$REPO_ROOT/progress.txt" 2>/dev/null || true)
+  if [[ -n "$recent_log" ]]; then
+    comment_body+="
+
+### イテレーションログ
+
+\`\`\`
+$recent_log
+\`\`\`"
+  fi
+
+  # Append relevant Claude agent output if iteration log dir exists
+  if [[ -n "${ITER_LOG_DIR:-}" && -d "${ITER_LOG_DIR:-}" ]]; then
+    local agent_logs=""
+    local logfile
+    for logfile in "$ITER_LOG_DIR"/*.stdout.log; do
+      [[ -f "$logfile" ]] || continue
+      local log_name log_tail
+      log_name=$(basename "$logfile" .stdout.log)
+      log_tail=$(tail -n 20 "$logfile" 2>/dev/null || true)
+      if [[ -n "$log_tail" ]]; then
+        agent_logs+="
+#### $log_name
+
+\`\`\`
+$log_tail
+\`\`\`"
+      fi
+    done
+    if [[ -n "$agent_logs" ]]; then
+      comment_body+="
+
+### エージェント出力
+$agent_logs"
+    fi
+  fi
+
+  comment_body+="
 
 ---
-_Automatically posted by agent/loop.sh_" 2>/dev/null || true
-  fi
+_Automatically posted by agent/loop.sh_"
+
+  gh issue comment "$issue_num" --body "$comment_body" 2>/dev/null || true
 }
 
 # Propose new issues by analyzing the gap between INTENT.md and the codebase.

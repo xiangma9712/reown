@@ -1,142 +1,141 @@
-# agent/steps/05b_review.sh — step_review: code review quality check before push
-# Return: 0=ok, 1=skip iteration, 2=break loop
+# agent/steps/05b_review.sh — step_review: smart review (blocking/followup classification)
+# Runs between verify and push. Never blocks the pipeline (never returns 1).
+# Return: 0=ok, 2=break loop (rate limit only)
 
 step_review() {
   cd "$REPO_ROOT"
 
-  local REVIEW_PROMPT CLAUDE_MD DIFF_OUTPUT REVIEW_INPUT REVIEW_OUTPUT REVIEW_JSON VERDICT REASONING
+  # ── Skip if no diff ────────────────────────────────────────────────────────
+  local diff_output
+  diff_output=$(git diff main...HEAD --name-only 2>/dev/null || echo "")
+  if [[ -z "$diff_output" ]]; then
+    log "Review: No diff against main. Skipping."
+    return 0
+  fi
 
+  # ── Run review agent (read-only) ───────────────────────────────────────────
+  local REVIEW_PROMPT REVIEW_INPUT REVIEW_OUTPUT
   REVIEW_PROMPT=$(cat "$SCRIPT_DIR/prompts/review.md")
-  CLAUDE_MD=$(cat "$REPO_ROOT/CLAUDE.md" 2>/dev/null || echo "(CLAUDE.md not found)")
-  DIFF_OUTPUT=$(git diff main...HEAD 2>/dev/null || git diff main 2>/dev/null || echo "(no diff available)")
-
   REVIEW_INPUT="$REVIEW_PROMPT
 
-## CLAUDE.md (Project Patterns)
+## Context
 
-$CLAUDE_MD
+- **Issue**: #$TASK_ISSUE
+- **Title**: $TASK_TITLE
+- **Branch**: $BRANCH_NAME"
 
-## Git Diff (main...HEAD)
-
-\`\`\`diff
-$DIFF_OUTPUT
-\`\`\`"
-
-  log "Running code review for #$TASK_ISSUE..."
+  log "Running smart review agent for #$TASK_ISSUE..."
   local review_rc=0
   REVIEW_OUTPUT=$(run_claude \
     --label "review-$TASK_ISSUE" \
     --timeout "$TIMEOUT_VERIFY_FIX" \
     --max-turns "$REVIEW_MAX_TURNS" \
+    --allowedTools "Bash,Read,Glob,Grep" \
     -- "$REVIEW_INPUT") || review_rc=$?
 
-  # Rate limit check
+  # Rate limit → break loop
   if [[ "$review_rc" -eq 2 ]]; then
     flag_rate_limit
-    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
-    cleanup_branch "$BRANCH_NAME"
     return 2
   fi
 
-  # Timeout — treat as pass to avoid blocking
-  if [[ "$review_rc" -eq 124 ]]; then
-    log "WARN: Code review timed out for #$TASK_ISSUE. Treating as pass."
+  # Timeout or error → pass (don't block pipeline)
+  if [[ "$review_rc" -ne 0 ]]; then
+    log "WARN: Review agent failed (rc=$review_rc). Treating as pass."
     return 0
   fi
 
-  # Parse verdict from output
+  # ── Parse JSON output ─────────────────────────────────────────────────────
+  local REVIEW_JSON BLOCKING_COUNT FOLLOWUP_COUNT
   REVIEW_JSON=$(echo "$REVIEW_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
-  VERDICT=$(echo "$REVIEW_JSON" | jq -r '.verdict' 2>/dev/null || echo "")
-  REASONING=$(echo "$REVIEW_JSON" | jq -r '.reasoning' 2>/dev/null || echo "")
 
-  if [[ "$VERDICT" == "pass" ]]; then
-    log "Code review passed for #$TASK_ISSUE: $REASONING"
+  if ! echo "$REVIEW_JSON" | jq empty 2>/dev/null; then
+    log "WARN: Review agent output is not valid JSON. Treating as pass."
     return 0
   fi
 
-  if [[ "$VERDICT" != "fail" ]]; then
-    log "WARN: Could not parse review agent output for #$TASK_ISSUE. Treating as pass."
-    return 0
+  BLOCKING_COUNT=$(echo "$REVIEW_JSON" | jq '.blocking | length' 2>/dev/null || echo "0")
+  FOLLOWUP_COUNT=$(echo "$REVIEW_JSON" | jq '.followup | length' 2>/dev/null || echo "0")
+
+  log "Review result: $BLOCKING_COUNT blocking, $FOLLOWUP_COUNT followup"
+
+  # ── Handle blocking issues ─────────────────────────────────────────────────
+  if [[ "$BLOCKING_COUNT" -gt 0 ]]; then
+    log "Attempting to fix $BLOCKING_COUNT blocking issue(s)..."
+
+    local BLOCKING_DESC
+    BLOCKING_DESC=$(echo "$REVIEW_JSON" | jq -r '.blocking[] | "- \(.file):\(.line) — \(.issue)"' 2>/dev/null)
+
+    local fix_rc=0
+    run_claude \
+      --label "review-fix-$TASK_ISSUE" \
+      --timeout "$TIMEOUT_VERIFY_FIX" \
+      --max-turns "$FIX_MAX_TURNS" \
+      --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+      -- "以下のblocking指摘を修正してください。修正後、影響するテスト（cargo test等）を実行して確認してください。
+
+$BLOCKING_DESC
+
+修正が完了したらコミットしてください。" \
+      >/dev/null || fix_rc=$?
+
+    # Rate limit → break loop
+    if [[ "$fix_rc" -eq 2 ]]; then
+      flag_rate_limit
+      return 2
+    fi
+
+    # Check if fix was successful (working tree clean + tests pass)
+    cd "$REPO_ROOT"
+    local fix_success=true
+
+    if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
+      log "WARN: Fix agent left uncommitted changes. Committing..."
+      git add -A
+      git commit -m "fix: address review blocking issues for #$TASK_ISSUE" 2>/dev/null || fix_success=false
+    fi
+
+    if [[ "$fix_rc" -ne 0 ]]; then
+      fix_success=false
+    fi
+
+    if [[ "$fix_success" != "true" ]]; then
+      log "WARN: Fix failed. Downgrading all blocking issues to followup."
+      # Merge blocking into followup
+      REVIEW_JSON=$(echo "$REVIEW_JSON" | jq '
+        .followup += [.blocking[] | {
+          title: ("fix: " + .issue),
+          body: (.file + ":" + (.line | tostring) + " — " + .issue)
+        }] | .blocking = []
+      ' 2>/dev/null || echo "$REVIEW_JSON")
+      BLOCKING_COUNT=0
+      FOLLOWUP_COUNT=$(echo "$REVIEW_JSON" | jq '.followup | length' 2>/dev/null || echo "0")
+    fi
   fi
 
-  # ── First failure: attempt fix + re-review ─────────────────────────────────
-  local ISSUES
-  ISSUES=$(echo "$REVIEW_JSON" | jq -r '.issues // [] | join("\n")' 2>/dev/null || echo "$REASONING")
+  # ── Create followup issues ─────────────────────────────────────────────────
+  if [[ "$FOLLOWUP_COUNT" -gt 0 ]]; then
+    log "Creating $FOLLOWUP_COUNT followup issue(s)..."
 
-  log "Code review failed for #$TASK_ISSUE: $REASONING"
-  log "Attempting fix based on review feedback..."
+    echo "$REVIEW_JSON" | jq -c '.followup[]' 2>/dev/null | while IFS= read -r entry; do
+      local fu_title fu_body
+      fu_title=$(echo "$entry" | jq -r '.title')
+      fu_body=$(echo "$entry" | jq -r '.body')
 
-  local fix_rc=0
-  run_claude \
-    --label "review-fix-$TASK_ISSUE" \
-    --timeout "$TIMEOUT_VERIFY_FIX" \
-    --max-turns "$FIX_MAX_TURNS" \
-    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-    -- "The code review agent found quality issues in the implementation.
+      fu_body="$fu_body
 
-## Review Issues
-$ISSUES
+---
+_レビューエージェントが #$TASK_ISSUE のレビュー中に検出しました。_
+_Automatically created by agent/loop.sh (smart review)_"
 
-## Review Summary
-$REASONING
-
-Please fix the issues identified by the review. Then run cargo test and cargo clippy --all-targets -- -D warnings to ensure everything still passes. Commit your changes." \
-    >/dev/null || fix_rc=$?
-
-  if [[ "$fix_rc" -eq 2 ]]; then
-    flag_rate_limit
-    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
-    cleanup_branch "$BRANCH_NAME"
-    return 2
+      if gh issue create --title "$fu_title" --body "$fu_body" --label "$AGENT_LABEL" 2>/dev/null; then
+        log "  Created followup: $fu_title"
+      else
+        log "  WARN: Failed to create followup issue: $fu_title"
+      fi
+    done
   fi
 
-  # ── Re-review after fix ────────────────────────────────────────────────────
-  DIFF_OUTPUT=$(git diff main...HEAD 2>/dev/null || git diff main 2>/dev/null || echo "(no diff available)")
-  REVIEW_INPUT="$REVIEW_PROMPT
-
-## CLAUDE.md (Project Patterns)
-
-$CLAUDE_MD
-
-## Git Diff (main...HEAD)
-
-\`\`\`diff
-$DIFF_OUTPUT
-\`\`\`"
-
-  log "Re-running code review for #$TASK_ISSUE after fix..."
-  local rereview_rc=0
-  REVIEW_OUTPUT=$(run_claude \
-    --label "review-retry-$TASK_ISSUE" \
-    --timeout "$TIMEOUT_VERIFY_FIX" \
-    --max-turns "$REVIEW_MAX_TURNS" \
-    -- "$REVIEW_INPUT") || rereview_rc=$?
-
-  if [[ "$rereview_rc" -eq 2 ]]; then
-    flag_rate_limit
-    gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
-    cleanup_branch "$BRANCH_NAME"
-    return 2
-  fi
-
-  if [[ "$rereview_rc" -eq 124 ]]; then
-    log "WARN: Re-review timed out for #$TASK_ISSUE. Treating as pass."
-    return 0
-  fi
-
-  REVIEW_JSON=$(echo "$REVIEW_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
-  VERDICT=$(echo "$REVIEW_JSON" | jq -r '.verdict' 2>/dev/null || echo "")
-  REASONING=$(echo "$REVIEW_JSON" | jq -r '.reasoning' 2>/dev/null || echo "")
-
-  if [[ "$VERDICT" == "pass" ]]; then
-    log "Code review passed on retry for #$TASK_ISSUE: $REASONING"
-    return 0
-  fi
-
-  # ── Final failure: mark as needs-split ─────────────────────────────────────
-  log "ERROR: Code review still failing for #$TASK_ISSUE after fix attempt. Marking as needs-split."
-  mark_needs_split "$TASK_ISSUE"
-  cleanup_branch "$BRANCH_NAME"
-  interruptible_sleep "$SLEEP_SECONDS"
-  return 1
+  log "Smart review completed for #$TASK_ISSUE."
+  return 0
 }

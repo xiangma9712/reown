@@ -14,7 +14,6 @@ CI_POLL_INTERVAL="${CI_POLL_INTERVAL:-30}"      # seconds between CI status poll
 CI_POLL_TIMEOUT="${CI_POLL_TIMEOUT:-600}"       # max seconds for one polling window (default 10min)
 VERIFY_MAX_TURNS="${VERIFY_MAX_TURNS:-10}"
 REVIEW_MAX_TURNS="${REVIEW_MAX_TURNS:-10}"
-VALIDATE_DIFF_MAX_TURNS="${VALIDATE_DIFF_MAX_TURNS:-10}"
 PROPOSE_MAX_TURNS="${PROPOSE_MAX_TURNS:-10}"
 LOG_MAX_BYTES="${LOG_MAX_BYTES:-524288}"       # 512KB per file
 LOG_MAX_FILES="${LOG_MAX_FILES:-3}"             # keep progress.txt + 3 archives

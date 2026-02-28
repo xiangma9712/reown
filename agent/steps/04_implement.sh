@@ -103,8 +103,8 @@ _Automatically posted by agent/loop.sh_" 2>/dev/null || true
   fi
 
   if [[ "$impl_rc" -eq 124 ]]; then
-    log "ERROR: Implementation agent timed out for #$TASK_ISSUE. Marking as needs-split."
-    mark_needs_split "$TASK_ISSUE"
+    log "ERROR: Implementation agent timed out for #$TASK_ISSUE. Marking as pend."
+    mark_pend "$TASK_ISSUE" "実装エージェントがタイムアウトしました（再試行可能）"
     cleanup_branch "$BRANCH_NAME"
     interruptible_sleep "$SLEEP_SECONDS"
     return 1
@@ -114,11 +114,11 @@ _Automatically posted by agent/loop.sh_" 2>/dev/null || true
   impl_stderr=$(run_claude_stderr "implement-$TASK_ISSUE")
   if [[ "$impl_rc" -ne 0 ]] || grep -qi "max turns\|max budget" "$impl_stderr" 2>/dev/null; then
     if grep -qi "max turns\|max budget" "$impl_stderr" 2>/dev/null; then
-      log "ERROR: Implementation agent hit resource limit for #$TASK_ISSUE. Needs split."
+      log "ERROR: Implementation agent hit resource limit for #$TASK_ISSUE. Marking as pend."
     else
       log "ERROR: Implementation agent failed for #$TASK_ISSUE (exit=$impl_rc)"
     fi
-    mark_needs_split "$TASK_ISSUE"
+    mark_pend "$TASK_ISSUE" "実装エージェントが失敗しました（再試行可能）"
     cleanup_branch "$BRANCH_NAME"
     interruptible_sleep "$SLEEP_SECONDS"
     return 1

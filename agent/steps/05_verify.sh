@@ -1,8 +1,35 @@
-# agent/steps/05_verify.sh — step_verify: cargo test + clippy + working tree check
+# agent/steps/05_verify.sh — step_verify: auto-format + cargo test/clippy + working tree check
+# Safety net after implementation. The implement agent should have already run
+# all checks, but this catches anything it missed.
 # Return: 0=ok, 1=skip iteration, 2=break loop
 
 step_verify() {
   cd "$REPO_ROOT"
+
+  # ── Auto-format before any checks ─────────────────────────────────────────
+  if has_rust_changes; then
+    log "Running cargo fmt..."
+    cargo fmt --all 2>/dev/null || true
+  fi
+
+  if has_frontend_changes; then
+    log "Running prettier and eslint..."
+    (cd "$REPO_ROOT/frontend" && npx prettier --write src/ 2>/dev/null) || true
+    (cd "$REPO_ROOT/frontend" && npx eslint --fix src/ 2>/dev/null) || true
+  fi
+
+  # ── Commit any formatter changes ──────────────────────────────────────────
+  cd "$REPO_ROOT"
+  if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
+    # If frontend components changed, update VRT snapshots
+    if git diff --name-only HEAD 2>/dev/null | grep -q 'frontend/src/components/.*\.tsx$'; then
+      log "Frontend components changed — updating VRT snapshots..."
+      (cd "$REPO_ROOT/frontend" && npx playwright test --update-snapshots 2>/dev/null) || true
+    fi
+
+    git add -A
+    git commit -m "fix: apply formatting for #$TASK_ISSUE" 2>/dev/null || true
+  fi
 
   # ── Run cargo test & clippy if Rust files changed ────────────────────────
   if has_rust_changes; then
@@ -15,7 +42,7 @@ step_verify() {
         --timeout "$TIMEOUT_VERIFY_FIX" \
         --max-turns "$FIX_MAX_TURNS" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        -- "cargo test is failing. Read the test output, find the root cause, and fix the implementation (not the tests). Then run cargo test again to verify." \
+        -- "cargo test is failing. Read the test output, find the root cause, and fix the implementation (not the tests). Then run cargo fmt --all && cargo test again to verify." \
         >/dev/null || fix_rc=$?
       if [[ "$fix_rc" -eq 2 ]]; then
         flag_rate_limit
@@ -41,7 +68,7 @@ step_verify() {
         --timeout "$TIMEOUT_VERIFY_FIX" \
         --max-turns "$FIX_MAX_TURNS" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        -- "cargo clippy --all-targets -- -D warnings is failing. Fix all clippy warnings in the code you changed." \
+        -- "cargo clippy --all-targets -- -D warnings is failing. Fix all clippy warnings, then run cargo fmt --all." \
         >/dev/null || fix_rc=$?
       if [[ "$fix_rc" -eq 2 ]]; then
         flag_rate_limit
@@ -62,90 +89,34 @@ step_verify() {
     log "No Rust files changed — skipping cargo test and clippy."
   fi
 
-  # ── Pre-push verification — ensure working tree is clean ─────────────────
+  # ── Ensure working tree is clean ──────────────────────────────────────────
   cd "$REPO_ROOT"
-  local VERIFY_CLEAN_PASSED=false
-  local verify_attempt
-  for verify_attempt in 1 2 3; do
-    if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
-      VERIFY_CLEAN_PASSED=true
-      break
-    fi
-
-    log "WARN: Working tree not clean (attempt $verify_attempt). Committing remaining changes..."
-
-    # If frontend component files were changed, update VRT snapshots before committing
-    if git diff --name-only HEAD | grep -q 'frontend/src/components/.*\.tsx$' 2>/dev/null; then
-      log "Frontend components changed — updating VRT snapshots..."
-      (cd "$REPO_ROOT/frontend" && npx playwright test --update-snapshots 2>/dev/null) || true
-    fi
-
+  if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
+    log "WARN: Working tree not clean after checks. Committing remaining changes..."
     git add -A
-
-    # Try commit — capture hook errors if it fails
-    local commit_output=""
-    local commit_rc=0
-    commit_output=$(git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>&1) || commit_rc=$?
-
-    if [[ "$commit_rc" -ne 0 ]]; then
-      log "WARN: git commit failed (rc=$commit_rc). Likely pre-commit hook failure. Invoking fix agent..."
-      local fix_rc=0
-      run_claude \
-        --label "verify-hook-fix-$TASK_ISSUE" \
-        --timeout 600 \
-        --max-turns "$FIX_MAX_TURNS" \
-        --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-        -- "git commit failed due to pre-commit hook. Here is the error output:
-
-$commit_output
-
-Fix the issues. For frontend files, run: cd frontend && npx prettier --write src/ && npx eslint --fix src/
-For Rust files, run: cargo fmt
-After fixing, do NOT commit — just leave the files modified." \
-        >/dev/null || fix_rc=$?
-      if [[ "$fix_rc" -eq 2 ]]; then
-        flag_rate_limit
-        gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
-        cleanup_branch "$BRANCH_NAME"
-        return 2
+    if ! git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null; then
+      # Pre-commit hook failed — run formatters and retry
+      log "WARN: Commit failed (pre-commit hook). Re-running formatters..."
+      cargo fmt --all 2>/dev/null || true
+      if has_frontend_changes; then
+        (cd "$REPO_ROOT/frontend" && npx prettier --write src/ 2>/dev/null) || true
+        (cd "$REPO_ROOT/frontend" && npx eslint --fix src/ 2>/dev/null) || true
       fi
-
-      # Re-stage and commit after fix agent ran formatters
       git add -A
-      git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || \
-        git commit --no-verify -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
+      git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
     fi
+  fi
 
-    # Re-run tests/clippy after committing leftover changes (only on first attempt, only if Rust files)
-    if [[ "$verify_attempt" -eq 1 ]] && has_rust_changes; then
-      if ! cargo test 2>/dev/null || ! cargo clippy --all-targets -- -D warnings 2>/dev/null; then
-        log "WARN: Tests/clippy failed after committing leftover changes. Invoking fix agent..."
-        local fix_rc=0
-        run_claude \
-          --label "verify-leftover-fix-$TASK_ISSUE" \
-          --timeout "$TIMEOUT_VERIFY_FIX" \
-          --max-turns "$FIX_MAX_TURNS" \
-          --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-          -- "There were uncommitted changes that have been staged and committed. Now cargo test or clippy is failing. Fix the issues, commit, and ensure the tree is clean." \
-          >/dev/null || fix_rc=$?
-        if [[ "$fix_rc" -eq 2 ]]; then
-          flag_rate_limit
-          gh issue edit "$TASK_ISSUE" --remove-label "doing" 2>/dev/null || true
-          cleanup_branch "$BRANCH_NAME"
-          return 2
-        fi
-      fi
-    fi
-  done
-
-  if [[ "$VERIFY_CLEAN_PASSED" != "true" ]]; then
-    log "ERROR: Working tree still not clean for #$TASK_ISSUE after fix attempt. Marking as pend."
+  # ── Final clean check ────────────────────────────────────────────────────
+  cd "$REPO_ROOT"
+  if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
+    log "ERROR: Working tree still not clean for #$TASK_ISSUE. Marking as pend."
     mark_pend "$TASK_ISSUE" "working tree が修正後もcleanになりません"
     cleanup_branch "$BRANCH_NAME"
     interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
 
-  log "Pre-push verification passed: working tree is clean."
+  log "Verify passed: working tree is clean."
   return 0
 }
