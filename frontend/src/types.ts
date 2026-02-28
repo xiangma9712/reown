@@ -125,6 +125,7 @@ export interface AppConfig {
   default_repo: string;
   llm: LlmConfig;
   automation: AutomationConfig;
+  onboarding_completed: boolean;
 }
 
 export interface FileSummary {
