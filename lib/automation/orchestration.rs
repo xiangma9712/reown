@@ -52,7 +52,7 @@ pub async fn execute_auto_approve_with_merge(
     token: &str,
     config: &AutomationConfig,
 ) -> AutoApproveWithMergeResult {
-    let approve_result = execute_auto_approve(candidates, owner, repo, token).await;
+    let approve_result = execute_auto_approve(candidates, owner, repo, token, config).await;
 
     let mut outcomes = Vec::new();
 
@@ -112,6 +112,8 @@ mod tests {
         AutoApproveCandidate {
             pr_number,
             risk_level: RiskLevel::Low,
+            risk_score: 10,
+            categories: vec![],
             reason: "テスト用候補".to_string(),
         }
     }
