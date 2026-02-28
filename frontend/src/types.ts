@@ -259,6 +259,16 @@ export interface AutoApproveCandidate {
   reason: string;
 }
 
+export interface ApproveOutcome {
+  pr_number: number;
+  success: boolean;
+  error: string | null;
+}
+
+export interface AutoApproveResult {
+  outcomes: ApproveOutcome[];
+}
+
 export type AutoMergeStatus =
   | "Enabled"
   | "Skipped"
