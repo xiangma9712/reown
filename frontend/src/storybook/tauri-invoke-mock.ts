@@ -54,8 +54,17 @@ const defaultHandlers: CommandHandlers = {
   save_risk_config: () => undefined as never,
   list_review_history: () => fixtures.reviewRecords,
   add_review_record: () => undefined as never,
+  save_github_token: () => undefined as never,
   get_github_auth_status: () => true,
   github_logout: () => undefined as never,
+  start_github_device_flow: () => ({
+    device_code: "mock-device-code",
+    user_code: "ABCD-1234",
+    verification_uri: "https://github.com/login/device",
+    interval: 5,
+    expires_in: 900,
+  }),
+  poll_github_device_flow: () => undefined as never,
   check_onboarding_needed: () => false,
   complete_onboarding: () => undefined as never,
 };

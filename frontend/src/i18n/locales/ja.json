@@ -307,7 +307,27 @@
   "onboarding": {
     "title": "reown",
     "placeholder": "セットアップウィザード（実装予定）",
-    "skip": "スキップ"
+    "skip": "スキップ",
+    "step2Title": "GitHub認証",
+    "step2Description": "GitHubと連携すると、PR取得・レビュー送信・オートメーションが利用できます。",
+    "deviceFlowStart": "GitHubでログイン",
+    "deviceFlowInstruction": "以下のコードをGitHubで入力してください:",
+    "deviceFlowOpenBrowser": "ブラウザで開く",
+    "deviceFlowWaiting": "認証を待っています…",
+    "deviceFlowSuccess": "GitHub認証が完了しました",
+    "deviceFlowError": "認証に失敗しました: {{message}}",
+    "deviceFlowExpired": "認証コードの有効期限が切れました。再度お試しください。",
+    "manualTokenLabel": "または、Personal Access Tokenを手動入力",
+    "manualTokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "manualTokenSave": "トークンを保存",
+    "manualTokenSaving": "保存中…",
+    "manualTokenSuccess": "トークンを保存しました",
+    "manualTokenError": "トークンの保存に失敗しました: {{message}}",
+    "showToken": "表示",
+    "hideToken": "非表示",
+    "skipNote": "スキップしても、あとから設定画面でGitHub認証を行えます。",
+    "next": "次へ",
+    "back": "戻る"
   },
   "worktree": {
     "title": "ワークツリー",

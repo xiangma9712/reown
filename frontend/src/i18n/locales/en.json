@@ -307,7 +307,27 @@
   "onboarding": {
     "title": "reown",
     "placeholder": "Setup Wizard (Coming Soon)",
-    "skip": "Skip"
+    "skip": "Skip",
+    "step2Title": "GitHub Authentication",
+    "step2Description": "Connect to GitHub to enable PR fetching, review submission, and automation.",
+    "deviceFlowStart": "Sign in with GitHub",
+    "deviceFlowInstruction": "Enter this code on GitHub:",
+    "deviceFlowOpenBrowser": "Open in browser",
+    "deviceFlowWaiting": "Waiting for authentication…",
+    "deviceFlowSuccess": "GitHub authentication completed",
+    "deviceFlowError": "Authentication failed: {{message}}",
+    "deviceFlowExpired": "Authentication code has expired. Please try again.",
+    "manualTokenLabel": "Or enter a Personal Access Token manually",
+    "manualTokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "manualTokenSave": "Save token",
+    "manualTokenSaving": "Saving…",
+    "manualTokenSuccess": "Token saved successfully",
+    "manualTokenError": "Failed to save token: {{message}}",
+    "showToken": "Show",
+    "hideToken": "Hide",
+    "skipNote": "You can set up GitHub authentication later in Settings.",
+    "next": "Next",
+    "back": "Back"
   },
   "worktree": {
     "title": "Worktrees",
