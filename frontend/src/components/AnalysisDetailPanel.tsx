@@ -38,6 +38,15 @@ const categoryLabelKeys: Record<ChangeCategory, string> = {
   Other: "pr.categoryOther",
 };
 
+function WarningBanner({ message }: { message: string }) {
+  return (
+    <div className="flex items-center gap-2 rounded border border-warning/30 bg-warning/10 px-3 py-1.5 text-[0.8rem] text-warning">
+      <span>&#x26A0;&#xFE0F;</span>
+      <span>{message}</span>
+    </div>
+  );
+}
+
 function ImpactWarnings({ factors }: { factors: RiskFactor[] }) {
   const { t } = useTranslation();
 
@@ -85,13 +94,7 @@ function ImpactWarnings({ factors }: { factors: RiskFactor[] }) {
   return (
     <div className="space-y-1">
       {warnings.map((warning, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-2 rounded border border-warning/30 bg-warning/10 px-3 py-1.5 text-[0.8rem] text-warning"
-        >
-          <span>&#x26A0;&#xFE0F;</span>
-          <span>{warning}</span>
-        </div>
+        <WarningBanner key={i} message={warning} />
       ))}
     </div>
   );
@@ -248,13 +251,7 @@ export function AnalysisDetailPanel({
           </h3>
           <div className="space-y-1">
             {hybridResult.llm_analysis.risk_warnings.map((warning, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 rounded border border-warning/30 bg-warning/10 px-3 py-1.5 text-[0.8rem] text-warning"
-              >
-                <span>&#x26A0;&#xFE0F;</span>
-                <span>{warning}</span>
-              </div>
+              <WarningBanner key={i} message={warning} />
             ))}
           </div>
         </Panel>
