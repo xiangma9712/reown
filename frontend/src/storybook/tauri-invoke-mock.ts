@@ -54,6 +54,8 @@ const defaultHandlers: CommandHandlers = {
   save_risk_config: () => undefined as never,
   list_review_history: () => fixtures.reviewRecords,
   add_review_record: () => undefined as never,
+  get_github_auth_status: () => true,
+  github_logout: () => undefined as never,
 };
 
 let currentOverrides: Partial<CommandHandlers> = {};

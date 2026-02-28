@@ -121,7 +121,6 @@ export interface AutomationConfig {
 }
 
 export interface AppConfig {
-  github_token: string;
   default_owner: string;
   default_repo: string;
   llm: LlmConfig;
