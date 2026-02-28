@@ -122,22 +122,7 @@ Run \`git status\` to confirm the working tree is clean and all changes have bee
       fi
 
       # ── Ensure agent's changes are committed and pushed ──────────────────
-      cd "$REPO_ROOT"
-      if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
-        log "WARN: CI fix agent left uncommitted changes. Committing..."
-        git_add_safe
-        if ! git commit -m "fix: address CI failures for #$TASK_ISSUE" 2>/dev/null; then
-          # Pre-commit hook failed — run formatters and retry
-          log "WARN: Commit failed (pre-commit hook). Re-running formatters..."
-          cargo fmt --all 2>/dev/null || true
-          if has_frontend_changes; then
-            (cd "$REPO_ROOT/frontend" && npx prettier --write src/ 2>/dev/null) || true
-            (cd "$REPO_ROOT/frontend" && npx eslint --fix src/ 2>/dev/null) || true
-          fi
-          git_add_safe
-          git commit -m "fix: address CI failures for #$TASK_ISSUE" 2>/dev/null || true
-        fi
-      fi
+      commit_with_formatter_retry "fix: address CI failures for #$TASK_ISSUE"
       git push 2>/dev/null || true
     fi
   done

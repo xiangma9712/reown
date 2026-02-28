@@ -120,6 +120,36 @@ git_add_safe() {
   fi
 }
 
+# Commit uncommitted changes with formatter retry on pre-commit hook failure.
+# If `git commit` fails (e.g. pre-commit hook), re-runs formatters and retries.
+# Usage: commit_with_formatter_retry "commit message"
+# Returns 0 if committed (or nothing to commit), non-zero on failure.
+commit_with_formatter_retry() {
+  local commit_msg="$1"
+  cd "$REPO_ROOT"
+
+  # Nothing to commit?
+  if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
+    return 0
+  fi
+
+  log "WARN: Uncommitted changes found. Committing..."
+  git_add_safe
+  if git commit -m "$commit_msg" 2>/dev/null; then
+    return 0
+  fi
+
+  # Pre-commit hook failed — run formatters and retry
+  log "WARN: Commit failed (pre-commit hook). Re-running formatters..."
+  cargo fmt --all 2>/dev/null || true
+  if has_frontend_changes; then
+    (cd "$REPO_ROOT/frontend" && npx prettier --write src/ 2>/dev/null) || true
+    (cd "$REPO_ROOT/frontend" && npx eslint --fix src/ 2>/dev/null) || true
+  fi
+  git_add_safe
+  git commit -m "$commit_msg" 2>/dev/null || true
+}
+
 # Check if any frontend-related files changed on the current branch vs main
 has_frontend_changes() {
   cd "$REPO_ROOT"
