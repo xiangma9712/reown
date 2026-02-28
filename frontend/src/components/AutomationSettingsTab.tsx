@@ -385,13 +385,19 @@ export function AutomationSettingsTab() {
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
                       if (!isNaN(val)) {
-                        setRiskConfig((prev) => ({
-                          ...prev,
-                          risk_thresholds: {
-                            ...prev.risk_thresholds,
-                            low_max: val,
-                          },
-                        }));
+                        setRiskConfig((prev) => {
+                          const clamped = Math.max(
+                            0,
+                            Math.min(val, prev.risk_thresholds.medium_max - 1)
+                          );
+                          return {
+                            ...prev,
+                            risk_thresholds: {
+                              ...prev.risk_thresholds,
+                              low_max: clamped,
+                            },
+                          };
+                        });
                       }
                     }}
                     className="w-20 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary"
@@ -410,13 +416,19 @@ export function AutomationSettingsTab() {
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
                       if (!isNaN(val)) {
-                        setRiskConfig((prev) => ({
-                          ...prev,
-                          risk_thresholds: {
-                            ...prev.risk_thresholds,
-                            medium_max: val,
-                          },
-                        }));
+                        setRiskConfig((prev) => {
+                          const clamped = Math.max(
+                            prev.risk_thresholds.low_max + 1,
+                            Math.min(val, 100)
+                          );
+                          return {
+                            ...prev,
+                            risk_thresholds: {
+                              ...prev.risk_thresholds,
+                              medium_max: clamped,
+                            },
+                          };
+                        });
                       }
                     }}
                     className="w-20 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary"
