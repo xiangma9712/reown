@@ -237,6 +237,7 @@
     "mergeRebase": "Rebase",
     "save": "保存",
     "reset": "リセット",
+    "repoLabel": "リポジトリ: {{owner}}/{{repo}}",
     "saveSuccess": "オートメーション設定を保存しました",
     "saveError": "オートメーション設定の保存に失敗しました: {{message}}",
     "loadError": "オートメーション設定の読み込みに失敗しました: {{message}}"

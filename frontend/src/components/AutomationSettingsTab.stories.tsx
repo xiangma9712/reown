@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AutomationSettingsTab } from "./AutomationSettingsTab";
-import { overrideInvoke, resetInvokeOverrides } from "../storybook";
+import {
+  overrideInvoke,
+  resetInvokeOverrides,
+  MockRepositoryProvider,
+} from "../storybook";
 
 const meta = {
   title: "Components/AutomationSettingsTab",
@@ -8,7 +12,11 @@ const meta = {
   decorators: [
     (Story) => {
       resetInvokeOverrides();
-      return <Story />;
+      return (
+        <MockRepositoryProvider>
+          <Story />
+        </MockRepositoryProvider>
+      );
     },
   ],
 } satisfies Meta<typeof AutomationSettingsTab>;

@@ -35,7 +35,7 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
     setCandidates([]);
     setOutcomes([]);
     try {
-      const config = await invoke("load_automation_config");
+      const config = await invoke("load_automation_config", { owner, repo });
       setAutomationConfig(config);
 
       if (!config.enabled) {
