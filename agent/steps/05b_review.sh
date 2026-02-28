@@ -91,7 +91,7 @@ $BLOCKING_DESC
 
     if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
       log "WARN: Fix agent left uncommitted changes. Committing..."
-      git add -A
+      git_add_safe
       git commit -m "fix: address review blocking issues for #$TASK_ISSUE" 2>/dev/null || fix_success=false
     fi
 
