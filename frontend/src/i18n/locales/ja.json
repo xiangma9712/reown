@@ -327,7 +327,14 @@
     "hideToken": "非表示",
     "skipNote": "スキップしても、あとから設定画面でGitHub認証を行えます。",
     "next": "次へ",
-    "back": "戻る"
+    "back": "戻る",
+    "step3Title": "LLM設定",
+    "step3Description": "Anthropic APIキーを設定すると、AI要約・リスク分析などの機能が利用できます。",
+    "step3TestSuccess": "接続テストに成功しました",
+    "step3TestError": "接続テストに失敗しました: {{message}}",
+    "step3SaveSuccess": "LLM設定を保存しました",
+    "step3SaveError": "LLM設定の保存に失敗しました: {{message}}",
+    "step3SkipNote": "スキップしても、あとから設定画面でLLM設定を行えます。"
   },
   "worktree": {
     "title": "ワークツリー",
