@@ -293,6 +293,11 @@
     "expandAll": "Expand All",
     "collapseAll": "Collapse All"
   },
+  "onboarding": {
+    "title": "reown",
+    "placeholder": "Setup Wizard (Coming Soon)",
+    "skip": "Skip"
+  },
   "worktree": {
     "title": "Worktrees",
     "empty": "No worktrees found.",

@@ -56,6 +56,8 @@ const defaultHandlers: CommandHandlers = {
   add_review_record: () => undefined as never,
   get_github_auth_status: () => true,
   github_logout: () => undefined as never,
+  check_onboarding_needed: () => false,
+  complete_onboarding: () => undefined as never,
 };
 
 let currentOverrides: Partial<CommandHandlers> = {};
