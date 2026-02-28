@@ -526,8 +526,28 @@ pub async fn add_labels(
     labels: &[String],
     token: &str,
 ) -> Result<()> {
+    add_labels_with_base_url(
+        "https://api.github.com",
+        owner,
+        repo,
+        issue_number,
+        labels,
+        token,
+    )
+    .await
+}
+
+/// Internal implementation of add_labels that accepts a base URL for testability.
+async fn add_labels_with_base_url(
+    base_url: &str,
+    owner: &str,
+    repo: &str,
+    issue_number: u64,
+    labels: &[String],
+    token: &str,
+) -> Result<()> {
     let client = reqwest::Client::new();
-    let url = format!("https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/labels");
+    let url = format!("{base_url}/repos/{owner}/{repo}/issues/{issue_number}/labels");
 
     let body = serde_json::json!({ "labels": labels });
 
@@ -1439,5 +1459,159 @@ mod tests {
             json["commit_url"],
             "https://github.com/owner/repo/commit/abc123"
         );
+    }
+
+    /// Test add_labels succeeds with a 200 response.
+    #[tokio::test]
+    async fn test_add_labels_success() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/issues/42/labels")
+            .match_header("Accept", "application/vnd.github+json")
+            .match_header("Authorization", "Bearer test-token")
+            .match_header("User-Agent", "reown")
+            .match_header("X-GitHub-Api-Version", "2022-11-28")
+            .match_body(mockito::Matcher::Json(
+                serde_json::json!({"labels": ["bug", "urgent"]}),
+            ))
+            .with_status(200)
+            .with_body(r#"[{"id":1,"name":"bug"},{"id":2,"name":"urgent"}]"#)
+            .create_async()
+            .await;
+
+        let labels = vec!["bug".to_string(), "urgent".to_string()];
+        let result =
+            add_labels_with_base_url(&server.url(), "owner", "repo", 42, &labels, "test-token")
+                .await;
+
+        assert!(result.is_ok());
+        mock.assert_async().await;
+    }
+
+    /// Test add_labels with a single label.
+    #[tokio::test]
+    async fn test_add_labels_single_label() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/issues/1/labels")
+            .match_body(mockito::Matcher::Json(
+                serde_json::json!({"labels": ["enhancement"]}),
+            ))
+            .with_status(200)
+            .with_body(r#"[{"id":1,"name":"enhancement"}]"#)
+            .create_async()
+            .await;
+
+        let labels = vec!["enhancement".to_string()];
+        let result =
+            add_labels_with_base_url(&server.url(), "owner", "repo", 1, &labels, "token").await;
+
+        assert!(result.is_ok());
+        mock.assert_async().await;
+    }
+
+    /// Test add_labels with empty labels list.
+    #[tokio::test]
+    async fn test_add_labels_empty_labels() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/issues/10/labels")
+            .match_body(mockito::Matcher::Json(serde_json::json!({"labels": []})))
+            .with_status(200)
+            .with_body("[]")
+            .create_async()
+            .await;
+
+        let labels: Vec<String> = vec![];
+        let result =
+            add_labels_with_base_url(&server.url(), "owner", "repo", 10, &labels, "token").await;
+
+        assert!(result.is_ok());
+        mock.assert_async().await;
+    }
+
+    /// Test add_labels returns error on 404 (e.g., repo not found).
+    #[tokio::test]
+    async fn test_add_labels_not_found() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/nonexistent/issues/1/labels")
+            .with_status(404)
+            .with_body(r#"{"message":"Not Found"}"#)
+            .create_async()
+            .await;
+
+        let labels = vec!["bug".to_string()];
+        let result =
+            add_labels_with_base_url(&server.url(), "owner", "nonexistent", 1, &labels, "token")
+                .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("404"));
+        mock.assert_async().await;
+    }
+
+    /// Test add_labels returns error on 401 (unauthorized).
+    #[tokio::test]
+    async fn test_add_labels_unauthorized() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/issues/5/labels")
+            .with_status(401)
+            .with_body(r#"{"message":"Bad credentials"}"#)
+            .create_async()
+            .await;
+
+        let labels = vec!["bug".to_string()];
+        let result =
+            add_labels_with_base_url(&server.url(), "owner", "repo", 5, &labels, "bad-token").await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("401"));
+        mock.assert_async().await;
+    }
+
+    /// Test add_labels returns error on 422 (validation failed).
+    #[tokio::test]
+    async fn test_add_labels_validation_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/issues/3/labels")
+            .with_status(422)
+            .with_body(r#"{"message":"Validation Failed"}"#)
+            .create_async()
+            .await;
+
+        let labels = vec!["invalid\0label".to_string()];
+        let result =
+            add_labels_with_base_url(&server.url(), "owner", "repo", 3, &labels, "token").await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("422"));
+        mock.assert_async().await;
+    }
+
+    /// Test add_labels returns error on 500 (server error).
+    #[tokio::test]
+    async fn test_add_labels_server_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/issues/7/labels")
+            .with_status(500)
+            .with_body(r#"{"message":"Internal Server Error"}"#)
+            .create_async()
+            .await;
+
+        let labels = vec!["bug".to_string()];
+        let result =
+            add_labels_with_base_url(&server.url(), "owner", "repo", 7, &labels, "token").await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("500"));
+        mock.assert_async().await;
     }
 }
