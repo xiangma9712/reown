@@ -562,7 +562,8 @@ export function AutomationSettingsTab() {
                   value={newScore}
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val)) setNewScore(val);
+                    if (!isNaN(val))
+                      setNewScore(Math.max(0, Math.min(100, val)));
                   }}
                   className="w-16 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary"
                   aria-label={t("automation.sensitiveScore")}
