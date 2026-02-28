@@ -341,6 +341,7 @@ const appConfig: AppConfig = {
   default_repo: "reown",
   llm: llmConfig,
   automation: automationConfig,
+  onboarding_completed: false,
 };
 
 const prSummary: PrSummary = {

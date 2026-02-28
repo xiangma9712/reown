@@ -496,6 +496,31 @@ fn save_risk_config(
     reown::config::save_config(&config_path, &config).map_err(AppError::storage)
 }
 
+// ── Onboarding commands ──────────────────────────────────────────────────────
+
+#[tauri::command]
+fn check_onboarding_needed(app_handle: tauri::AppHandle) -> Result<bool, AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    Ok(!config.onboarding_completed)
+}
+
+#[tauri::command]
+fn complete_onboarding(app_handle: tauri::AppHandle) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let mut config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    config.onboarding_completed = true;
+    reown::config::save_config(&config_path, &config).map_err(AppError::storage)
+}
+
 // ── Automation commands ───────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -753,6 +778,8 @@ fn main() {
             suggest_review_comments,
             list_review_history,
             add_review_record,
+            check_onboarding_needed,
+            complete_onboarding,
             start_github_device_flow,
             poll_github_device_flow,
             get_github_auth_status,

@@ -287,6 +287,9 @@ pub struct AppConfig {
     /// リポジトリ別のオートメーション設定（キーは "owner/repo" 形式）
     #[serde(default)]
     pub repo_automation: HashMap<String, AutomationConfig>,
+    /// オンボーディング完了フラグ
+    #[serde(default)]
+    pub onboarding_completed: bool,
 }
 
 impl AppConfig {
@@ -479,6 +482,7 @@ mod tests {
         assert_eq!(config.github_token, "");
         assert_eq!(config.default_owner, "");
         assert_eq!(config.default_repo, "");
+        assert!(!config.onboarding_completed);
     }
 
     #[test]
@@ -820,6 +824,7 @@ mod tests {
             llm: LlmConfig::default(),
             automation: AutomationConfig::default(),
             repo_automation,
+            ..Default::default()
         };
 
         save_config(&config_path, &config).unwrap();
@@ -1017,6 +1022,39 @@ mod tests {
         );
         assert_eq!(loaded.automation.risk_config.risk_thresholds.low_max, 30);
         assert_eq!(loaded.automation.risk_config.risk_thresholds.medium_max, 60);
+    }
+
+    // ── Onboarding テスト ───────────────────────────────────────────────
+
+    #[test]
+    fn test_backward_compat_load_without_onboarding_completed_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // onboarding_completedフィールドなしの旧形式JSON
+        let old_json = r#"{"github_token":"tok","default_owner":"o","default_repo":"r"}"#;
+        std::fs::write(&config_path, old_json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert_eq!(config.github_token, "tok");
+        assert!(!config.onboarding_completed);
+    }
+
+    #[test]
+    fn test_save_and_load_config_with_onboarding_completed() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+
+        let config = AppConfig {
+            github_token: "ghp_test".to_string(),
+            default_owner: "org".to_string(),
+            default_repo: "repo".to_string(),
+            onboarding_completed: true,
+            ..Default::default()
+        };
+
+        save_config(&config_path, &config).unwrap();
+        let loaded = load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+        assert!(loaded.onboarding_completed);
     }
 
     // ── GitHub Token Keychain テスト ────────────────────────────────────
