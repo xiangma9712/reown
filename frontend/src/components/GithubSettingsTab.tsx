@@ -46,7 +46,7 @@ export function GithubSettingsTab() {
 
       const config = await invoke("load_app_config");
       await invoke("save_app_config", {
-        config: { ...config, github_token: token },
+        config: { ...config },
       });
 
       setTokenStored(true);
