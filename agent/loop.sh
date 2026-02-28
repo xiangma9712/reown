@@ -207,6 +207,10 @@ while true; do
       ;;
     next)
       record_iteration_result "success" "complete" "${TASK_ISSUE:-}"
+      # Reset failure history after successful self-review to prevent re-triggering
+      if [[ "$_is_review_iteration" == "true" ]]; then
+        reset_failure_history
+      fi
       ;;
   esac
 
