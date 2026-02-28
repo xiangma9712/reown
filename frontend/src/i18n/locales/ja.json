@@ -252,6 +252,8 @@
     "thresholdLowRange": "Low: 0 〜 {{max}}",
     "thresholdMediumRange": "Medium: {{min}} 〜 {{max}}",
     "thresholdHighRange": "High: {{min}} 〜",
+    "missingTestPenalty": "テスト未追加ペナルティ",
+    "missingTestPenaltyDescription": "ロジック変更にテストが含まれない場合に加算されるペナルティスコアです（0 = 無効）。",
     "sensitivePatterns": "センシティブパスパターン",
     "sensitivePatternsDescription": "これらのパターンにマッチするファイルパスはリスクスコアが加算されます。",
     "sensitivePattern": "パターン",
