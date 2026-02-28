@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GithubSettingsTab } from "./GithubSettingsTab";
-import { overrideInvoke, resetInvokeOverrides, fixtures } from "../storybook";
+import { overrideInvoke, resetInvokeOverrides } from "../storybook";
 
 const meta = {
   title: "Components/GithubSettingsTab",
@@ -21,10 +21,7 @@ export const Default: Story = {
   decorators: [
     (Story) => {
       overrideInvoke({
-        load_app_config: () => ({
-          ...fixtures.appConfig,
-          github_token: "",
-        }),
+        get_github_auth_status: () => false,
       });
       return <Story />;
     },
@@ -36,10 +33,7 @@ export const WithTokenStored: Story = {
   decorators: [
     (Story) => {
       overrideInvoke({
-        load_app_config: () => ({
-          ...fixtures.appConfig,
-          github_token: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        }),
+        get_github_auth_status: () => true,
       });
       return <Story />;
     },

@@ -337,7 +337,6 @@ const automationConfig: AutomationConfig = {
 };
 
 const appConfig: AppConfig = {
-  github_token: "",
   default_owner: "example",
   default_repo: "reown",
   llm: llmConfig,

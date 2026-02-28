@@ -20,8 +20,8 @@ export function GithubSettingsTab() {
   const loadConfig = useCallback(async () => {
     try {
       setLoading(true);
-      const config = await invoke("load_app_config");
-      setTokenStored(config.github_token !== "");
+      const stored = await invoke("get_github_auth_status");
+      setTokenStored(stored);
       setToken("");
     } catch (e) {
       setMessage({
@@ -45,8 +45,9 @@ export function GithubSettingsTab() {
       setMessage(null);
 
       const config = await invoke("load_app_config");
-      config.github_token = token;
-      await invoke("save_app_config", { config });
+      await invoke("save_app_config", {
+        config: { ...config, github_token: token },
+      });
 
       setTokenStored(true);
       setToken("");
@@ -72,9 +73,7 @@ export function GithubSettingsTab() {
     try {
       setMessage(null);
 
-      const config = await invoke("load_app_config");
-      config.github_token = "";
-      await invoke("save_app_config", { config });
+      await invoke("github_logout");
 
       setTokenStored(false);
       setToken("");
