@@ -327,7 +327,14 @@
     "hideToken": "Hide",
     "skipNote": "You can set up GitHub authentication later in Settings.",
     "next": "Next",
-    "back": "Back"
+    "back": "Back",
+    "step3Title": "LLM Settings",
+    "step3Description": "Set up your Anthropic API key to enable AI summaries, risk analysis, and more.",
+    "step3TestSuccess": "Connection test successful",
+    "step3TestError": "Connection test failed: {{message}}",
+    "step3SaveSuccess": "LLM settings saved successfully",
+    "step3SaveError": "Failed to save LLM settings: {{message}}",
+    "step3SkipNote": "You can configure LLM settings later in Settings."
   },
   "worktree": {
     "title": "Worktrees",
