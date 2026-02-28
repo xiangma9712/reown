@@ -82,9 +82,14 @@ for f in "$SCRIPT_DIR"/lib/*.sh; do safe_source "$f"; done
 
 # Clear rate limit flag from previous runs
 rm -f "$RATE_LIMIT_FLAG"
+mkdir -p /tmp/claude
+mkdir -p "${AGENT_LOG_BASE:-/tmp/claude/agent-logs}"
 
 # Ensure required labels exist on the repo
 ensure_labels
+
+# Clean up orphaned labels from previous crashed runs
+cleanup_orphaned_resources
 
 # ── Step execution order ─────────────────────────────────────────────────────
 STEP_ORDER=(step_setup step_triage step_select step_implement step_verify step_reqverify step_review step_push step_ci step_complete)
@@ -107,7 +112,17 @@ while true; do
     break
   fi
 
+  # Check rate limit flag
+  if is_rate_limited; then
+    log "Rate limit flag detected. Exiting."
+    break
+  fi
+
   log "--- Iteration $iteration ---"
+
+  # ── Set up iteration log directory ─────────────────────────────────────────
+  init_iter_log_dir "$iteration"
+  cleanup_old_iter_logs
 
   # ── Reset per-iteration state ────────────────────────────────────────────
   ISSUES_FILE="" TASK_ISSUE="" TASK_TITLE="" TASK_DESC="" TASK_ID=""
@@ -144,7 +159,7 @@ while true; do
   fi
 
   log "Sleeping ${SLEEP_SECONDS}s before next iteration..."
-  sleep "$SLEEP_SECONDS"
+  interruptible_sleep "$SLEEP_SECONDS"
 done
 
 log "=== Agent loop finished ==="
