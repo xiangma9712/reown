@@ -127,9 +127,12 @@ export function ReviewSubmit({
 
   return (
     <Card>
-      <h3 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+      <h3 className="mb-1 text-lg text-text-heading">
         {t("pr.reviewSubmitTitle")}
       </h3>
+      <p className="mb-3 border-b border-border pb-2 text-sm text-text-secondary">
+        #{matchedPr.number} {matchedPr.title}
+      </p>
 
       {/* Feedback messages */}
       {successMessage && (
@@ -178,7 +181,7 @@ export function ReviewSubmit({
           {t("pr.approve")}
         </Button>
         <Button
-          variant="destructive"
+          variant="ghost"
           disabled={submitting || !comment.trim()}
           onClick={() => {
             clearMessages();

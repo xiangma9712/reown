@@ -5,7 +5,7 @@ test.describe("ReviewSubmit", () => {
     await page.goto(
       "/iframe.html?id=components-reviewsubmit--default&viewMode=story"
     );
-    await page.waitForSelector("text=Approve", { timeout: 10_000 });
+    await page.waitForSelector("text=#42", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "default.png"
     );
@@ -15,7 +15,7 @@ test.describe("ReviewSubmit", () => {
     await page.goto(
       "/iframe.html?id=components-reviewsubmit--no-analysis&viewMode=story"
     );
-    await page.waitForSelector("text=Approve", { timeout: 10_000 });
+    await page.waitForSelector("text=#42", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "no-analysis.png"
     );
