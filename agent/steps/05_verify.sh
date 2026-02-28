@@ -27,11 +27,11 @@ step_verify() {
       (cd "$REPO_ROOT/frontend" && npx playwright test --update-snapshots 2>/dev/null) || true
     fi
 
-    git add -A
+    git_add_safe
     if ! git commit -m "fix: apply formatting for #$TASK_ISSUE" 2>/dev/null; then
       # Hook failed after formatting — bypass to avoid blocking
       log "WARN: Formatter commit failed (pre-commit hook). Bypassing hook."
-      git add -A
+      git_add_safe
       git commit --no-verify -m "fix: apply formatting for #$TASK_ISSUE" 2>/dev/null || true
     fi
   fi
@@ -98,7 +98,7 @@ step_verify() {
   cd "$REPO_ROOT"
   if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
     log "WARN: Working tree not clean after checks. Committing remaining changes..."
-    git add -A
+    git_add_safe
     if ! git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null; then
       # Pre-commit hook failed — run formatters and retry
       log "WARN: Commit failed (pre-commit hook). Re-running formatters..."
@@ -107,7 +107,7 @@ step_verify() {
         (cd "$REPO_ROOT/frontend" && npx prettier --write src/ 2>/dev/null) || true
         (cd "$REPO_ROOT/frontend" && npx eslint --fix src/ 2>/dev/null) || true
       fi
-      git add -A
+      git_add_safe
       if ! git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null; then
         # Hook still fails — bypass hook to avoid blocking pipeline
         log "WARN: Commit still failing. Bypassing pre-commit hook."
