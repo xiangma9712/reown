@@ -137,7 +137,7 @@ export function ReviewSubmit({
         </div>
       )}
       {errorMessage && (
-        <div className="mb-3 rounded bg-red-100 px-3 py-2 text-sm text-red-800 dark:bg-red-900/30 dark:text-red-300">
+        <div className="mb-3 rounded border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger">
           {errorMessage}
         </div>
       )}

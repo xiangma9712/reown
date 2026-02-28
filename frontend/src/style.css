@@ -20,6 +20,8 @@
   --color-success: #15803d;
   --color-success-bg: #f0fdf4;
   --color-success-border: #86efac;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fca5a5;
   --color-btn-secondary: #e5e7eb;
   --color-btn-secondary-hover: #d1d5db;
   --color-bg-hint: #f3f4f6;
@@ -59,6 +61,8 @@ html.dark {
   --color-success: #4ade80;
   --color-success-bg: rgba(22, 163, 74, 0.15);
   --color-success-border: rgba(22, 163, 74, 0.4);
+  --color-danger-bg: rgba(220, 38, 38, 0.15);
+  --color-danger-border: rgba(220, 38, 38, 0.4);
   --color-btn-secondary: #374151;
   --color-btn-secondary-hover: #4b5563;
   --color-bg-hint: #1f2937;
