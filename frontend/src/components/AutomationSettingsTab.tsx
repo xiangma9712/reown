@@ -136,6 +136,8 @@ export function AutomationSettingsTab() {
   const handleAddPattern = useCallback(() => {
     const trimmed = newPattern.trim();
     if (!trimmed) return;
+    if (riskConfig.sensitive_patterns.some((sp) => sp.pattern === trimmed))
+      return;
     setRiskConfig((prev) => ({
       ...prev,
       sensitive_patterns: [
@@ -145,7 +147,7 @@ export function AutomationSettingsTab() {
     }));
     setNewPattern("");
     setNewScore(15);
-  }, [newPattern, newScore]);
+  }, [newPattern, newScore, riskConfig.sensitive_patterns]);
 
   const handleRemovePattern = useCallback((index: number) => {
     setRiskConfig((prev) => ({
@@ -572,7 +574,12 @@ export function AutomationSettingsTab() {
                   variant="secondary"
                   size="sm"
                   onClick={handleAddPattern}
-                  disabled={!newPattern.trim()}
+                  disabled={
+                    !newPattern.trim() ||
+                    riskConfig.sensitive_patterns.some(
+                      (sp) => sp.pattern === newPattern.trim()
+                    )
+                  }
                 >
                   {t("automation.addPattern")}
                 </Button>
