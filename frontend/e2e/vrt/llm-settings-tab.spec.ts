@@ -23,4 +23,36 @@ test.describe("LlmSettingsTab", () => {
       "with-api-key-stored.png"
     );
   });
+
+  test("test success", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-llmsettingstab--test-success&viewMode=story"
+    );
+    await page.waitForSelector("text=LLM設定", { timeout: 10_000 });
+    // 接続テストボタンをクリック
+    await page.getByRole("button", { name: "接続テスト" }).click();
+    // 成功メッセージを待つ
+    await page.waitForSelector("text=接続テストに成功しました", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "test-success.png"
+    );
+  });
+
+  test("test error", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-llmsettingstab--test-error&viewMode=story"
+    );
+    await page.waitForSelector("text=LLM設定", { timeout: 10_000 });
+    // 接続テストボタンをクリック
+    await page.getByRole("button", { name: "接続テスト" }).click();
+    // エラーメッセージを待つ
+    await page.waitForSelector("text=接続テストに失敗しました", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "test-error.png"
+    );
+  });
 });

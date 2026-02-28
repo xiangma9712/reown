@@ -1,10 +1,49 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "./Card";
 import { Input } from "./Input";
 import { Button } from "./Button";
 import { invoke } from "../invoke";
 import type { LlmConfig } from "../types";
+
+function EyeIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
+      <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+      <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
+      <path d="m2 2 20 20" />
+    </svg>
+  );
+}
 
 export function LlmSettingsTab() {
   const { t } = useTranslation();
@@ -137,64 +176,64 @@ export function LlmSettingsTab() {
         {t("llmSettings.title")}
       </h2>
 
-      <Card>
-        <div className="space-y-4">
-          <Input
-            label={t("llmSettings.endpoint")}
-            value={endpoint}
-            onChange={(e) => setEndpoint(e.target.value)}
-            placeholder="https://api.anthropic.com"
-          />
+      <div className="space-y-4">
+        <Input
+          label={t("llmSettings.endpoint")}
+          value={endpoint}
+          onChange={(e) => setEndpoint(e.target.value)}
+          placeholder="https://api.anthropic.com"
+        />
 
-          <Input
-            label={t("llmSettings.model")}
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            placeholder="claude-sonnet-4-5-20250929"
-          />
+        <Input
+          label={t("llmSettings.model")}
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          placeholder="claude-sonnet-4-5-20250929"
+        />
 
-          <div>
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Input
-                  label={t("llmSettings.apiKey")}
-                  type={showApiKey ? "text" : "password"}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={
-                    apiKeyStored
-                      ? t("llmSettings.apiKeyStoredPlaceholder")
-                      : t("llmSettings.apiKeyPlaceholder")
-                  }
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="md"
-                onClick={() => setShowApiKey((v) => !v)}
-                className="mb-0"
-              >
-                {showApiKey
-                  ? t("llmSettings.hideApiKey")
-                  : t("llmSettings.showApiKey")}
-              </Button>
+        <div>
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Input
+                label={t("llmSettings.apiKey")}
+                type={showApiKey ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={
+                  apiKeyStored
+                    ? t("llmSettings.apiKeyStoredPlaceholder")
+                    : t("llmSettings.apiKeyPlaceholder")
+                }
+              />
             </div>
-            {apiKeyStored && (
-              <div className="mt-1 flex items-center gap-2">
-                <span className="text-[0.75rem] text-success">
-                  {t("llmSettings.apiKeyStored")}
-                </span>
-                <button
-                  onClick={handleDeleteApiKey}
-                  className="cursor-pointer border-none bg-transparent text-[0.75rem] text-danger hover:underline"
-                >
-                  {t("llmSettings.deleteApiKey")}
-                </button>
-              </div>
-            )}
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setShowApiKey((v) => !v)}
+              aria-label={
+                showApiKey
+                  ? t("llmSettings.hideApiKey")
+                  : t("llmSettings.showApiKey")
+              }
+            >
+              {showApiKey ? <EyeOffIcon /> : <EyeIcon />}
+            </Button>
           </div>
+          {apiKeyStored && (
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-[0.75rem] text-success">
+                {t("llmSettings.apiKeyStored")}
+              </span>
+              <button
+                onClick={handleDeleteApiKey}
+                className="cursor-pointer border-none bg-transparent text-[0.75rem] text-danger hover:underline"
+              >
+                {t("llmSettings.deleteApiKey")}
+              </button>
+            </div>
+          )}
         </div>
-      </Card>
+      </div>
 
       {message && (
         <div

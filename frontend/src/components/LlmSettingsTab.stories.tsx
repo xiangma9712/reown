@@ -42,3 +42,42 @@ export const WithApiKeyStored: Story = {
     },
   ],
 };
+
+/** 接続テスト成功 */
+export const TestSuccess: Story = {
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        load_llm_config: () => ({
+          ...fixtures.llmConfig,
+          llm_api_key_stored: false,
+        }),
+        test_llm_connection: () =>
+          new Promise((resolve) => setTimeout(resolve, 500)),
+      });
+      return <Story />;
+    },
+  ],
+};
+
+/** 接続テスト失敗 */
+export const TestError: Story = {
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        load_llm_config: () => ({
+          ...fixtures.llmConfig,
+          llm_api_key_stored: false,
+        }),
+        test_llm_connection: () =>
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Connection refused: ECONNREFUSED")),
+              500
+            )
+          ),
+      });
+      return <Story />;
+    },
+  ],
+};
