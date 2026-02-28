@@ -6,6 +6,7 @@ import type { TodoItem, TodoKind } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { Card } from "./Card";
+import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
 import { WorktreeList } from "./WorktreeList";
 
@@ -235,9 +236,7 @@ export function TodoTab({ onNavigateToBranch }: TodoTabProps) {
             <p className="p-2 text-[0.9rem] text-accent">{successMessage}</p>
           )}
           {!loading && !error && todos.length === 0 && (
-            <p className="p-2 text-[0.9rem] italic text-text-secondary">
-              {t("todo.empty")}
-            </p>
+            <EmptyState message={t("todo.empty")} />
           )}
           {groups.map((group) => {
             const isCollapsed = collapsedGroups.has(group.module);

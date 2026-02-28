@@ -14,6 +14,7 @@ import type {
 import { Badge } from "./Badge";
 import { BranchSelector } from "./BranchSelector";
 import { Card } from "./Card";
+import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
 import { DiffViewer } from "./DiffViewer";
 import { FileListPanel } from "./FileListPanel";
@@ -310,9 +311,7 @@ export function ReviewTab({
       {!selectedBranch && (
         <>
           <Card>
-            <p className="p-4 text-center text-text-secondary">
-              {t("review.noBranch")}
-            </p>
+            <EmptyState message={t("review.noBranch")} />
           </Card>
           <ReviewHistoryPanel records={reviewHistory} />
         </>
@@ -321,9 +320,7 @@ export function ReviewTab({
       {/* Main branch selected */}
       {selectedBranch === "main" && (
         <Card>
-          <p className="p-4 text-center text-text-secondary">
-            {t("review.mainBranch")}
-          </p>
+          <EmptyState message={t("review.mainBranch")} />
         </Card>
       )}
 
@@ -430,9 +427,7 @@ export function ReviewTab({
           {/* No PR message */}
           {!matchedPr && !loading && !error && diffs.length > 0 && (
             <Card>
-              <p className="p-2 text-center text-sm text-text-secondary">
-                {t("review.noPr")}
-              </p>
+              <EmptyState message={t("review.noPr")} />
             </Card>
           )}
 
@@ -467,9 +462,7 @@ export function ReviewTab({
             >
               {prDiffsLoading && <Loading />}
               {!prDiffsLoading && !selectedPrDiff && (
-                <p className="p-4 text-[0.9rem] italic text-text-secondary">
-                  {t("review.selectFile")}
-                </p>
+                <EmptyState message={t("review.selectFile")} />
               )}
               {selectedPrDiff && <DiffViewer diff={selectedPrDiff} />}
             </FileListPanel>
@@ -493,9 +486,7 @@ export function ReviewTab({
             >
               {loading && <Loading />}
               {!loading && !selectedDiff && (
-                <p className="p-4 text-[0.9rem] italic text-text-secondary">
-                  {t("review.selectFile")}
-                </p>
+                <EmptyState message={t("review.selectFile")} />
               )}
               {selectedDiff && <DiffViewer diff={selectedDiff} />}
             </FileListPanel>

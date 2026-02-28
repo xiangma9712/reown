@@ -8,6 +8,7 @@ import type {
 } from "../types";
 import { Card } from "./Card";
 import { Button } from "./Button";
+import { EmptyState } from "./EmptyState";
 import { RiskBadge } from "./RiskBadge";
 import { AutoMergeBadge } from "./AutoMergeBadge";
 import { Loading } from "./Loading";
@@ -96,9 +97,7 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
             </p>
           )}
           {candidates.length === 0 && outcomes.length === 0 && (
-            <p className="text-[0.85rem] text-text-secondary">
-              {t("automationPanel.description")}
-            </p>
+            <EmptyState message={t("automationPanel.description")} />
           )}
           <Button onClick={handleEvaluate} variant="primary">
             {t("pr.autoApproveRun")}
