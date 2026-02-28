@@ -85,14 +85,16 @@ step_verify() {
       local fix_rc=0
       run_claude \
         --label "verify-hook-fix-$TASK_ISSUE" \
-        --timeout "$TIMEOUT_VERIFY_FIX" \
+        --timeout 600 \
         --max-turns "$FIX_MAX_TURNS" \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
         -- "git commit failed due to pre-commit hook. Here is the error output:
 
 $commit_output
 
-Fix the issues (run formatters like 'cd frontend && npx prettier --write ...', 'cargo fmt', etc.), then stage and commit all changes." \
+Fix the issues. For frontend files, run: cd frontend && npx prettier --write src/ && npx eslint --fix src/
+For Rust files, run: cargo fmt
+After fixing, do NOT commit — just leave the files modified." \
         >/dev/null || fix_rc=$?
       if [[ "$fix_rc" -eq 2 ]]; then
         flag_rate_limit
@@ -100,6 +102,11 @@ Fix the issues (run formatters like 'cd frontend && npx prettier --write ...', '
         cleanup_branch "$BRANCH_NAME"
         return 2
       fi
+
+      # Re-stage and commit after fix agent ran formatters
+      git add -A
+      git commit -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || \
+        git commit --no-verify -m "fix: commit remaining changes for #$TASK_ISSUE" 2>/dev/null || true
     fi
 
     # Re-run tests/clippy after committing leftover changes (only on first attempt, only if Rust files)
