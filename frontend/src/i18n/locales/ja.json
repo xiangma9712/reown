@@ -240,7 +240,18 @@
     "repoLabel": "リポジトリ: {{owner}}/{{repo}}",
     "saveSuccess": "オートメーション設定を保存しました",
     "saveError": "オートメーション設定の保存に失敗しました: {{message}}",
-    "loadError": "オートメーション設定の読み込みに失敗しました: {{message}}"
+    "loadError": "オートメーション設定の読み込みに失敗しました: {{message}}",
+    "riskCustomization": "リスクカスタマイズ",
+    "riskCustomizationDescription": "カテゴリ別の重みとリスクレベル閾値を設定します。",
+    "categoryWeights": "カテゴリ別リスク重み",
+    "categoryWeightsDescription": "変更カテゴリごとのリスク重み係数を調整します（0.0 〜 3.0）。",
+    "riskThresholds": "リスクレベル閾値",
+    "riskThresholdsDescription": "Low / Medium / High のリスクレベル境界スコアを設定します。",
+    "thresholdLowMax": "Low 上限",
+    "thresholdMediumMax": "Medium 上限",
+    "thresholdLowRange": "Low: 0 〜 {{max}}",
+    "thresholdMediumRange": "Medium: {{min}} 〜 {{max}}",
+    "thresholdHighRange": "High: {{min}} 〜"
   },
   "automationPanel": {
     "title": "オートメーション実行",

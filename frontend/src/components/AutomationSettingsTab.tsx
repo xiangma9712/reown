@@ -7,9 +7,32 @@ import { useRepository } from "../RepositoryContext";
 import type {
   AutomationConfig,
   AutoApproveMaxRisk,
+  ChangeCategory,
   ConfigMergeMethod,
   RiskConfig,
 } from "../types";
+
+const ALL_CATEGORIES: ChangeCategory[] = [
+  "Logic",
+  "Test",
+  "Config",
+  "CI",
+  "Documentation",
+  "Dependency",
+  "Refactor",
+  "Other",
+];
+
+const CATEGORY_LABEL_KEYS: Record<ChangeCategory, string> = {
+  Logic: "pr.categoryLogic",
+  Test: "pr.categoryTest",
+  Config: "pr.categoryConfig",
+  CI: "pr.categoryCI",
+  Documentation: "pr.categoryDocumentation",
+  Dependency: "pr.categoryDependency",
+  Refactor: "pr.categoryRefactor",
+  Other: "pr.categoryOther",
+};
 
 export function AutomationSettingsTab() {
   const { t } = useTranslation();
@@ -240,6 +263,148 @@ export function AutomationSettingsTab() {
           )}
         </div>
       </Card>
+
+      {enabled && (
+        <Card>
+          <div className="space-y-5">
+            <div>
+              <h3 className="text-[0.95rem] font-bold text-text-heading">
+                {t("automation.riskCustomization")}
+              </h3>
+              <p className="mt-1 text-[0.8rem] text-text-muted">
+                {t("automation.riskCustomizationDescription")}
+              </p>
+            </div>
+
+            {/* Category Weights */}
+            <div className="space-y-3">
+              <div>
+                <p className="text-[0.85rem] font-medium text-text-secondary">
+                  {t("automation.categoryWeights")}
+                </p>
+                <p className="mt-0.5 text-[0.75rem] text-text-muted">
+                  {t("automation.categoryWeightsDescription")}
+                </p>
+              </div>
+              <div className="space-y-2">
+                {ALL_CATEGORIES.map((cat) => {
+                  const weight = riskConfig.category_weights[cat] ?? 1.0;
+                  return (
+                    <div key={cat} className="flex items-center gap-3">
+                      <span className="w-28 shrink-0 text-[0.8rem] text-text-primary">
+                        {t(CATEGORY_LABEL_KEYS[cat])}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="3"
+                        step="0.1"
+                        value={weight}
+                        onChange={(e) => {
+                          setRiskConfig((prev) => ({
+                            ...prev,
+                            category_weights: {
+                              ...prev.category_weights,
+                              [cat]: parseFloat(e.target.value),
+                            },
+                          }));
+                        }}
+                        className="h-1.5 flex-1 cursor-pointer accent-accent"
+                      />
+                      <span className="w-10 text-right text-[0.8rem] tabular-nums text-text-muted">
+                        {weight.toFixed(1)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Risk Thresholds */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div>
+                <p className="text-[0.85rem] font-medium text-text-secondary">
+                  {t("automation.riskThresholds")}
+                </p>
+                <p className="mt-0.5 text-[0.75rem] text-text-muted">
+                  {t("automation.riskThresholdsDescription")}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2">
+                  <span className="text-[0.8rem] text-text-primary">
+                    {t("automation.thresholdLowMax")}
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    max={riskConfig.risk_thresholds.medium_max - 1}
+                    value={riskConfig.risk_thresholds.low_max}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) {
+                        setRiskConfig((prev) => ({
+                          ...prev,
+                          risk_thresholds: {
+                            ...prev.risk_thresholds,
+                            low_max: val,
+                          },
+                        }));
+                      }
+                    }}
+                    className="w-20 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary"
+                  />
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <span className="text-[0.8rem] text-text-primary">
+                    {t("automation.thresholdMediumMax")}
+                  </span>
+                  <input
+                    type="number"
+                    min={riskConfig.risk_thresholds.low_max + 1}
+                    max="100"
+                    value={riskConfig.risk_thresholds.medium_max}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) {
+                        setRiskConfig((prev) => ({
+                          ...prev,
+                          risk_thresholds: {
+                            ...prev.risk_thresholds,
+                            medium_max: val,
+                          },
+                        }));
+                      }
+                    }}
+                    className="w-20 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary"
+                  />
+                </label>
+              </div>
+
+              <div className="flex flex-wrap gap-3 text-[0.75rem] text-text-muted">
+                <span>
+                  {t("automation.thresholdLowRange", {
+                    max: riskConfig.risk_thresholds.low_max,
+                  })}
+                </span>
+                <span>
+                  {t("automation.thresholdMediumRange", {
+                    min: riskConfig.risk_thresholds.low_max + 1,
+                    max: riskConfig.risk_thresholds.medium_max,
+                  })}
+                </span>
+                <span>
+                  {t("automation.thresholdHighRange", {
+                    min: riskConfig.risk_thresholds.medium_max + 1,
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {message && (
         <div

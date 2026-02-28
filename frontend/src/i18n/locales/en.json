@@ -240,7 +240,18 @@
     "repoLabel": "Repository: {{owner}}/{{repo}}",
     "saveSuccess": "Automation settings saved successfully",
     "saveError": "Failed to save automation settings: {{message}}",
-    "loadError": "Failed to load automation settings: {{message}}"
+    "loadError": "Failed to load automation settings: {{message}}",
+    "riskCustomization": "Risk Customization",
+    "riskCustomizationDescription": "Customize category weights and risk level thresholds.",
+    "categoryWeights": "Category Weights",
+    "categoryWeightsDescription": "Adjust the risk weight multiplier for each change category (0.0 – 3.0).",
+    "riskThresholds": "Risk Level Thresholds",
+    "riskThresholdsDescription": "Set score boundaries for Low / Medium / High risk levels.",
+    "thresholdLowMax": "Low upper bound",
+    "thresholdMediumMax": "Medium upper bound",
+    "thresholdLowRange": "Low: 0 – {{max}}",
+    "thresholdMediumRange": "Medium: {{min}} – {{max}}",
+    "thresholdHighRange": "High: {{min}} –"
   },
   "automationPanel": {
     "title": "Automation",

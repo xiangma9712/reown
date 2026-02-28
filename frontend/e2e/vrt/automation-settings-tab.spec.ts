@@ -17,7 +17,7 @@ test.describe("AutomationSettingsTab", () => {
     await page.goto(
       "/iframe.html?id=components-automationsettingstab--enabled&viewMode=story"
     );
-    await page.waitForSelector("text=自動Approveする最大リスクレベル", {
+    await page.waitForSelector("text=リスクカスタマイズ", {
       timeout: 10_000,
     });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
