@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { PrInfo, CommitInfo, RiskLevel } from "../types";
 import { invoke } from "../invoke";
 import { Badge } from "./Badge";
+import { Button } from "./Button";
 import { Card } from "./Card";
 import { CommitListPanel } from "./CommitListPanel";
 import { EmptyState } from "./EmptyState";
@@ -147,17 +148,15 @@ export function PrListView({
 
       <div className="mb-4 flex gap-1">
         {filters.map((f) => (
-          <button
+          <Button
             key={f.key}
-            className={`rounded-t px-3 py-1.5 text-sm transition-colors ${
-              filter === f.key
-                ? "border-b-2 border-b-accent bg-accent/10 font-bold text-accent"
-                : "border-b-2 border-b-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary"
-            }`}
+            variant="filter"
+            size="sm"
+            active={filter === f.key}
             onClick={() => setFilter(f.key)}
           >
             {f.label}
-          </button>
+          </Button>
         ))}
       </div>
 

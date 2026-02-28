@@ -196,13 +196,11 @@ export function TodoTab({ onNavigateToBranch }: TodoTabProps) {
         {todos.length > 0 && (
           <div className="mb-3 flex items-center gap-2">
             {(["all", "Todo", "Fixme"] as const).map((f) => (
-              <button
+              <Button
                 key={f}
-                className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-                  filter === f
-                    ? "bg-accent text-bg-primary"
-                    : "bg-bg-hover text-text-secondary hover:text-text-primary"
-                }`}
+                variant="filter"
+                size="sm"
+                active={filter === f}
                 onClick={() => setFilter(f)}
               >
                 {f === "all"
@@ -210,7 +208,7 @@ export function TodoTab({ onNavigateToBranch }: TodoTabProps) {
                   : f === "Todo"
                     ? t("todo.filterTodo")
                     : t("todo.filterFixme")}
-              </button>
+              </Button>
             ))}
             <div className="ml-auto">
               <button

@@ -74,30 +74,26 @@ function CategoryFilter({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <button
-          className={`rounded px-3 py-1 text-xs transition-colors ${
-            isAllActive
-              ? "bg-accent text-bg-primary font-bold shadow-sm ring-1 ring-accent"
-              : "bg-bg-hover text-text-secondary font-medium hover:text-text-primary"
-          }`}
+        <Button
+          variant="filter"
+          size="sm"
+          active={isAllActive}
           onClick={onShowAll}
         >
           {t("pr.categoryFilterAll")}
-        </button>
+        </Button>
         {presentCategories.map((category) => {
           const isActive = activeCategories.has(category);
           return (
-            <button
+            <Button
               key={category}
-              className={`rounded px-3 py-1 text-xs transition-colors ${
-                isActive
-                  ? "bg-accent text-bg-primary font-bold shadow-sm ring-1 ring-accent"
-                  : "bg-bg-hover text-text-secondary font-medium hover:text-text-primary"
-              }`}
+              variant="filter"
+              size="sm"
+              active={isActive}
               onClick={() => onToggle(category)}
             >
               {categoryIcons[category]} {t(categoryLabelKeys[category])}
-            </button>
+            </Button>
           );
         })}
       </div>
