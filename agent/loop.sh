@@ -141,6 +141,7 @@ while true; do
   ISSUES_FILE="" TASK_ISSUE="" TASK_TITLE="" TASK_DESC="" TASK_ID=""
   BRANCH_NAME="" PR_URL=""
   _is_review_iteration=false
+  _skip_is_benign=false  # set by steps to mark non-failure skips (e.g. already-implemented)
 
   # ── Hot-reload: re-source lib & steps every iteration ────────────────────
   for f in "$SCRIPT_DIR"/lib/*.sh; do safe_source "$f"; done
@@ -197,11 +198,16 @@ while true; do
       break
       ;;
     skip)
-      record_iteration_result "fail" "$_failed_step" "${TASK_ISSUE:-}"
-      # If a self-review iteration failed, exit — can't self-heal
-      if [[ "$_is_review_iteration" == "true" ]]; then
-        log "FATAL: self-review タスク自体が失敗しました。ループを終了します。"
-        break
+      if [[ "$_skip_is_benign" == "true" ]]; then
+        # Benign skip (e.g. issue already implemented) — not a failure
+        record_iteration_result "success" "skip_benign" "${TASK_ISSUE:-}"
+      else
+        record_iteration_result "fail" "$_failed_step" "${TASK_ISSUE:-}"
+        # If a self-review iteration failed, exit — can't self-heal
+        if [[ "$_is_review_iteration" == "true" ]]; then
+          log "FATAL: self-review タスク自体が失敗しました。ループを終了します。"
+          break
+        fi
       fi
       continue
       ;;
