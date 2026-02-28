@@ -150,7 +150,7 @@ export function PrListView({
         {filters.map((f) => (
           <Button
             key={f.key}
-            variant="filter"
+            variant="tab"
             size="sm"
             active={filter === f.key}
             onClick={() => setFilter(f.key)}

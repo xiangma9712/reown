@@ -81,3 +81,20 @@ export const FilterActive: Story = {
     children: "フィルター（選択中）",
   },
 };
+
+export const Tab: Story = {
+  args: {
+    variant: "tab",
+    size: "sm",
+    children: "タブ",
+  },
+};
+
+export const TabActive: Story = {
+  args: {
+    variant: "tab",
+    size: "sm",
+    active: true,
+    children: "タブ（選択中）",
+  },
+};

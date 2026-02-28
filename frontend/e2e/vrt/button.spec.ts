@@ -73,4 +73,22 @@ test.describe("Button", () => {
       "filter-active.png"
     );
   });
+
+  test("tab variant", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--tab&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "tab.png"
+    );
+  });
+
+  test("tab active variant", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--tab-active&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "tab-active.png"
+    );
+  });
 });
