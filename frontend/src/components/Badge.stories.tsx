@@ -39,3 +39,22 @@ export const Info: Story = {
 export const Purple: Story = {
   args: { variant: "purple", children: "Merged" },
 };
+
+/** aria-label 付き（role="img" が自動付与される） */
+export const WithAriaLabel: Story = {
+  args: {
+    variant: "success",
+    children: "A",
+    "aria-label": "追加",
+  },
+};
+
+/** status-badge クラス付き（border-left スタイル） */
+export const StatusBadge: Story = {
+  args: {
+    variant: "warning",
+    children: "M",
+    className: "status-badge",
+    "aria-label": "変更",
+  },
+};
