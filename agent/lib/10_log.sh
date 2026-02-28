@@ -69,11 +69,18 @@ init_iter_log_dir() {
 
 # cleanup_old_iter_logs — remove iteration logs older than AGENT_LOG_KEEP.
 # Keeps the most recent N directories by name sort.
+# Skips cleanup entirely when recent failures exist (logs needed for self-review).
 cleanup_old_iter_logs() {
   local base="${AGENT_LOG_BASE:-/tmp/claude/agent-logs}"
   local keep="${AGENT_LOG_KEEP:-5}"
 
   [[ -d "$base" ]] || return 0
+
+  # Preserve all logs when recent failures exist — self-review needs them
+  if [[ -f "$ITERATION_RESULTS_FILE" ]] \
+     && tail -n 5 "$ITERATION_RESULTS_FILE" 2>/dev/null | grep -q ' fail '; then
+    return 0
+  fi
 
   local -a dirs=()
   local d

@@ -93,3 +93,14 @@ has_rust_changes() {
   fi
   echo "$changed_files" | grep -qE '\.(rs|toml|lock)$|^Cargo\.'
 }
+
+# Check if any frontend-related files changed on the current branch vs main
+has_frontend_changes() {
+  cd "$REPO_ROOT"
+  local changed_files
+  changed_files=$(git diff --name-only main...HEAD 2>/dev/null || git diff --name-only main 2>/dev/null || echo "")
+  if [[ -z "$changed_files" ]]; then
+    return 1
+  fi
+  echo "$changed_files" | grep -qE '^frontend/'
+}
