@@ -1,14 +1,16 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }
 
-export function Card({ children, className = "" }: Props) {
+export function Card({ children, className = "", style }: Props) {
   return (
     <section
       className={`rounded-lg border border-border bg-bg-secondary p-6 ${className}`}
+      style={style}
     >
       {children}
     </section>

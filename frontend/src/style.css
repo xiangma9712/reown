@@ -140,6 +140,16 @@ html.dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
   animation: sidebar-fade-in 200ms ease-in-out;
 }
 
+/* ── Status badge: enhanced accessibility for file status (M/A/D/R) ── */
+
+.status-badge {
+  min-width: 1.5em;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  border-left: 3px solid currentColor;
+}
+
 /* ── Diff line backgrounds (need rgba, not in theme tokens) ──── */
 
 .diff-line-addition {
