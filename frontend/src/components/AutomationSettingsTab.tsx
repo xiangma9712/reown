@@ -456,6 +456,54 @@ export function AutomationSettingsTab() {
               </div>
             </div>
 
+            {/* Missing Test Penalty */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div>
+                <p className="text-[0.85rem] font-medium text-text-secondary">
+                  {t("automation.missingTestPenalty")}
+                </p>
+                <p className="mt-0.5 text-[0.75rem] text-text-muted">
+                  {t("automation.missingTestPenaltyDescription")}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="1"
+                  value={riskConfig.missing_test_penalty}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) {
+                      setRiskConfig((prev) => ({
+                        ...prev,
+                        missing_test_penalty: val,
+                      }));
+                    }
+                  }}
+                  className="h-1.5 flex-1 cursor-pointer accent-accent"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
+                  value={riskConfig.missing_test_penalty}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) {
+                      setRiskConfig((prev) => ({
+                        ...prev,
+                        missing_test_penalty: Math.max(0, Math.min(val, 50)),
+                      }));
+                    }
+                  }}
+                  className="w-16 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary"
+                />
+              </div>
+            </div>
+
             {/* Sensitive Path Patterns */}
             <div className="space-y-3 border-t border-border pt-4">
               <div>

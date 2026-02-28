@@ -147,7 +147,7 @@ export const EnabledWithSensitivePatterns: Story = {
             ],
             file_count_thresholds: [],
             line_count_thresholds: [],
-            missing_test_penalty: 15,
+            missing_test_penalty: 30,
             risk_thresholds: { low_max: 25, medium_max: 55 },
           },
         }),

@@ -252,6 +252,8 @@
     "thresholdLowRange": "Low: 0 – {{max}}",
     "thresholdMediumRange": "Medium: {{min}} – {{max}}",
     "thresholdHighRange": "High: {{min}} –",
+    "missingTestPenalty": "Missing Test Penalty",
+    "missingTestPenaltyDescription": "Penalty score added when logic changes lack corresponding test updates (0 = disabled).",
     "sensitivePatterns": "Sensitive Path Patterns",
     "sensitivePatternsDescription": "File paths matching these patterns will have their risk score increased.",
     "sensitivePattern": "Pattern",
