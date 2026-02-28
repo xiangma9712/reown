@@ -97,7 +97,8 @@ After fixing, run the appropriate formatters:
 You MUST commit and push your changes. This is critical — without this step the fix has no effect.
 
 \`\`\`bash
-git add -A
+git add -u
+git add -- \$(git ls-files --others --exclude-standard | grep -E '\\.(rs|toml|lock|ts|tsx|js|jsx|json|css|html|md|sh|yaml|yml|svg|png)\$')
 git commit -m \"fix: address CI failures for #$TASK_ISSUE\"
 git push
 \`\`\`
@@ -124,7 +125,7 @@ Run \`git status\` to confirm the working tree is clean and all changes have bee
       cd "$REPO_ROOT"
       if ! git diff --quiet || ! git diff --cached --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
         log "WARN: CI fix agent left uncommitted changes. Committing..."
-        git add -A
+        git_add_safe
         if ! git commit -m "fix: address CI failures for #$TASK_ISSUE" 2>/dev/null; then
           # Pre-commit hook failed — run formatters and retry
           log "WARN: Commit failed (pre-commit hook). Re-running formatters..."
@@ -133,7 +134,7 @@ Run \`git status\` to confirm the working tree is clean and all changes have bee
             (cd "$REPO_ROOT/frontend" && npx prettier --write src/ 2>/dev/null) || true
             (cd "$REPO_ROOT/frontend" && npx eslint --fix src/ 2>/dev/null) || true
           fi
-          git add -A
+          git_add_safe
           git commit -m "fix: address CI failures for #$TASK_ISSUE" 2>/dev/null || true
         fi
       fi

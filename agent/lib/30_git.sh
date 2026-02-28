@@ -97,6 +97,22 @@ has_rust_changes() {
   echo "$changed_files" | grep -qE '\.(rs|toml|lock)$|^Cargo\.'
 }
 
+# Stage changes safely — tracked modifications + untracked source files only.
+# Avoids `git add -A` which can include temp files, logs, and other artifacts.
+git_add_safe() {
+  cd "$REPO_ROOT"
+  # Stage all tracked file modifications and deletions
+  git add -u
+  # Selectively stage untracked files matching known source patterns
+  local untracked
+  untracked=$(git ls-files --others --exclude-standard)
+  if [[ -n "$untracked" ]]; then
+    echo "$untracked" | grep -E '\.(rs|toml|lock|ts|tsx|js|jsx|json|css|html|md|sh|yaml|yml|svg|png)$' | while IFS= read -r f; do
+      git add -- "$f"
+    done
+  fi
+}
+
 # Check if any frontend-related files changed on the current branch vs main
 has_frontend_changes() {
   cd "$REPO_ROOT"
