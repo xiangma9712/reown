@@ -17,7 +17,7 @@ const variantClasses: Record<Variant, string> = {
   destructive:
     "bg-transparent text-danger border border-danger font-semibold hover:bg-danger hover:text-white",
   ghost:
-    "bg-transparent text-text-primary border border-border hover:bg-bg-hover hover:border-border-hover",
+    "bg-transparent text-text-primary border border-transparent hover:bg-bg-hover hover:border-border-hover",
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -43,7 +43,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || loading}
-        className={`cursor-pointer rounded transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+        className={`cursor-pointer rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
         {...props}
       >
         {children}
