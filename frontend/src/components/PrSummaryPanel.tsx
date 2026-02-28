@@ -11,15 +11,9 @@ interface PrSummaryPanelProps {
   owner: string;
   repo: string;
   prNumber: number;
-  token: string;
 }
 
-export function PrSummaryPanel({
-  owner,
-  repo,
-  prNumber,
-  token,
-}: PrSummaryPanelProps) {
+export function PrSummaryPanel({ owner, repo, prNumber }: PrSummaryPanelProps) {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<PrSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -83,7 +77,6 @@ export function PrSummaryPanel({
         owner: owner.trim(),
         repo: repo.trim(),
         prNumber,
-        token: token.trim(),
       });
       if (cancelledRef.current) return;
       setSummary(result);
@@ -101,7 +94,7 @@ export function PrSummaryPanel({
         unlistenRef.current = null;
       }
     }
-  }, [owner, repo, prNumber, token]);
+  }, [owner, repo, prNumber]);
 
   return (
     <Card className="space-y-3">

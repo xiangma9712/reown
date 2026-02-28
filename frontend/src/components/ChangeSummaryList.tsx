@@ -117,7 +117,6 @@ interface ChangeSummaryListProps {
   owner: string;
   repo: string;
   prNumber: number;
-  token: string;
   diffs: CategorizedFileDiff[];
   autoGenerate?: boolean;
 }
@@ -206,7 +205,6 @@ export function ChangeSummaryList({
   owner,
   repo,
   prNumber,
-  token,
   diffs,
   autoGenerate = false,
 }: ChangeSummaryListProps) {
@@ -285,7 +283,6 @@ export function ChangeSummaryList({
       owner: owner.trim(),
       repo: repo.trim(),
       prNumber,
-      token: token.trim(),
     };
 
     try {
@@ -306,7 +303,7 @@ export function ChangeSummaryList({
         unlistenRef.current = null;
       }
     }
-  }, [owner, repo, prNumber, token]);
+  }, [owner, repo, prNumber]);
 
   // Auto-generate summary when LLM is configured
   useEffect(() => {

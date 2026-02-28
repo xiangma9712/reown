@@ -59,16 +59,9 @@ export function App() {
     (async () => {
       setLoadingPrs(true);
       try {
-        const config = await invoke("load_app_config");
-        if (cancelled) return;
-        if (!config.github_token) {
-          setPrs([]);
-          return;
-        }
         const result = await invoke("list_pull_requests", {
           owner,
           repo,
-          token: config.github_token,
         });
         if (!cancelled) {
           setPrs(result);

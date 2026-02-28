@@ -8,7 +8,6 @@ const meta = {
   args: {
     owner: "example",
     repo: "reown",
-    token: "ghp_dummy",
   },
   decorators: [
     (Story) => {

@@ -10,7 +10,6 @@ const meta = {
     owner: "example",
     repo: "reown",
     prNumber: 42,
-    token: "ghp_dummy",
   },
   decorators: [
     (Story) => {
