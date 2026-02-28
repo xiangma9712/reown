@@ -131,7 +131,7 @@ pub async fn execute_auto_approve(
                     owner,
                     repo,
                     candidate.pr_number,
-                    &[config.auto_approve_label.clone()],
+                    std::slice::from_ref(&config.auto_approve_label),
                     token,
                 )
                 .await

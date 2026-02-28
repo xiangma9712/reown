@@ -13,6 +13,6 @@ pub use review_pattern::{
     ReviewPatternStats, ReviewSuggestion, RiskStat, SuggestionSeverity,
 };
 pub use risk::{
-    analyze_pr_risk, analyze_pr_risk_with_config, AnalysisResult, AnalysisSummary, FileAnalysis,
-    RiskLevel, RiskScore,
+    analyze_pr_risk, analyze_pr_risk_with_config, AnalysisResult, AnalysisSummary, CategoryCount,
+    FileAnalysis, RiskLevel, RiskScore,
 };

@@ -770,6 +770,7 @@ mod tests {
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
                 risk_config: RiskConfig::default(),
+                auto_approve_label: default_auto_approve_label(),
             },
         );
 
@@ -795,6 +796,7 @@ mod tests {
             enable_auto_merge: true,
             auto_merge_method: MergeMethod::Rebase,
             risk_config: RiskConfig::default(),
+            auto_approve_label: default_auto_approve_label(),
         };
         config.set_repo_automation_config("owner/repo".to_string(), repo_config.clone());
 
@@ -856,6 +858,7 @@ mod tests {
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
                 risk_config: RiskConfig::default(),
+                auto_approve_label: default_auto_approve_label(),
             },
         );
         repo_automation.insert(
@@ -866,6 +869,7 @@ mod tests {
                 enable_auto_merge: false,
                 auto_merge_method: MergeMethod::Merge,
                 risk_config: RiskConfig::default(),
+                auto_approve_label: default_auto_approve_label(),
             },
         );
 
@@ -898,6 +902,7 @@ mod tests {
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Rebase,
                 risk_config: RiskConfig::default(),
+                auto_approve_label: default_auto_approve_label(),
             },
         );
 
@@ -928,6 +933,7 @@ mod tests {
                 enable_auto_merge: true,
                 auto_merge_method: MergeMethod::Squash,
                 risk_config: RiskConfig::default(),
+                auto_approve_label: default_auto_approve_label(),
             },
         );
 
@@ -1052,6 +1058,7 @@ mod tests {
                         medium_max: 60,
                     },
                 },
+                auto_approve_label: default_auto_approve_label(),
             },
             ..Default::default()
         };
