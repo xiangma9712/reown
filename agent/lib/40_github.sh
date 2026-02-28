@@ -140,7 +140,7 @@ $SRC_FILES
 
   if [[ "$propose_rc" -eq 2 ]]; then
     flag_rate_limit
-    return 1
+    return 2
   fi
 
   PROPOSE_JSON=$(echo "$PROPOSE_OUTPUT" | sed -n '/^```json$/,/^```$/{ /^```/d; p; }')
