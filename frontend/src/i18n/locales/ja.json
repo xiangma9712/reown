@@ -251,7 +251,16 @@
     "thresholdMediumMax": "Medium 上限",
     "thresholdLowRange": "Low: 0 〜 {{max}}",
     "thresholdMediumRange": "Medium: {{min}} 〜 {{max}}",
-    "thresholdHighRange": "High: {{min}} 〜"
+    "thresholdHighRange": "High: {{min}} 〜",
+    "sensitivePatterns": "センシティブパスパターン",
+    "sensitivePatternsDescription": "これらのパターンにマッチするファイルパスはリスクスコアが加算されます。",
+    "sensitivePattern": "パターン",
+    "sensitiveScore": "スコア",
+    "addPattern": "追加",
+    "addPatternPlaceholder": "パターンを入力（例: auth, migration）",
+    "removePattern": "削除",
+    "resetToDefaults": "デフォルトに戻す",
+    "confirmResetToDefaults": "リスクカスタマイズ設定をデフォルトに戻しますか？現在の設定は失われます。"
   },
   "automationPanel": {
     "title": "オートメーション実行",

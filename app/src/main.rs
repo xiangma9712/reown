@@ -496,6 +496,12 @@ fn save_risk_config(
     reown::config::save_config(&config_path, &config).map_err(AppError::storage)
 }
 
+/// デフォルトのRiskConfigを返す（「デフォルトに戻す」機能用）
+#[tauri::command]
+fn load_default_risk_config() -> reown::config::RiskConfig {
+    reown::config::RiskConfig::default()
+}
+
 // ── Onboarding commands ──────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -792,6 +798,7 @@ fn main() {
             load_automation_config,
             load_risk_config,
             save_risk_config,
+            load_default_risk_config,
             evaluate_auto_approve_candidates,
             run_auto_approve,
             run_auto_approve_with_merge,

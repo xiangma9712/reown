@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "./Card";
 import { Button } from "./Button";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { invoke } from "../invoke";
 import { useRepository } from "../RepositoryContext";
 import type {
@@ -58,6 +59,9 @@ export function AutomationSettingsTab() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [newPattern, setNewPattern] = useState("");
+  const [newScore, setNewScore] = useState(15);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const loadConfig = useCallback(async () => {
     try {
@@ -128,6 +132,43 @@ export function AutomationSettingsTab() {
     setMessage(null);
     loadConfig();
   }, [loadConfig]);
+
+  const handleAddPattern = useCallback(() => {
+    const trimmed = newPattern.trim();
+    if (!trimmed) return;
+    setRiskConfig((prev) => ({
+      ...prev,
+      sensitive_patterns: [
+        ...prev.sensitive_patterns,
+        { pattern: trimmed, score: newScore },
+      ],
+    }));
+    setNewPattern("");
+    setNewScore(15);
+  }, [newPattern, newScore]);
+
+  const handleRemovePattern = useCallback((index: number) => {
+    setRiskConfig((prev) => ({
+      ...prev,
+      sensitive_patterns: prev.sensitive_patterns.filter((_, i) => i !== index),
+    }));
+  }, []);
+
+  const handleResetToDefaults = useCallback(async () => {
+    try {
+      const defaultConfig = await invoke("load_default_risk_config");
+      setRiskConfig(defaultConfig);
+      setShowResetConfirm(false);
+    } catch (e) {
+      setMessage({
+        type: "error",
+        text: t("automation.loadError", {
+          message: e instanceof Error ? e.message : String(e),
+        }),
+      });
+      setShowResetConfirm(false);
+    }
+  }, [t]);
 
   if (loading) {
     return (
@@ -402,6 +443,90 @@ export function AutomationSettingsTab() {
                 </span>
               </div>
             </div>
+
+            {/* Sensitive Path Patterns */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <div>
+                <p className="text-[0.85rem] font-medium text-text-secondary">
+                  {t("automation.sensitivePatterns")}
+                </p>
+                <p className="mt-0.5 text-[0.75rem] text-text-muted">
+                  {t("automation.sensitivePatternsDescription")}
+                </p>
+              </div>
+
+              {riskConfig.sensitive_patterns.length > 0 && (
+                <div className="space-y-1">
+                  {riskConfig.sensitive_patterns.map((sp, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 rounded border border-border bg-bg-primary px-3 py-1.5"
+                    >
+                      <span className="flex-1 text-[0.8rem] text-text-primary">
+                        {sp.pattern}
+                      </span>
+                      <span className="text-[0.75rem] tabular-nums text-text-muted">
+                        {t("automation.sensitiveScore")}: {sp.score}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePattern(index)}
+                        className="ml-1 text-[0.75rem] text-danger hover:text-danger/80"
+                        aria-label={`${t("automation.removePattern")} ${sp.pattern}`}
+                      >
+                        {t("automation.removePattern")}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newPattern}
+                  onChange={(e) => setNewPattern(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddPattern();
+                    }
+                  }}
+                  placeholder={t("automation.addPatternPlaceholder")}
+                  className="flex-1 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary placeholder:text-text-muted/50"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={newScore}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) setNewScore(val);
+                  }}
+                  className="w-16 rounded border border-border bg-bg-primary px-2 py-1 text-[0.8rem] text-text-primary"
+                  aria-label={t("automation.sensitiveScore")}
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleAddPattern}
+                  disabled={!newPattern.trim()}
+                >
+                  {t("automation.addPattern")}
+                </Button>
+              </div>
+            </div>
+
+            {/* Reset to Defaults */}
+            <div className="border-t border-border pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setShowResetConfirm(true)}
+              >
+                {t("automation.resetToDefaults")}
+              </Button>
+            </div>
           </div>
         </Card>
       )}
@@ -426,6 +551,15 @@ export function AutomationSettingsTab() {
           {t("automation.reset")}
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={showResetConfirm}
+        message={t("automation.confirmResetToDefaults")}
+        onConfirm={handleResetToDefaults}
+        onCancel={() => setShowResetConfirm(false)}
+        confirmLabel={t("automation.resetToDefaults")}
+        confirmVariant="destructive"
+      />
     </div>
   );
 }

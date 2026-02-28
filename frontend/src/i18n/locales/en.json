@@ -251,7 +251,16 @@
     "thresholdMediumMax": "Medium upper bound",
     "thresholdLowRange": "Low: 0 – {{max}}",
     "thresholdMediumRange": "Medium: {{min}} – {{max}}",
-    "thresholdHighRange": "High: {{min}} –"
+    "thresholdHighRange": "High: {{min}} –",
+    "sensitivePatterns": "Sensitive Path Patterns",
+    "sensitivePatternsDescription": "File paths matching these patterns will have their risk score increased.",
+    "sensitivePattern": "Pattern",
+    "sensitiveScore": "Score",
+    "addPattern": "Add",
+    "addPatternPlaceholder": "Enter pattern (e.g. auth, migration)",
+    "removePattern": "Remove",
+    "resetToDefaults": "Reset to Defaults",
+    "confirmResetToDefaults": "Reset risk customization to defaults? Current settings will be lost."
   },
   "automationPanel": {
     "title": "Automation",
