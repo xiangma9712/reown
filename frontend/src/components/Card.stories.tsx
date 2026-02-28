@@ -39,6 +39,21 @@ export const PanelDefault: Story = {
   ),
 };
 
+/** Card に style prop を適用 */
+export const CardWithStyle: Story = {
+  args: {
+    children: (
+      <div>
+        <h2 className="mb-2 text-lg text-text-heading">スタイル付き Card</h2>
+        <p className="text-sm text-text-secondary">
+          style prop でカスタムスタイルを適用した例です。
+        </p>
+      </div>
+    ),
+    style: { maxWidth: 320, border: "2px solid #6366f1" },
+  },
+};
+
 /** Card + Panel ネスト */
 export const CardWithPanel: Story = {
   args: { children: "placeholder" },

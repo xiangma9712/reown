@@ -19,6 +19,15 @@ test.describe("Card", () => {
     );
   });
 
+  test("card with style", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-card--card-with-style&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "card-with-style.png"
+    );
+  });
+
   test("card with panel", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=components-card--card-with-panel&viewMode=story"
