@@ -29,6 +29,14 @@ should_create_review_issue() {
   [[ "$count" -ge 2 ]]
 }
 
+# Reset failure history (e.g. after successful self-review).
+reset_failure_history() {
+  if [[ -f "$ITERATION_RESULTS_FILE" ]]; then
+    log "Resetting failure history after successful self-review."
+    : > "$ITERATION_RESULTS_FILE"
+  fi
+}
+
 # True if 4+ failures in the last 5 iterations — exit loop.
 should_exit_on_failure_rate() {
   local count
