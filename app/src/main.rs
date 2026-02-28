@@ -1641,6 +1641,7 @@ mod tests {
             auto_approve_max_risk: reown::config::AutoApproveMaxRisk::Medium,
             enable_auto_merge: true,
             auto_merge_method: reown::config::MergeMethod::Squash,
+            ..Default::default()
         };
         config.automation = automation_config.clone();
         reown::config::save_config(&config_path, &config).unwrap();
@@ -1703,6 +1704,7 @@ mod tests {
             auto_approve_max_risk: reown::config::AutoApproveMaxRisk::Low,
             enable_auto_merge: false,
             auto_merge_method: reown::config::MergeMethod::Merge,
+            ..Default::default()
         };
         reown::config::save_config(&config_path, &config).unwrap();
 

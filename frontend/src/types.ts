@@ -98,9 +98,17 @@ export interface RiskThresholds {
   medium_max: number;
 }
 
+export interface SensitivePattern {
+  pattern: string;
+  score: number;
+}
+
 export interface RiskConfig {
   category_weights: Partial<Record<ChangeCategory, number>>;
-  sensitive_paths: string[];
+  sensitive_patterns: SensitivePattern[];
+  file_count_thresholds: [number, number][];
+  line_count_thresholds: [number, number][];
+  missing_test_penalty: number;
   risk_thresholds: RiskThresholds;
 }
 

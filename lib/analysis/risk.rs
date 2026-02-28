@@ -1,3 +1,4 @@
+use crate::config::RiskConfig;
 use crate::git::diff::FileDiff;
 use crate::github::PrInfo;
 
@@ -78,6 +79,15 @@ pub struct CategoryCount {
 
 /// PrInfo と Vec<FileDiff> からリスク分析を行う
 pub fn analyze_pr_risk(pr: &PrInfo, diffs: &[FileDiff]) -> AnalysisResult {
+    analyze_pr_risk_with_config(pr, diffs, &RiskConfig::default())
+}
+
+/// RiskConfig を指定してリスク分析を行う
+pub fn analyze_pr_risk_with_config(
+    pr: &PrInfo,
+    diffs: &[FileDiff],
+    config: &RiskConfig,
+) -> AnalysisResult {
     let file_analyses: Vec<FileAnalysis> = diffs
         .iter()
         .map(|diff| {
@@ -92,7 +102,7 @@ pub fn analyze_pr_risk(pr: &PrInfo, diffs: &[FileDiff]) -> AnalysisResult {
         .collect();
 
     let summary = build_summary(&file_analyses);
-    let risk = calculate_risk_score(diffs, &file_analyses, &summary);
+    let risk = calculate_risk_score(diffs, &file_analyses, &summary, config);
 
     AnalysisResult {
         pr_number: pr.number,
@@ -139,17 +149,13 @@ fn calculate_risk_score(
     diffs: &[FileDiff],
     files: &[FileAnalysis],
     summary: &AnalysisSummary,
+    config: &RiskConfig,
 ) -> RiskScore {
     let mut factors = Vec::new();
     let mut total_score: u32 = 0;
 
-    // 要素1: 変更ファイル数
-    let file_count_score = match summary.total_files {
-        0..=3 => 0,
-        4..=10 => 10,
-        11..=20 => 20,
-        _ => 30,
-    };
+    // 要素1: 変更ファイル数（閾値テーブルから判定）
+    let file_count_score = lookup_threshold(&config.file_count_thresholds, summary.total_files);
     if file_count_score > 0 {
         factors.push(RiskFactor {
             name: "file_count".to_string(),
@@ -159,14 +165,9 @@ fn calculate_risk_score(
         total_score += file_count_score;
     }
 
-    // 要素2: 変更行数
+    // 要素2: 変更行数（閾値テーブルから判定）
     let total_lines = summary.total_additions + summary.total_deletions;
-    let line_count_score = match total_lines {
-        0..=50 => 0,
-        51..=200 => 10,
-        201..=500 => 20,
-        _ => 30,
-    };
+    let line_count_score = lookup_threshold(&config.line_count_thresholds, total_lines);
     if line_count_score > 0 {
         factors.push(RiskFactor {
             name: "line_count".to_string(),
@@ -180,7 +181,7 @@ fn calculate_risk_score(
     }
 
     // 要素3: センシティブなパスパターン
-    let sensitive_score = calculate_sensitive_path_score(diffs);
+    let sensitive_score = calculate_sensitive_path_score(diffs, &config.sensitive_patterns);
     if sensitive_score > 0 {
         factors.push(RiskFactor {
             name: "sensitive_paths".to_string(),
@@ -192,22 +193,23 @@ fn calculate_risk_score(
 
     // 要素4: テストファイルの有無
     let logic_changes = files.iter().any(|f| f.category == ChangeCategory::Logic);
-    if logic_changes && !summary.has_test_changes {
-        let test_score = 15;
+    if logic_changes && !summary.has_test_changes && config.missing_test_penalty > 0 {
         factors.push(RiskFactor {
             name: "no_tests".to_string(),
-            score: test_score,
+            score: config.missing_test_penalty,
             description: "ロジック変更がありますが、テストの追加・更新がありません".to_string(),
         });
-        total_score += test_score;
+        total_score += config.missing_test_penalty;
     }
 
     total_score = total_score.min(100);
 
-    let level = match total_score {
-        0..=25 => RiskLevel::Low,
-        26..=55 => RiskLevel::Medium,
-        _ => RiskLevel::High,
+    let level = if total_score <= config.risk_thresholds.low_max {
+        RiskLevel::Low
+    } else if total_score <= config.risk_thresholds.medium_max {
+        RiskLevel::Medium
+    } else {
+        RiskLevel::High
     };
 
     RiskScore {
@@ -217,49 +219,31 @@ fn calculate_risk_score(
     }
 }
 
-/// センシティブなパスパターンによるスコア加算
-fn calculate_sensitive_path_score(diffs: &[FileDiff]) -> u32 {
+/// 閾値テーブルからスコアを取得する。
+/// テーブルは (上限値, スコア) の昇順リスト。値が上限以下の最初のエントリのスコアを返す。
+fn lookup_threshold(thresholds: &[(usize, u32)], value: usize) -> u32 {
+    for &(max, score) in thresholds {
+        if value <= max {
+            return score;
+        }
+    }
+    // テーブルが空の場合は0を返す
+    0
+}
+
+/// センシティブなパスパターンによるスコア加算（設定ベース）
+fn calculate_sensitive_path_score(
+    diffs: &[FileDiff],
+    patterns: &[crate::config::SensitivePattern],
+) -> u32 {
     let mut score = 0u32;
 
     for diff in diffs {
         let path = effective_path(diff).to_lowercase();
-
-        // 認証・セキュリティ関連
-        if path.contains("auth")
-            || path.contains("security")
-            || path.contains("permission")
-            || path.contains("credential")
-            || path.contains("token")
-            || path.contains("secret")
-            || path.contains("encrypt")
-            || path.contains("password")
-        {
-            score = score.max(25);
-        }
-
-        // DB・マイグレーション関連
-        if path.contains("migration")
-            || path.contains("schema")
-            || path.contains("database")
-            || path.contains("db/")
-        {
-            score = score.max(20);
-        }
-
-        // API 関連
-        if path.contains("api/") || path.contains("endpoint") || path.contains("route") {
-            score = score.max(15);
-        }
-
-        // インフラ・デプロイ関連
-        if path.contains("deploy")
-            || path.contains("infra")
-            || path.contains("terraform")
-            || path.contains("docker")
-            || path.contains("k8s")
-            || path.contains("kubernetes")
-        {
-            score = score.max(20);
+        for sp in patterns {
+            if path.contains(&sp.pattern) {
+                score = score.max(sp.score);
+            }
         }
     }
 
