@@ -309,3 +309,13 @@ export interface ReviewSuggestion {
   severity: SuggestionSeverity;
   source: string;
 }
+
+// ── Device Flow Types ────────────────────────────────────────────────────────
+
+export interface DeviceFlowResponse {
+  device_code: string;
+  user_code: string;
+  verification_uri: string;
+  interval: number;
+  expires_in: number;
+}

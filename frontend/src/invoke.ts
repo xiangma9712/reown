@@ -23,6 +23,7 @@ import type {
   ReviewSuggestion,
   AutoApproveCandidate,
   AutoApproveWithMergeResult,
+  DeviceFlowResponse,
 } from "./types";
 
 export type Commands = {
@@ -169,8 +170,17 @@ export type Commands = {
     args: { record: ReviewRecord };
     ret: void;
   };
+  save_github_token: { args: { token: string }; ret: void };
   get_github_auth_status: { args?: Record<string, unknown>; ret: boolean };
   github_logout: { args?: Record<string, unknown>; ret: void };
+  start_github_device_flow: {
+    args?: Record<string, unknown>;
+    ret: DeviceFlowResponse;
+  };
+  poll_github_device_flow: {
+    args: { deviceCode: string; interval: number };
+    ret: void;
+  };
   check_onboarding_needed: { args?: Record<string, unknown>; ret: boolean };
   complete_onboarding: { args?: Record<string, unknown>; ret: void };
 };

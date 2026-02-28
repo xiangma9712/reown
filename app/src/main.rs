@@ -637,6 +637,11 @@ async fn poll_github_device_flow(device_code: String, interval: u64) -> Result<(
 }
 
 #[tauri::command]
+fn save_github_token(token: String) -> Result<(), AppError> {
+    reown::config::save_github_token(&token).map_err(AppError::storage)
+}
+
+#[tauri::command]
 fn get_github_auth_status() -> Result<bool, AppError> {
     Ok(reown::config::load_github_token().is_ok())
 }
@@ -797,6 +802,7 @@ fn main() {
             add_review_record,
             check_onboarding_needed,
             complete_onboarding,
+            save_github_token,
             start_github_device_flow,
             poll_github_device_flow,
             get_github_auth_status,
