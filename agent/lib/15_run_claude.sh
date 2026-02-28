@@ -126,9 +126,17 @@ run_claude() {
     return 2
   fi
 
+  # Auth error check (claude outputs 401/auth errors to stdout, not stderr)
+  if [[ "$rc" -ne 0 ]] && grep -qi "authentication_error\|401\|OAuth token has expired" "$stdout_log" 2>/dev/null; then
+    log "FATAL: run_claude [$label] authentication failed — token may have expired"
+    log "  stdout: $(head -3 "$stdout_log" 2>/dev/null || echo '(empty)')"
+    return 2  # treat as rate limit (break loop)
+  fi
+
   if [[ "$rc" -ne 0 ]]; then
     log "WARN: run_claude [$label] exited with code $rc"
     log "  stderr (last 5 lines): $(tail -5 "$stderr_log" 2>/dev/null || echo '(empty)')"
+    log "  stdout (last 5 lines): $(tail -5 "$stdout_log" 2>/dev/null || echo '(empty)')"
   else
     log "run_claude [$label] completed successfully"
   fi

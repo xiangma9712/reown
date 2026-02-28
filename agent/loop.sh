@@ -83,6 +83,8 @@ for f in "$SCRIPT_DIR"/lib/*.sh; do safe_source "$f"; done
 # Clear rate limit flag from previous runs
 rm -f "$RATE_LIMIT_FLAG"
 mkdir -p /tmp/claude
+# Clear stale iteration logs from previous runs (avoids name collision with iter-001, etc.)
+rm -rf "${AGENT_LOG_BASE:-/tmp/claude/agent-logs}"
 mkdir -p "${AGENT_LOG_BASE:-/tmp/claude/agent-logs}"
 
 # Ensure required labels exist on the repo
