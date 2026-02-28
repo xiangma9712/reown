@@ -67,6 +67,7 @@ _Automatically posted by agent/loop.sh_" 2>/dev/null || true
       gh issue close "$TASK_ISSUE" 2>/dev/null || true
       log "Issue #$TASK_ISSUE closed as already implemented (pre-check)."
       cleanup_branch "$BRANCH_NAME"
+      _skip_is_benign=true
       interruptible_sleep "$SLEEP_SECONDS"
       return 1
     fi
@@ -142,6 +143,7 @@ _Automatically posted by agent/loop.sh_" 2>/dev/null || true
     gh issue close "$TASK_ISSUE" 2>/dev/null || true
     log "Issue #$TASK_ISSUE closed as already implemented."
     cleanup_branch "$BRANCH_NAME"
+    _skip_is_benign=true
     interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi

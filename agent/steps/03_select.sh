@@ -25,6 +25,7 @@ step_select() {
     log "No planned tasks available. Proposing new issues from INTENT.md gap analysis..."
     if ! propose_issues; then return 2; fi
     if is_rate_limited; then return 2; fi
+    _skip_is_benign=true
     interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi

@@ -131,13 +131,14 @@ $SRC_FILES
 \`\`\`"
 
   log "Running propose agent to identify unrealized features..."
-  PROPOSE_STDERR="/tmp/claude/agent-propose-stderr.log"
-  PROPOSE_OUTPUT=$(claude -p "$PROPOSE_INPUT" \
+  local propose_rc=0
+  PROPOSE_OUTPUT=$(run_claude \
+    --label "propose" \
+    --timeout "$TIMEOUT_TRIAGE" \
     --max-turns "$PROPOSE_MAX_TURNS" \
-    --max-budget-usd "$MAX_BUDGET_USD" \
-    2>"$PROPOSE_STDERR") || true
+    -- "$PROPOSE_INPUT") || propose_rc=$?
 
-  if check_rate_limit "$PROPOSE_STDERR"; then
+  if [[ "$propose_rc" -eq 2 ]]; then
     flag_rate_limit
     return 1
   fi
