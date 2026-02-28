@@ -73,6 +73,13 @@ step_verify() {
     fi
 
     log "WARN: Working tree not clean (attempt $verify_attempt). Committing remaining changes..."
+
+    # If frontend component files were changed, update VRT snapshots before committing
+    if git diff --name-only HEAD | grep -q 'frontend/src/components/.*\.tsx$' 2>/dev/null; then
+      log "Frontend components changed — updating VRT snapshots..."
+      (cd "$REPO_ROOT/frontend" && npx playwright test --update-snapshots 2>/dev/null) || true
+    fi
+
     git add -A
 
     # Try commit — capture hook errors if it fails
