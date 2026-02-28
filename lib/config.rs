@@ -40,15 +40,33 @@ impl Default for RiskThresholds {
     }
 }
 
+/// センシティブパスパターンとそのスコア
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SensitivePattern {
+    /// マッチするキーワード（小文字パスに対して contains で判定）
+    pub pattern: String,
+    /// マッチ時に付与するスコア
+    pub score: u32,
+}
+
 /// リスク設定（スコアリングルールのカスタマイズ）
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RiskConfig {
     /// カテゴリ別リスク重み
     #[serde(default = "default_category_weights")]
     pub category_weights: HashMap<ChangeCategory, f64>,
-    /// sensitive path パターンのリスト
-    #[serde(default = "default_sensitive_paths")]
-    pub sensitive_paths: Vec<String>,
+    /// sensitive path パターンのリスト（パターンとスコアのペア）
+    #[serde(default = "default_sensitive_patterns")]
+    pub sensitive_patterns: Vec<SensitivePattern>,
+    /// 変更ファイル数の閾値とスコア（ファイル数上限, スコア）のリスト（昇順）
+    #[serde(default = "default_file_count_thresholds")]
+    pub file_count_thresholds: Vec<(usize, u32)>,
+    /// 変更行数の閾値とスコア（行数上限, スコア）のリスト（昇順）
+    #[serde(default = "default_line_count_thresholds")]
+    pub line_count_thresholds: Vec<(usize, u32)>,
+    /// ロジック変更があるのにテストがない場合のペナルティスコア
+    #[serde(default = "default_missing_test_penalty")]
+    pub missing_test_penalty: u32,
     /// Low/Medium/High の境界スコア
     #[serde(default)]
     pub risk_thresholds: RiskThresholds,
@@ -67,37 +85,121 @@ fn default_category_weights() -> HashMap<ChangeCategory, f64> {
     weights
 }
 
-fn default_sensitive_paths() -> Vec<String> {
+fn default_sensitive_patterns() -> Vec<SensitivePattern> {
     vec![
-        "auth".to_string(),
-        "security".to_string(),
-        "permission".to_string(),
-        "credential".to_string(),
-        "token".to_string(),
-        "secret".to_string(),
-        "encrypt".to_string(),
-        "password".to_string(),
-        "migration".to_string(),
-        "schema".to_string(),
-        "database".to_string(),
-        "db/".to_string(),
-        "api/".to_string(),
-        "endpoint".to_string(),
-        "route".to_string(),
-        "deploy".to_string(),
-        "infra".to_string(),
-        "terraform".to_string(),
-        "docker".to_string(),
-        "k8s".to_string(),
-        "kubernetes".to_string(),
+        // 認証・セキュリティ関連 (score: 25)
+        SensitivePattern {
+            pattern: "auth".to_string(),
+            score: 25,
+        },
+        SensitivePattern {
+            pattern: "security".to_string(),
+            score: 25,
+        },
+        SensitivePattern {
+            pattern: "permission".to_string(),
+            score: 25,
+        },
+        SensitivePattern {
+            pattern: "credential".to_string(),
+            score: 25,
+        },
+        SensitivePattern {
+            pattern: "token".to_string(),
+            score: 25,
+        },
+        SensitivePattern {
+            pattern: "secret".to_string(),
+            score: 25,
+        },
+        SensitivePattern {
+            pattern: "encrypt".to_string(),
+            score: 25,
+        },
+        SensitivePattern {
+            pattern: "password".to_string(),
+            score: 25,
+        },
+        // DB・マイグレーション関連 (score: 20)
+        SensitivePattern {
+            pattern: "migration".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "schema".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "database".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "db/".to_string(),
+            score: 20,
+        },
+        // API関連 (score: 15)
+        SensitivePattern {
+            pattern: "api/".to_string(),
+            score: 15,
+        },
+        SensitivePattern {
+            pattern: "endpoint".to_string(),
+            score: 15,
+        },
+        SensitivePattern {
+            pattern: "route".to_string(),
+            score: 15,
+        },
+        // インフラ・デプロイ関連 (score: 20)
+        SensitivePattern {
+            pattern: "deploy".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "infra".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "terraform".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "docker".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "k8s".to_string(),
+            score: 20,
+        },
+        SensitivePattern {
+            pattern: "kubernetes".to_string(),
+            score: 20,
+        },
     ]
+}
+
+fn default_file_count_thresholds() -> Vec<(usize, u32)> {
+    // (ファイル数上限, スコア) — 昇順。最後のエントリを超えるとそのスコアが適用される
+    vec![(3, 0), (10, 10), (20, 20), (usize::MAX, 30)]
+}
+
+fn default_line_count_thresholds() -> Vec<(usize, u32)> {
+    // (行数上限, スコア) — 昇順
+    vec![(50, 0), (200, 10), (500, 20), (usize::MAX, 30)]
+}
+
+fn default_missing_test_penalty() -> u32 {
+    15
 }
 
 impl Default for RiskConfig {
     fn default() -> Self {
         Self {
             category_weights: default_category_weights(),
-            sensitive_paths: default_sensitive_paths(),
+            sensitive_patterns: default_sensitive_patterns(),
+            file_count_thresholds: default_file_count_thresholds(),
+            line_count_thresholds: default_line_count_thresholds(),
+            missing_test_penalty: default_missing_test_penalty(),
             risk_thresholds: RiskThresholds::default(),
         }
     }
@@ -809,9 +911,15 @@ mod tests {
                 .get(&crate::analysis::ChangeCategory::Test),
             Some(&1.0)
         );
-        assert!(!config.sensitive_paths.is_empty());
-        assert!(config.sensitive_paths.contains(&"auth".to_string()));
-        assert!(config.sensitive_paths.contains(&"migration".to_string()));
+        assert!(!config.sensitive_patterns.is_empty());
+        assert!(config
+            .sensitive_patterns
+            .iter()
+            .any(|p| p.pattern == "auth"));
+        assert!(config
+            .sensitive_patterns
+            .iter()
+            .any(|p| p.pattern == "migration"));
         assert_eq!(config.risk_thresholds, RiskThresholds::default());
     }
 
@@ -826,7 +934,7 @@ mod tests {
         let config = RiskConfig::default();
         let json = serde_json::to_value(&config).unwrap();
         assert!(json["category_weights"].is_object());
-        assert!(json["sensitive_paths"].is_array());
+        assert!(json["sensitive_patterns"].is_array());
         assert_eq!(json["risk_thresholds"]["low_max"], 25);
         assert_eq!(json["risk_thresholds"]["medium_max"], 55);
     }
@@ -875,7 +983,13 @@ mod tests {
                 auto_merge_method: MergeMethod::Merge,
                 risk_config: RiskConfig {
                     category_weights,
-                    sensitive_paths: vec!["custom/path".to_string()],
+                    sensitive_patterns: vec![SensitivePattern {
+                        pattern: "custom/path".to_string(),
+                        score: 30,
+                    }],
+                    file_count_thresholds: default_file_count_thresholds(),
+                    line_count_thresholds: default_line_count_thresholds(),
+                    missing_test_penalty: 15,
                     risk_thresholds: RiskThresholds {
                         low_max: 30,
                         medium_max: 60,
@@ -896,9 +1010,10 @@ mod tests {
                 .get(&crate::analysis::ChangeCategory::Logic),
             Some(&2.0)
         );
+        assert_eq!(loaded.automation.risk_config.sensitive_patterns.len(), 1);
         assert_eq!(
-            loaded.automation.risk_config.sensitive_paths,
-            vec!["custom/path".to_string()]
+            loaded.automation.risk_config.sensitive_patterns[0].pattern,
+            "custom/path"
         );
         assert_eq!(loaded.automation.risk_config.risk_thresholds.low_max, 30);
         assert_eq!(loaded.automation.risk_config.risk_thresholds.medium_max, 60);

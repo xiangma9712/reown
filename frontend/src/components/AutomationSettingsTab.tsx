@@ -20,7 +20,10 @@ export function AutomationSettingsTab() {
   const [loading, setLoading] = useState(true);
   const [riskConfig, setRiskConfig] = useState<RiskConfig>({
     category_weights: {},
-    sensitive_paths: [],
+    sensitive_patterns: [],
+    file_count_thresholds: [],
+    line_count_thresholds: [],
+    missing_test_penalty: 15,
     risk_thresholds: { low_max: 25, medium_max: 55 },
   });
   const [saving, setSaving] = useState(false);
