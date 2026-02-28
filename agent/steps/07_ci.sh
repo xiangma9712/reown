@@ -77,14 +77,10 @@ step_ci() {
 
 ## Step 1: Read the CI logs
 
-1. Get the latest failed run ID:
-   \`\`\`
-   gh run list --branch $BRANCH_NAME --limit 1 --json databaseId,status,conclusion --jq '.[0]'
-   \`\`\`
-2. View the failed logs:
-   \`\`\`
-   gh run view <run-id> --log-failed
-   \`\`\`
+Run this command to get the failed CI logs:
+\`\`\`
+gh run view \$(gh run list --branch $BRANCH_NAME --limit 1 --json databaseId --jq '.[0].databaseId') --log-failed
+\`\`\`
 
 ## Step 2: Fix the issues
 
