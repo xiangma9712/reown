@@ -37,7 +37,7 @@ $NEW_ISSUES
     local ROADMAP_OUTPUT rc=0
     ROADMAP_OUTPUT=$(run_claude \
       --label "triage-roadmap" \
-      --timeout "$TIMEOUT_VERIFY_FIX" \
+      --timeout "$TIMEOUT_TRIAGE" \
       --max-turns "$ROADMAP_MAX_TURNS" \
       -- "$ROADMAP_INPUT") || rc=$?
     if [[ "$rc" -eq 2 ]]; then flag_rate_limit; return 2; fi
@@ -155,7 +155,7 @@ $INTENT_FOR_SPLIT
       local split_rc=0
       SPLIT_OUTPUT=$(run_claude \
         --label "triage-split-$S_NUM" \
-        --timeout "$TIMEOUT_VERIFY_FIX" \
+        --timeout "$TIMEOUT_TRIAGE" \
         --max-turns "$ROADMAP_MAX_TURNS" \
         -- "$SPLIT_INPUT") || split_rc=$?
       if [[ "$split_rc" -eq 2 ]]; then flag_rate_limit; break; fi
