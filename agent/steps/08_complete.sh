@@ -4,22 +4,13 @@
 step_complete() {
   log "CI passed. Merging PR..."
 
-  # Attempt squash merge. Separate merge and branch delete to avoid false
-  # failures when auto-delete is enabled on the repo (--delete-branch can
-  # fail if the branch was already removed by GitHub).
+  # Squash merge without --delete-branch to avoid false failures when
+  # GitHub's auto-delete is enabled (the flag races with auto-delete).
+  # Branch cleanup is handled separately below.
   local merge_ok=false
-  if gh pr merge "$PR_URL" --squash --delete-branch 2>/dev/null; then
+  if gh pr merge "$PR_URL" --squash 2>/dev/null; then
     merge_ok=true
     log "PR merged: $PR_URL"
-  else
-    # gh pr merge can exit non-zero even when the merge succeeded (e.g.
-    # branch auto-delete race). Check the actual PR state before giving up.
-    local pr_state
-    pr_state=$(gh pr view "$PR_URL" --json state -q '.state' 2>/dev/null || echo "")
-    if [[ "$pr_state" == "MERGED" ]]; then
-      merge_ok=true
-      log "PR merged (confirmed via API): $PR_URL"
-    fi
   fi
 
   if [[ "$merge_ok" != "true" ]]; then
@@ -29,6 +20,10 @@ step_complete() {
     interruptible_sleep "$SLEEP_SECONDS"
     return 1
   fi
+
+  # Delete remote branch separately (best-effort; may already be gone
+  # if the repo has auto-delete enabled).
+  git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
 
   # Mark issue as done & close
   gh issue edit "$TASK_ISSUE" --add-label "done" --remove-label "doing" --remove-label "planned" 2>/dev/null || true
