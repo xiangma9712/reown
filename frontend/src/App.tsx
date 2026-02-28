@@ -34,6 +34,7 @@ export function App() {
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
   const [prs, setPrs] = useState<PrInfo[]>([]);
   const [loadingPrs, setLoadingPrs] = useState(false);
+  const [navigateToBranch, setNavigateToBranch] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addingRepo, setAddingRepo] = useState(false);
   const [addRepoError, setAddRepoError] = useState<string | null>(null);
@@ -136,6 +137,12 @@ export function App() {
     }
   }, [t]);
 
+  const handleNavigateToBranch = useCallback((branch: string) => {
+    setNavigateToBranch(branch);
+    setActiveTab("review");
+    setSettingsOpen(false);
+  }, []);
+
   const dismissAddRepoError = useCallback(() => {
     setAddRepoError(null);
     clearTimeout(addErrorTimerRef.current);
@@ -179,14 +186,17 @@ export function App() {
         case "r":
           setActiveTab("review");
           setSettingsOpen(false);
+          setNavigateToBranch(null);
           break;
         case "n":
           setActiveTab("next-action");
           setSettingsOpen(false);
+          setNavigateToBranch(null);
           break;
         case "a":
           setActiveTab("automate");
           setSettingsOpen(false);
+          setNavigateToBranch(null);
           break;
         case "s":
           setSettingsOpen((prev) => !prev);
@@ -194,6 +204,7 @@ export function App() {
         case "Tab":
           e.preventDefault();
           setSettingsOpen(false);
+          setNavigateToBranch(null);
           setActiveTab((prev) => {
             const ids = NAV_ITEMS.map((item) => item.id);
             const idx = ids.indexOf(prev);
@@ -243,6 +254,7 @@ export function App() {
           onSelectTab={(id) => {
             setActiveTab(id as TabName);
             setSettingsOpen(false);
+            setNavigateToBranch(null);
           }}
           settingsOpen={settingsOpen}
           onToggleSettings={() => setSettingsOpen((prev) => !prev)}
@@ -255,9 +267,15 @@ export function App() {
           }
         >
           {activeTab === "review" && (
-            <ReviewTab prs={prs} loadingPrs={loadingPrs} />
+            <ReviewTab
+              prs={prs}
+              loadingPrs={loadingPrs}
+              navigateToBranch={navigateToBranch}
+            />
           )}
-          {activeTab === "next-action" && <TodoTab />}
+          {activeTab === "next-action" && (
+            <TodoTab onNavigateToBranch={handleNavigateToBranch} />
+          )}
           {activeTab === "automate" && <AutomationSettingsTab />}
         </Layout>
       </RepositoryProvider>
