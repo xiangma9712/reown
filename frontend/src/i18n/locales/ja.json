@@ -333,6 +333,7 @@
     "stepIndicator": "ステップ {{current}} / {{total}}",
     "step1Title": "リポジトリ選択",
     "step1Description": "レビュー対象のリポジトリを選択してください。",
+    "step1Placeholder": "リポジトリ選択機能は近日実装予定です。",
     "completeTitle": "セットアップ完了！",
     "completeDescription": "reownの設定が完了しました。さっそく使い始めましょう。",
     "completeButton": "はじめる",
