@@ -11,6 +11,16 @@ step_complete() {
   if gh pr merge "$PR_URL" --squash 2>/dev/null; then
     merge_ok=true
     log "PR merged: $PR_URL"
+  else
+    # Fallback: gh pr merge may return non-zero even when the merge
+    # succeeded server-side (e.g. network timeout after server processed
+    # the request). Check the actual PR state before giving up.
+    local pr_state
+    pr_state=$(gh pr view "$PR_URL" --json state --jq '.state' 2>/dev/null || true)
+    if [[ "$pr_state" == "MERGED" ]]; then
+      merge_ok=true
+      log "PR merge command failed but PR is actually merged: $PR_URL"
+    fi
   fi
 
   if [[ "$merge_ok" != "true" ]]; then
