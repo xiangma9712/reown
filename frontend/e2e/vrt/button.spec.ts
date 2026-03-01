@@ -29,12 +29,8 @@ test.describe("Button", () => {
   });
 
   test("ghost variant", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-button--ghost&viewMode=story"
-    );
-    await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "ghost.png"
-    );
+    await page.goto("/iframe.html?id=components-button--ghost&viewMode=story");
+    await expect(page.locator("#storybook-root")).toHaveScreenshot("ghost.png");
   });
 
   test("disabled state", async ({ page }) => {
@@ -57,9 +53,7 @@ test.describe("Button", () => {
   });
 
   test("filter variant", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-button--filter&viewMode=story"
-    );
+    await page.goto("/iframe.html?id=components-button--filter&viewMode=story");
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "filter.png"
     );
@@ -75,12 +69,8 @@ test.describe("Button", () => {
   });
 
   test("tab variant", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-button--tab&viewMode=story"
-    );
-    await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "tab.png"
-    );
+    await page.goto("/iframe.html?id=components-button--tab&viewMode=story");
+    await expect(page.locator("#storybook-root")).toHaveScreenshot("tab.png");
   });
 
   test("tab active variant", async ({ page }) => {
@@ -89,6 +79,42 @@ test.describe("Button", () => {
     );
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "tab-active.png"
+    );
+  });
+
+  test("primary active ignored", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--primary-active-ignored&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "primary-active-ignored.png"
+    );
+  });
+
+  test("secondary active ignored", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--secondary-active-ignored&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "secondary-active-ignored.png"
+    );
+  });
+
+  test("destructive active ignored", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--destructive-active-ignored&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "destructive-active-ignored.png"
+    );
+  });
+
+  test("ghost active ignored", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-button--ghost-active-ignored&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "ghost-active-ignored.png"
     );
   });
 });
