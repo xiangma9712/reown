@@ -1954,7 +1954,7 @@ mod tests {
         assert_eq!(config, reown::config::RiskConfig::default());
 
         // IPC経由でJSON化されることを確認
-        let json = serde_json::to_value(&config).unwrap();
+        let json = serde_json::to_value(&config).expect("RiskConfig should serialize");
         assert!(json["category_weights"].is_object());
         assert!(json["sensitive_patterns"].is_array());
         assert!(json["file_count_thresholds"].is_array());
