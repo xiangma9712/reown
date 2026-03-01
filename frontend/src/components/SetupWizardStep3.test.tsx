@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SetupWizardStep3 } from "./SetupWizardStep3";
@@ -218,8 +218,10 @@ describe("SetupWizardStep3", () => {
 
   it("sends custom endpoint and model in test connection", async () => {
     const user = userEvent.setup();
-    mockInvokeFn.mockResolvedValueOnce(undefined);
-    render(<SetupWizardStep3 {...defaultProps} />);
+    mockInvokeFn.mockResolvedValueOnce(undefined); // test_llm_connection
+    await act(async () => {
+      render(<SetupWizardStep3 {...defaultProps} />);
+    });
 
     const endpointInput = screen.getByDisplayValue("https://api.anthropic.com");
     const modelInput = screen.getByDisplayValue("claude-sonnet-4-5-20250929");
