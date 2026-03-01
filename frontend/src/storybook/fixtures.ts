@@ -545,7 +545,7 @@ const autoApproveCandidates: AutoApproveCandidate[] = [
     factors: [
       {
         name: "file_count",
-        score: 0,
+        score: 2,
         description: "2ファイルが変更されています",
       },
     ],
