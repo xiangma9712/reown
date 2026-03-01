@@ -12,8 +12,10 @@ pub struct AutoApproveCandidate {
     /// リスクレベル
     pub risk_level: RiskLevel,
     /// リスクスコア（0〜100）
+    #[serde(default)]
     pub risk_score: u32,
     /// 変更カテゴリ一覧
+    #[serde(default)]
     pub categories: Vec<ChangeCategory>,
     /// 主要リスク要因の内訳
     #[serde(default)]
