@@ -108,7 +108,7 @@ fn build_approve_comment(candidate: &AutoApproveCandidate) -> String {
         let items: Vec<String> = candidate
             .factors
             .iter()
-            .map(|f| format!("  - {} (+{}) — {}", f.name, f.score, f.description))
+            .map(|f| format!("- **{}** (+{}) — {}", f.name, f.score, f.description))
             .collect();
         format!("\nFactors:\n{}", items.join("\n"))
     };
@@ -499,9 +499,9 @@ mod tests {
         assert!(comment.contains("Risk: Low (score: 15/100)"));
         assert!(comment.contains("Categories: Test, Documentation"));
         assert!(comment.contains("Factors:"));
-        assert!(comment.contains("file_count (+10)"));
+        assert!(comment.contains("**file_count** (+10)"));
         assert!(comment.contains("5ファイルが変更されています"));
-        assert!(comment.contains("line_count (+5)"));
+        assert!(comment.contains("**line_count** (+5)"));
     }
 
     #[test]
@@ -538,7 +538,7 @@ mod tests {
         let comment = build_approve_comment(&candidate);
         assert!(comment.contains("Risk: Medium (score: 40/100)"));
         assert!(comment.contains("Categories: Logic"));
-        assert!(comment.contains("no_tests (+15)"));
+        assert!(comment.contains("**no_tests** (+15)"));
     }
 
     #[test]
