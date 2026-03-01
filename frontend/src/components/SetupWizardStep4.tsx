@@ -3,9 +3,13 @@ import { Button } from "./Button";
 
 interface SetupWizardStep4Props {
   onComplete: () => void;
+  onBack: () => void;
 }
 
-export function SetupWizardStep4({ onComplete }: SetupWizardStep4Props) {
+export function SetupWizardStep4({
+  onComplete,
+  onBack,
+}: SetupWizardStep4Props) {
   const { t } = useTranslation();
 
   return (
@@ -20,7 +24,13 @@ export function SetupWizardStep4({ onComplete }: SetupWizardStep4Props) {
           </p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onBack}
+            className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
+          >
+            {t("onboarding.back")}
+          </button>
           <Button variant="primary" size="lg" onClick={onComplete}>
             {t("onboarding.completeButton")}
           </Button>

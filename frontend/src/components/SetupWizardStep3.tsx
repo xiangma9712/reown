@@ -7,9 +7,14 @@ import { useLlmSettings } from "../hooks/useLlmSettings";
 interface SetupWizardStep3Props {
   onNext: () => void;
   onSkip: () => void;
+  onBack: () => void;
 }
 
-export function SetupWizardStep3({ onNext, onSkip }: SetupWizardStep3Props) {
+export function SetupWizardStep3({
+  onNext,
+  onSkip,
+  onBack,
+}: SetupWizardStep3Props) {
   const { t } = useTranslation();
 
   const {
@@ -118,12 +123,20 @@ export function SetupWizardStep3({ onNext, onSkip }: SetupWizardStep3Props) {
 
         {/* Navigation */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={onSkip}
-            className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
-          >
-            {t("onboarding.skip")}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onBack}
+              className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
+            >
+              {t("onboarding.back")}
+            </button>
+            <button
+              onClick={onSkip}
+              className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
+            >
+              {t("onboarding.skip")}
+            </button>
+          </div>
           {isConfigured ? (
             <Button
               variant="primary"

@@ -15,9 +15,14 @@ type DeviceFlowState =
 interface SetupWizardStep2Props {
   onNext: () => void;
   onSkip: () => void;
+  onBack: () => void;
 }
 
-export function SetupWizardStep2({ onNext, onSkip }: SetupWizardStep2Props) {
+export function SetupWizardStep2({
+  onNext,
+  onSkip,
+  onBack,
+}: SetupWizardStep2Props) {
   const { t } = useTranslation();
 
   // Device Flow state
@@ -249,12 +254,20 @@ export function SetupWizardStep2({ onNext, onSkip }: SetupWizardStep2Props) {
 
         {/* Navigation */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={onSkip}
-            className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
-          >
-            {t("onboarding.skip")}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onBack}
+              className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
+            >
+              {t("onboarding.back")}
+            </button>
+            <button
+              onClick={onSkip}
+              className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
+            >
+              {t("onboarding.skip")}
+            </button>
+          </div>
           {isAuthenticated ? (
             <Button variant="primary" size="md" onClick={onNext}>
               {t("onboarding.next")}
