@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "./Button";
-import { Card } from "./Card";
+import { SetupWizardStep1 } from "./SetupWizardStep1";
+import { SetupWizardStep2 } from "./SetupWizardStep2";
+import { SetupWizardStep3 } from "./SetupWizardStep3";
+import { SetupWizardStep4 } from "./SetupWizardStep4";
 
 const STEPS = ["repository", "github", "llm", "complete"] as const;
 type Step = (typeof STEPS)[number];
@@ -15,7 +17,6 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const currentStep: Step = STEPS[currentIndex];
-  const isComplete = currentStep === "complete";
 
   const handleNext = useCallback(() => {
     if (currentIndex < STEPS.length - 1) {
@@ -23,100 +24,30 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
     }
   }, [currentIndex]);
 
-  const handleBack = useCallback(() => {
-    if (currentIndex > 0) {
-      setCurrentIndex((i) => i - 1);
-    }
-  }, [currentIndex]);
-
-  const stepTitle = (step: Step): string => {
-    switch (step) {
+  const renderStep = () => {
+    switch (currentStep) {
       case "repository":
-        return t("onboarding.step1Title");
+        return <SetupWizardStep1 onNext={handleNext} onSkip={handleNext} />;
       case "github":
-        return t("onboarding.step2Title");
+        return <SetupWizardStep2 onNext={handleNext} onSkip={handleNext} />;
       case "llm":
-        return t("onboarding.step3Title");
+        return <SetupWizardStep3 onNext={handleNext} onSkip={handleNext} />;
       case "complete":
-        return t("onboarding.completeTitle");
-    }
-  };
-
-  const stepDescription = (step: Step): string => {
-    switch (step) {
-      case "repository":
-        return t("onboarding.step1Description");
-      case "github":
-        return t("onboarding.step2Description");
-      case "llm":
-        return t("onboarding.step3Description");
-      case "complete":
-        return t("onboarding.completeDescription");
+        return <SetupWizardStep4 onComplete={onComplete} />;
     }
   };
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-bg-primary">
-      <div className="w-full max-w-md space-y-6 px-4">
-        {/* Step indicator */}
-        <div className="text-center text-sm text-text-muted">
-          {t("onboarding.stepIndicator", {
-            current: currentIndex + 1,
-            total: STEPS.length,
-          })}
-        </div>
-
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-text-primary">
-            {stepTitle(currentStep)}
-          </h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            {stepDescription(currentStep)}
-          </p>
-        </div>
-
-        {/* Step content */}
-        {!isComplete && (
-          <Card>
-            <div className="py-8 text-center text-text-muted">
-              {stepTitle(currentStep)}
-            </div>
-          </Card>
-        )}
-
-        {/* Navigation */}
-        {isComplete ? (
-          <div className="flex justify-center">
-            <Button variant="primary" size="lg" onClick={onComplete}>
-              {t("onboarding.completeButton")}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <div>
-              {currentIndex > 0 ? (
-                <Button variant="ghost" size="md" onClick={handleBack}>
-                  {t("onboarding.back")}
-                </Button>
-              ) : (
-                <div />
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleNext}
-                className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
-              >
-                {t("onboarding.skip")}
-              </button>
-              <Button variant="primary" size="md" onClick={handleNext}>
-                {t("onboarding.next")}
-              </Button>
-            </div>
-          </div>
-        )}
+    <div>
+      {/* Step indicator */}
+      <div className="fixed left-0 right-0 top-4 z-10 text-center text-sm text-text-muted">
+        {t("onboarding.stepIndicator", {
+          current: currentIndex + 1,
+          total: STEPS.length,
+        })}
       </div>
+
+      {renderStep()}
     </div>
   );
 }

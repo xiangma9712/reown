@@ -333,6 +333,7 @@
     "stepIndicator": "Step {{current}} / {{total}}",
     "step1Title": "Select Repository",
     "step1Description": "Choose a repository to review.",
+    "step1Placeholder": "Repository selection coming soon.",
     "completeTitle": "Setup Complete!",
     "completeDescription": "reown is ready to go. Let's get started.",
     "completeButton": "Get Started",
