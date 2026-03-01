@@ -787,6 +787,7 @@ impl GitHubClient {
         .await
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn enable_auto_merge_with_base_url(
         &self,
         graphql_url: &str,
