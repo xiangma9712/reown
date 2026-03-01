@@ -82,7 +82,6 @@ export function useLlmSettings(
         // Config not found or error — keep defaults
       }
     })();
-     
   }, [loadOnMount]);
 
   const toggleShowApiKey = useCallback(() => {
