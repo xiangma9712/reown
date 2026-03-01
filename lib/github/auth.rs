@@ -79,8 +79,8 @@ pub async fn poll_for_token(client_id: &str, device_code: &str, interval: u64) -
     .await
 }
 
-/// `poll_for_token` の内部実装。テスト時にモックサーバーのURLを指定できる。
-async fn poll_for_token_with_url(
+/// `poll_for_token` の内部実装。テスト時にモックサーバーのURLを指定できるよう `pub(crate)` にしている。
+pub(crate) async fn poll_for_token_with_url(
     token_url: &str,
     client_id: &str,
     device_code: &str,
