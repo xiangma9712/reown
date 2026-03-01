@@ -126,6 +126,7 @@ export interface AppConfig {
   llm: LlmConfig;
   automation: AutomationConfig;
   onboarding_completed: boolean;
+  show_keyboard_shortcuts: boolean;
 }
 
 export interface FileSummary {

@@ -310,6 +310,12 @@
     "dark": "Dark",
     "system": "System"
   },
+  "keyboardShortcuts": {
+    "label": "キーボードショートカット",
+    "description": "タブやサイドバーにキーボードショートカットのバッジを表示します。",
+    "show": "表示する",
+    "hide": "非表示"
+  },
   "todo": {
     "title": "TODO / FIXME",
     "empty": "TODO/FIXMEコメントは見つかりませんでした。",
