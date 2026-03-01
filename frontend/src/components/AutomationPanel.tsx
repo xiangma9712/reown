@@ -130,7 +130,10 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
           open={true}
           message={t("pr.autoApproveConfirm")}
           onConfirm={handleExecute}
-          onCancel={() => setPhase("idle")}
+          onCancel={() => {
+            setPhase("idle");
+            setEvaluated(false);
+          }}
           confirmLabel={t("pr.autoApproveRun")}
           confirmVariant="primary"
         >
