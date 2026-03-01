@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SetupWizardStep3 } from "./SetupWizardStep3";
@@ -13,6 +13,12 @@ vi.mock("../invoke", () => ({
   invoke: (...args: unknown[]) => mockInvokeFn(...args),
 }));
 
+const validConfig = {
+  llm_endpoint: "https://api.anthropic.com",
+  llm_model: "claude-sonnet-4-5-20250929",
+  llm_api_key_stored: false,
+};
+
 describe("SetupWizardStep3", () => {
   const defaultProps = {
     onNext: vi.fn(),
@@ -21,6 +27,8 @@ describe("SetupWizardStep3", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: load_llm_config succeeds on mount (loadOnMount: true)
+    mockInvokeFn.mockResolvedValueOnce(validConfig);
   });
 
   it("renders the title and description", () => {
@@ -95,9 +103,7 @@ describe("SetupWizardStep3", () => {
 
   it("shows error message when test fails", async () => {
     const user = userEvent.setup();
-    mockInvokeFn
-      .mockRejectedValueOnce(new Error("config not found")) // load_llm_config on mount
-      .mockRejectedValueOnce(new Error("Invalid API key")); // test_llm_connection
+    mockInvokeFn.mockRejectedValueOnce(new Error("Invalid API key")); // test_llm_connection
     render(<SetupWizardStep3 {...defaultProps} />);
     await user.click(screen.getByText("接続テスト"));
     await waitFor(() => {
@@ -109,9 +115,7 @@ describe("SetupWizardStep3", () => {
 
   it("does not show next button after test failure", async () => {
     const user = userEvent.setup();
-    mockInvokeFn
-      .mockRejectedValueOnce(new Error("config not found")) // load_llm_config on mount
-      .mockRejectedValueOnce(new Error("fail")); // test_llm_connection
+    mockInvokeFn.mockRejectedValueOnce(new Error("fail")); // test_llm_connection
     render(<SetupWizardStep3 {...defaultProps} />);
     await user.click(screen.getByText("接続テスト"));
     await waitFor(() => {
@@ -184,7 +188,6 @@ describe("SetupWizardStep3", () => {
   it("shows save error when save fails", async () => {
     const user = userEvent.setup();
     mockInvokeFn
-      .mockRejectedValueOnce(new Error("config not found")) // load_llm_config on mount
       .mockResolvedValueOnce(undefined) // test_llm_connection succeeds
       .mockRejectedValueOnce(new Error("Save failed")); // save_llm_config fails
     render(<SetupWizardStep3 {...defaultProps} />);
@@ -215,8 +218,10 @@ describe("SetupWizardStep3", () => {
 
   it("sends custom endpoint and model in test connection", async () => {
     const user = userEvent.setup();
-    mockInvokeFn.mockResolvedValueOnce(undefined);
-    render(<SetupWizardStep3 {...defaultProps} />);
+    mockInvokeFn.mockResolvedValueOnce(undefined); // test_llm_connection
+    await act(async () => {
+      render(<SetupWizardStep3 {...defaultProps} />);
+    });
 
     const endpointInput = screen.getByDisplayValue("https://api.anthropic.com");
     const modelInput = screen.getByDisplayValue("claude-sonnet-4-5-20250929");

@@ -18,6 +18,12 @@ export interface UseLlmSettingsOptions {
   saveSuccessKey?: string;
   /** Translation key for save error message */
   saveErrorKey?: string;
+  /** Translation key for load error message */
+  loadErrorKey?: string;
+  /** Translation key for API key deleted message */
+  apiKeyDeletedKey?: string;
+  /** Translation key for delete error message */
+  deleteErrorKey?: string;
   /** Callback after successful save */
   onSaveSuccess?: () => void;
 }
@@ -32,13 +38,17 @@ export interface LlmSettingsState {
   showApiKey: boolean;
   toggleShowApiKey: () => void;
   saving: boolean;
-  setSaving: (value: boolean) => void;
   testing: boolean;
   testResult: "success" | "error" | null;
   message: { type: "success" | "error"; text: string } | null;
   setMessage: (msg: { type: "success" | "error"; text: string } | null) => void;
   handleTest: () => Promise<void>;
   handleSave: () => Promise<void>;
+  apiKeyStored: boolean;
+  loading: boolean;
+  loadConfig: () => Promise<void>;
+  handleReset: () => void;
+  handleDeleteApiKey: () => Promise<void>;
 }
 
 export function useLlmSettings(
@@ -52,6 +62,9 @@ export function useLlmSettings(
     testErrorKey = "llmSettings.testError",
     saveSuccessKey = "llmSettings.saveSuccess",
     saveErrorKey = "llmSettings.saveError",
+    loadErrorKey = "llmSettings.loadError",
+    apiKeyDeletedKey = "llmSettings.apiKeyDeleted",
+    deleteErrorKey = "common.error",
     onSaveSuccess,
   } = options;
 
@@ -70,19 +83,34 @@ export function useLlmSettings(
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [apiKeyStored, setApiKeyStored] = useState(false);
+  const [loading, setLoading] = useState(loadOnMount);
+
+  const loadConfig = useCallback(async () => {
+    try {
+      setLoading(true);
+      const config = await invoke("load_llm_config");
+      setEndpoint(config.llm_endpoint || defaultEndpoint);
+      setModel(config.llm_model || defaultModel);
+      setApiKeyStored(config.llm_api_key_stored);
+      setApiKey("");
+      setMessage(null);
+    } catch (e) {
+      setMessage({
+        type: "error",
+        text: t(loadErrorKey, {
+          message: e instanceof Error ? e.message : String(e),
+        }),
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [t, loadErrorKey, defaultEndpoint, defaultModel]);
 
   useEffect(() => {
     if (!loadOnMount) return;
-    (async () => {
-      try {
-        const config = await invoke("load_llm_config");
-        if (config.llm_endpoint) setEndpoint(config.llm_endpoint);
-        if (config.llm_model) setModel(config.llm_model);
-      } catch {
-        // Config not found or error — keep defaults
-      }
-    })();
-  }, [loadOnMount]);
+    loadConfig();
+  }, [loadOnMount, loadConfig]);
 
   const toggleShowApiKey = useCallback(() => {
     setShowApiKey((v) => !v);
@@ -121,12 +149,14 @@ export function useLlmSettings(
       const llmConfig: LlmConfig = {
         llm_endpoint: endpoint,
         llm_model: model,
-        llm_api_key_stored: !!apiKey,
+        llm_api_key_stored: apiKey ? true : apiKeyStored,
       };
       await invoke("save_llm_config", { llmConfig });
 
       if (apiKey) {
         await invoke("save_llm_api_key", { apiKey });
+        setApiKeyStored(true);
+        setApiKey("");
       }
 
       setMessage({ type: "success", text: t(saveSuccessKey) });
@@ -141,7 +171,41 @@ export function useLlmSettings(
     } finally {
       setSaving(false);
     }
-  }, [endpoint, model, apiKey, t, saveSuccessKey, saveErrorKey, onSaveSuccess]);
+  }, [
+    endpoint,
+    model,
+    apiKey,
+    apiKeyStored,
+    t,
+    saveSuccessKey,
+    saveErrorKey,
+    onSaveSuccess,
+  ]);
+
+  const handleReset = useCallback(() => {
+    setMessage(null);
+    loadConfig();
+  }, [loadConfig]);
+
+  const handleDeleteApiKey = useCallback(async () => {
+    try {
+      setMessage(null);
+      await invoke("delete_llm_api_key");
+      setApiKeyStored(false);
+      setApiKey("");
+      setMessage({
+        type: "success",
+        text: t(apiKeyDeletedKey),
+      });
+    } catch (e) {
+      setMessage({
+        type: "error",
+        text: t(deleteErrorKey, {
+          message: e instanceof Error ? e.message : String(e),
+        }),
+      });
+    }
+  }, [t, apiKeyDeletedKey, deleteErrorKey]);
 
   return {
     endpoint,
@@ -153,12 +217,16 @@ export function useLlmSettings(
     showApiKey,
     toggleShowApiKey,
     saving,
-    setSaving,
     testing,
     testResult,
     message,
     setMessage,
     handleTest,
     handleSave,
+    apiKeyStored,
+    loading,
+    loadConfig,
+    handleReset,
+    handleDeleteApiKey,
   };
 }
