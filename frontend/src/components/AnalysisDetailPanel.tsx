@@ -11,6 +11,7 @@ import { Card, Panel } from "./Card";
 import { Badge } from "./Badge";
 import { RiskBadge } from "./RiskBadge";
 import { FileDiffLegend } from "./FileDiffLegend";
+import { WarningBanner } from "./WarningBanner";
 
 interface AnalysisDetailPanelProps {
   result: AnalysisResult;
@@ -38,15 +39,6 @@ const categoryLabelKeys: Record<ChangeCategory, string> = {
   Dependency: "pr.categoryDependency",
   Other: "pr.categoryOther",
 };
-
-function WarningBanner({ message }: { message: string }) {
-  return (
-    <div className="flex items-center gap-2 rounded border border-warning/30 bg-warning/10 px-3 py-1.5 text-[0.8rem] text-warning">
-      <span>&#x26A0;&#xFE0F;</span>
-      <span>{message}</span>
-    </div>
-  );
-}
 
 function ImpactWarnings({ factors }: { factors: RiskFactor[] }) {
   const { t } = useTranslation();
