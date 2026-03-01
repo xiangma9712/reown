@@ -36,9 +36,7 @@ test.describe("TodoTab", () => {
   });
 
   test("error state", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-todotab--error&viewMode=story"
-    );
+    await page.goto("/iframe.html?id=components-todotab--error&viewMode=story");
     // play関数のエラー表示を待つ
     await page.waitForSelector("text=Repository not found", {
       timeout: 10_000,
@@ -97,6 +95,19 @@ test.describe("TodoTab", () => {
     await page.waitForTimeout(500);
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "collapsed-groups.png"
+    );
+  });
+
+  test("with navigate to branch", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-todotab--with-navigate-to-branch&viewMode=story"
+    );
+    // play関数のworktree表示を待つ
+    await page.waitForSelector("text=feature/auth", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "with-navigate-to-branch.png"
     );
   });
 });

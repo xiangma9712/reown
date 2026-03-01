@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { userEvent, within, waitFor } from "storybook/test";
+import { fn, userEvent, within, waitFor } from "storybook/test";
 import { TodoTab } from "./TodoTab";
 import {
   overrideInvoke,
@@ -140,5 +140,19 @@ export const CollapsedGroups: Story = {
     // 「全て折りたたみ」をクリック
     const collapseBtn = canvas.getByRole("button", { name: "全て折りたたみ" });
     await userEvent.click(collapseBtn);
+  },
+};
+
+/** onNavigateToBranch付き（ブランチ名がクリック可能なリンクとして表示） */
+export const WithNavigateToBranch: Story = {
+  args: {
+    onNavigateToBranch: fn(),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // WorktreeListがworktreeを自動読み込みするのを待つ
+    await waitFor(() => {
+      canvas.getByText("feature/auth");
+    });
   },
 };
