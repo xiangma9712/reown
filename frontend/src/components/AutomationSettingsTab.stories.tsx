@@ -208,10 +208,16 @@ export const SliderInteraction: Story = {
     // 最初のスライダー（Logic）の値を変更
     const logicSlider = sliders[0];
     // nativeInputValueSetter を使って React の state を更新
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+    const descriptor = Object.getOwnPropertyDescriptor(
       HTMLInputElement.prototype,
       "value"
-    )!.set!;
+    );
+    if (!descriptor?.set) {
+      throw new Error(
+        "HTMLInputElement.prototype.value の setter が見つかりません"
+      );
+    }
+    const nativeInputValueSetter = descriptor.set;
     nativeInputValueSetter.call(logicSlider, "2.5");
     logicSlider.dispatchEvent(new Event("input", { bubbles: true }));
     logicSlider.dispatchEvent(new Event("change", { bubbles: true }));
