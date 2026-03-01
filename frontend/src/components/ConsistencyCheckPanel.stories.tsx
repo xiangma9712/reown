@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { userEvent, within, waitFor } from "storybook/test";
+import { userEvent, within, waitFor, expect } from "storybook/test";
 import { ConsistencyCheckPanel } from "./ConsistencyCheckPanel";
 import { overrideInvoke, resetInvokeOverrides } from "../storybook";
 
@@ -91,5 +91,78 @@ export const Error: Story = {
     await waitFor(() => {
       canvas.getByText(/API rate limit exceeded/);
     });
+  },
+};
+
+/** 再チェック: 整合性OK → 警告ありに結果が更新される */
+export const RecheckUpdatesResult: Story = {
+  play: async ({ canvasElement }) => {
+    let callCount = 0;
+    overrideInvoke({
+      check_pr_consistency: () => {
+        callCount++;
+        if (callCount === 1) {
+          return { is_consistent: true, warnings: [] };
+        }
+        return {
+          is_consistent: false,
+          warnings: ["PRタイトルに記載された機能が変更内容に含まれていません"],
+        };
+      },
+    });
+    const canvas = within(canvasElement);
+
+    // 初回チェック実行
+    const runButton = canvas.getByRole("button");
+    await userEvent.click(runButton);
+    await waitFor(() => {
+      canvas.getByText("PRタイトル・本文と変更内容は一致しています");
+    });
+
+    // 再チェックボタンをクリック
+    const recheckButton = canvas.getByRole("button", { name: /再チェック/ });
+    await userEvent.click(recheckButton);
+
+    // 結果が警告ありに更新されることを確認
+    await waitFor(() => {
+      canvas.getByText("PRタイトル・本文と実際の変更内容に乖離があります");
+    });
+    expect(
+      canvas.getByText("PRタイトルに記載された機能が変更内容に含まれていません")
+    ).toBeTruthy();
+  },
+};
+
+/** 再チェック: エラー → 成功に回復する */
+export const RecheckRecoveryFromError: Story = {
+  play: async ({ canvasElement }) => {
+    let callCount = 0;
+    overrideInvoke({
+      check_pr_consistency: () => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.reject("Network error");
+        }
+        return { is_consistent: true, warnings: [] };
+      },
+    });
+    const canvas = within(canvasElement);
+
+    // 初回チェック → エラー
+    const runButton = canvas.getByRole("button");
+    await userEvent.click(runButton);
+    await waitFor(() => {
+      canvas.getByText(/Network error/);
+    });
+
+    // 再チェックボタンをクリック
+    const recheckButton = canvas.getByRole("button", { name: /再チェック/ });
+    await userEvent.click(recheckButton);
+
+    // エラーが消えて成功結果に更新されることを確認
+    await waitFor(() => {
+      canvas.getByText("PRタイトル・本文と変更内容は一致しています");
+    });
+    expect(canvas.queryByText(/Network error/)).toBeNull();
   },
 };
