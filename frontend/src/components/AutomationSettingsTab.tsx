@@ -521,7 +521,7 @@ export function AutomationSettingsTab() {
                 <div className="space-y-1">
                   {riskConfig.sensitive_patterns.map((sp, index) => (
                     <div
-                      key={index}
+                      key={sp.pattern}
                       className="flex items-center gap-2 rounded border border-border bg-bg-primary px-3 py-1.5"
                     >
                       <span className="flex-1 text-[0.8rem] text-text-primary">
