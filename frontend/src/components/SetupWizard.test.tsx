@@ -28,12 +28,15 @@ vi.mock("./SetupWizardStep2", () => ({
   SetupWizardStep2: ({
     onNext,
     onSkip,
+    onBack,
   }: {
     onNext: () => void;
     onSkip: () => void;
+    onBack: () => void;
   }) => (
     <div data-testid="step2">
       <h1>GitHub認証</h1>
+      <button onClick={onBack}>戻る</button>
       <button onClick={onNext}>次へ</button>
       <button onClick={onSkip}>スキップ</button>
     </div>
@@ -44,12 +47,15 @@ vi.mock("./SetupWizardStep3", () => ({
   SetupWizardStep3: ({
     onNext,
     onSkip,
+    onBack,
   }: {
     onNext: () => void;
     onSkip: () => void;
+    onBack: () => void;
   }) => (
     <div data-testid="step3">
       <h1>LLM設定</h1>
+      <button onClick={onBack}>戻る</button>
       <button onClick={onNext}>次へ</button>
       <button onClick={onSkip}>スキップ</button>
     </div>
@@ -57,9 +63,16 @@ vi.mock("./SetupWizardStep3", () => ({
 }));
 
 vi.mock("./SetupWizardStep4", () => ({
-  SetupWizardStep4: ({ onComplete }: { onComplete: () => void }) => (
+  SetupWizardStep4: ({
+    onComplete,
+    onBack,
+  }: {
+    onComplete: () => void;
+    onBack: () => void;
+  }) => (
     <div data-testid="step4">
       <h1>セットアップ完了！</h1>
+      <button onClick={onBack}>戻る</button>
       <button onClick={onComplete}>はじめる</button>
     </div>
   ),
@@ -123,5 +136,38 @@ describe("SetupWizard", () => {
     await user.click(screen.getByText("次へ"));
     await user.click(screen.getByText("次へ"));
     expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("navigates back from step 2 to step 1", async () => {
+    const user = userEvent.setup();
+    render(<SetupWizard onComplete={vi.fn()} />);
+    await user.click(screen.getByText("次へ"));
+    expect(screen.getByTestId("step2")).toBeInTheDocument();
+    await user.click(screen.getByText("戻る"));
+    expect(screen.getByTestId("step1")).toBeInTheDocument();
+    expect(screen.getByText("ステップ 1 / 4")).toBeInTheDocument();
+  });
+
+  it("navigates back from step 3 to step 2", async () => {
+    const user = userEvent.setup();
+    render(<SetupWizard onComplete={vi.fn()} />);
+    await user.click(screen.getByText("次へ"));
+    await user.click(screen.getByText("次へ"));
+    expect(screen.getByTestId("step3")).toBeInTheDocument();
+    await user.click(screen.getByText("戻る"));
+    expect(screen.getByTestId("step2")).toBeInTheDocument();
+    expect(screen.getByText("ステップ 2 / 4")).toBeInTheDocument();
+  });
+
+  it("navigates back from step 4 to step 3", async () => {
+    const user = userEvent.setup();
+    render(<SetupWizard onComplete={vi.fn()} />);
+    await user.click(screen.getByText("次へ"));
+    await user.click(screen.getByText("次へ"));
+    await user.click(screen.getByText("次へ"));
+    expect(screen.getByTestId("step4")).toBeInTheDocument();
+    await user.click(screen.getByText("戻る"));
+    expect(screen.getByTestId("step3")).toBeInTheDocument();
+    expect(screen.getByText("ステップ 3 / 4")).toBeInTheDocument();
   });
 });

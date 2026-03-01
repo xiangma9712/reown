@@ -22,6 +22,7 @@ export const Default: Story = {
   args: {
     onNext: () => {},
     onSkip: () => {},
+    onBack: () => {},
   },
   decorators: [
     (Story) => {
@@ -40,6 +41,7 @@ export const WithExistingConfig: Story = {
   args: {
     onNext: () => {},
     onSkip: () => {},
+    onBack: () => {},
   },
   decorators: [
     (Story) => {
@@ -56,6 +58,7 @@ export const AfterTestSuccess: Story = {
   args: {
     onNext: () => {},
     onSkip: () => {},
+    onBack: () => {},
   },
   decorators: [
     (Story) => {
@@ -72,6 +75,7 @@ export const AfterTestError: Story = {
   args: {
     onNext: () => {},
     onSkip: () => {},
+    onBack: () => {},
   },
   decorators: [
     (Story) => {

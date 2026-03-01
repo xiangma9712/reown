@@ -9,7 +9,7 @@ vi.mock("react-i18next", async () => {
 
 describe("SetupWizardStep4", () => {
   it("renders the complete title and description", () => {
-    render(<SetupWizardStep4 onComplete={vi.fn()} />);
+    render(<SetupWizardStep4 onComplete={vi.fn()} onBack={vi.fn()} />);
     expect(screen.getByText("セットアップ完了！")).toBeInTheDocument();
     expect(
       screen.getByText("reownの設定が完了しました。さっそく使い始めましょう。")
@@ -17,22 +17,29 @@ describe("SetupWizardStep4", () => {
   });
 
   it("renders the complete button", () => {
-    render(<SetupWizardStep4 onComplete={vi.fn()} />);
+    render(<SetupWizardStep4 onComplete={vi.fn()} onBack={vi.fn()} />);
     expect(screen.getByText("はじめる")).toBeInTheDocument();
   });
 
   it("calls onComplete when complete button is clicked", async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
-    render(<SetupWizardStep4 onComplete={onComplete} />);
+    render(<SetupWizardStep4 onComplete={onComplete} onBack={vi.fn()} />);
     await user.click(screen.getByText("はじめる"));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
+  it("calls onBack when back button is clicked", async () => {
+    const user = userEvent.setup();
+    const onBack = vi.fn();
+    render(<SetupWizardStep4 onComplete={vi.fn()} onBack={onBack} />);
+    await user.click(screen.getByText("戻る"));
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
   it("does not render next or skip buttons", () => {
-    render(<SetupWizardStep4 onComplete={vi.fn()} />);
+    render(<SetupWizardStep4 onComplete={vi.fn()} onBack={vi.fn()} />);
     expect(screen.queryByText("次へ")).not.toBeInTheDocument();
     expect(screen.queryByText("スキップ")).not.toBeInTheDocument();
-    expect(screen.queryByText("戻る")).not.toBeInTheDocument();
   });
 });

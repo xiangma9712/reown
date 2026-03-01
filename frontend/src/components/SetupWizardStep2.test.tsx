@@ -17,6 +17,7 @@ describe("SetupWizardStep2", () => {
   const defaultProps = {
     onNext: vi.fn(),
     onSkip: vi.fn(),
+    onBack: vi.fn(),
   };
 
   beforeEach(() => {
@@ -49,9 +50,18 @@ describe("SetupWizardStep2", () => {
     expect(screen.getByText("トークンを保存")).toBeInTheDocument();
   });
 
-  it("renders skip button", () => {
+  it("renders back and skip buttons", () => {
     render(<SetupWizardStep2 {...defaultProps} />);
+    expect(screen.getByText("戻る")).toBeInTheDocument();
     expect(screen.getByText("スキップ")).toBeInTheDocument();
+  });
+
+  it("calls onBack when back button is clicked", async () => {
+    const user = userEvent.setup();
+    const onBack = vi.fn();
+    render(<SetupWizardStep2 {...defaultProps} onBack={onBack} />);
+    await user.click(screen.getByText("戻る"));
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("calls onSkip when skip button is clicked", async () => {

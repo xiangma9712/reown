@@ -24,16 +24,34 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
     }
   }, [currentIndex]);
 
+  const handleBack = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex((i) => i - 1);
+    }
+  }, [currentIndex]);
+
   const renderStep = () => {
     switch (currentStep) {
       case "repository":
         return <SetupWizardStep1 onNext={handleNext} onSkip={handleNext} />;
       case "github":
-        return <SetupWizardStep2 onNext={handleNext} onSkip={handleNext} />;
+        return (
+          <SetupWizardStep2
+            onNext={handleNext}
+            onSkip={handleNext}
+            onBack={handleBack}
+          />
+        );
       case "llm":
-        return <SetupWizardStep3 onNext={handleNext} onSkip={handleNext} />;
+        return (
+          <SetupWizardStep3
+            onNext={handleNext}
+            onSkip={handleNext}
+            onBack={handleBack}
+          />
+        );
       case "complete":
-        return <SetupWizardStep4 onComplete={onComplete} />;
+        return <SetupWizardStep4 onComplete={onComplete} onBack={handleBack} />;
     }
   };
 
