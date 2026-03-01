@@ -15,7 +15,12 @@ interface Props {
   showShortcuts?: boolean;
 }
 
-export function TabBar({ items, activeId, onSelect, showShortcuts = false }: Props) {
+export function TabBar({
+  items,
+  activeId,
+  onSelect,
+  showShortcuts = false,
+}: Props) {
   const { t } = useTranslation();
   const tablistRef = useRef<HTMLDivElement>(null);
 
