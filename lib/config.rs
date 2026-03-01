@@ -398,6 +398,9 @@ const KEYRING_GITHUB_TOKEN: &str = "github_token";
 
 /// LLM APIキーをOS keychainに保存する
 pub fn save_llm_api_key(api_key: &str) -> Result<()> {
+    if api_key.trim().is_empty() {
+        anyhow::bail!("LLM APIキーが空です");
+    }
     let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_LLM_API_KEY)
         .context("keychainエントリの作成に失敗")?;
     entry
@@ -1223,6 +1226,20 @@ mod tests {
         delete_github_token().unwrap();
         let result = load_github_token();
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_save_llm_api_key_rejects_empty() {
+        let result = save_llm_api_key("");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("空"));
+    }
+
+    #[test]
+    fn test_save_llm_api_key_rejects_whitespace_only() {
+        let result = save_llm_api_key("   ");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("空"));
     }
 
     #[test]
