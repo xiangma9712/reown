@@ -76,7 +76,10 @@ test.describe("AutomationSettingsTab", () => {
     await page.waitForSelector("text=テスト未追加ペナルティ", {
       timeout: 10_000,
     });
-    await page.waitForTimeout(500);
+    // Wait for story play interaction to update the input value to 35
+    await expect(
+      page.locator('#storybook-root input[type="number"][min="0"][max="50"]')
+    ).toHaveValue("35", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "missing-test-penalty-interaction.png"
     );
@@ -97,8 +100,10 @@ test.describe("AutomationSettingsTab", () => {
       "/iframe.html?id=components-automationsettingstab--remove-sensitive-pattern&viewMode=story"
     );
     await page.waitForSelector("text=security", { timeout: 10_000 });
-    // Wait for removal animation to complete
-    await page.waitForTimeout(500);
+    // Wait for "auth" pattern to be removed by the story play interaction
+    await expect(
+      page.locator('#storybook-root [aria-label="削除 auth"]')
+    ).toHaveCount(0, { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "remove-sensitive-pattern.png"
     );
