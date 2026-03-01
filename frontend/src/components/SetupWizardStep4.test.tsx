@@ -2,20 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { SetupWizardStep4 } from "./SetupWizardStep4";
+import { i18nMock } from "../test/i18n-mock";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "onboarding.completeTitle": "セットアップ完了！",
-        "onboarding.completeDescription":
-          "reownの設定が完了しました。さっそく使い始めましょう。",
-        "onboarding.completeButton": "はじめる",
-      };
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", () => i18nMock);
 
 describe("SetupWizardStep4", () => {
   it("renders the complete title and description", () => {

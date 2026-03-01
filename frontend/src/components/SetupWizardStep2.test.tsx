@@ -2,44 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SetupWizardStep2 } from "./SetupWizardStep2";
+import { i18nMock } from "../test/i18n-mock";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, params?: Record<string, unknown>) => {
-      const translations: Record<string, string> = {
-        "onboarding.step2Title": "GitHub認証",
-        "onboarding.step2Description": "GitHubと連携します。",
-        "onboarding.deviceFlowStart": "GitHubでログイン",
-        "onboarding.deviceFlowInstruction":
-          "以下のコードをGitHubで入力してください:",
-        "onboarding.deviceFlowOpenBrowser": "ブラウザで開く",
-        "onboarding.deviceFlowWaiting": "認証を待っています…",
-        "onboarding.deviceFlowSuccess": "GitHub認証が完了しました",
-        "onboarding.deviceFlowExpired":
-          "認証コードの有効期限が切れました。再度お試しください。",
-        "onboarding.manualTokenLabel":
-          "または、Personal Access Tokenを手動入力",
-        "onboarding.manualTokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
-        "onboarding.manualTokenSave": "トークンを保存",
-        "onboarding.manualTokenSaving": "保存中…",
-        "onboarding.manualTokenSuccess": "トークンを保存しました",
-        "onboarding.showToken": "表示",
-        "onboarding.hideToken": "非表示",
-        "onboarding.skip": "スキップ",
-        "onboarding.skipNote":
-          "スキップしても、あとから設定画面でGitHub認証を行えます。",
-        "onboarding.next": "次へ",
-      };
-      if (key === "onboarding.deviceFlowError" && params) {
-        return `認証に失敗しました: ${params.message}`;
-      }
-      if (key === "onboarding.manualTokenError" && params) {
-        return `トークンの保存に失敗しました: ${params.message}`;
-      }
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", () => i18nMock);
 
 const mockInvokeFn = vi.fn();
 
@@ -60,7 +25,11 @@ describe("SetupWizardStep2", () => {
   it("renders the title and description", () => {
     render(<SetupWizardStep2 {...defaultProps} />);
     expect(screen.getByText("GitHub認証")).toBeInTheDocument();
-    expect(screen.getByText("GitHubと連携します。")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "GitHubと連携すると、PR取得・レビュー送信・オートメーションが利用できます。"
+      )
+    ).toBeInTheDocument();
   });
 
   it("renders device flow start button", () => {

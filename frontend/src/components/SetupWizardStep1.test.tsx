@@ -2,22 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { SetupWizardStep1 } from "./SetupWizardStep1";
+import { i18nMock } from "../test/i18n-mock";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "onboarding.step1Title": "リポジトリ選択",
-        "onboarding.step1Description":
-          "レビュー対象のリポジトリを選択してください。",
-        "onboarding.step1Placeholder": "リポジトリ選択機能は近日実装予定です。",
-        "onboarding.skip": "スキップ",
-        "onboarding.next": "次へ",
-      };
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", () => i18nMock);
 
 describe("SetupWizardStep1", () => {
   const defaultProps = {

@@ -3,32 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { Layout } from "./Layout";
 import { fixtures } from "../storybook/fixtures";
+import { i18nMock } from "../test/i18n-mock";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, opts?: Record<string, string>) => {
-      const translations: Record<string, string> = {
-        "repository.selectPrompt": "リポジトリを選択してください",
-        "app.title": "reown",
-        "repository.title": "Repositories",
-        "repository.empty": "リポジトリがありません",
-        "repository.add": "リポジトリを追加",
-        "repository.remove": "削除",
-        "repository.addAriaLabel": "リポジトリを追加",
-        "repository.navAriaLabel": "リポジトリ一覧",
-        "tabs.settingsAriaLabel": "設定を開く",
-        "sidebar.open": "サイドバーを開く",
-        "sidebar.close": "サイドバーを閉じる",
-        "sidebar.resizeHandle": "サイドバーの幅を調整",
-        "sidebar.collapse": "サイドバーを折りたたむ",
-        "sidebar.expand": "サイドバーを展開する",
-      };
-      if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;
-      if (key === "repository.selectAriaLabel") return `${opts?.name} を選択`;
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", () => i18nMock);
 
 const navItems = [
   { id: "review", labelKey: "nav.review", shortcut: "R" },
@@ -75,7 +52,9 @@ describe("Layout", () => {
       </Layout>
     );
     expect(
-      screen.getByText("リポジトリを選択してください")
+      screen.getByText(
+        "左のサイドメニューからリポジトリを選択してください。"
+      )
     ).toBeInTheDocument();
     expect(screen.queryByText("Content")).not.toBeInTheDocument();
   });

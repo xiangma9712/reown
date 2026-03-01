@@ -2,18 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { TabBar } from "./TabBar";
+import { i18nMock } from "../test/i18n-mock";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      const translations: Record<string, string> = {
-        "tabs.review": "Review",
-        "tabs.nextAction": "Next Action",
-      };
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", () => i18nMock);
 
 const items = [
   { id: "review", labelKey: "tabs.review", shortcut: "R" },

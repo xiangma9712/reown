@@ -2,37 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SetupWizardStep3 } from "./SetupWizardStep3";
+import { i18nMock } from "../test/i18n-mock";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, params?: Record<string, unknown>) => {
-      const translations: Record<string, string> = {
-        "onboarding.step3Title": "LLM設定",
-        "onboarding.step3Description": "APIキーを設定します。",
-        "onboarding.step3TestSuccess": "接続テストに成功しました",
-        "onboarding.step3SaveSuccess": "LLM設定を保存しました",
-        "onboarding.step3SkipNote":
-          "スキップしても、あとから設定画面でLLM設定を行えます。",
-        "onboarding.skip": "スキップ",
-        "onboarding.next": "次へ",
-        "llmSettings.endpoint": "エンドポイントURL",
-        "llmSettings.model": "モデル名",
-        "llmSettings.apiKey": "APIキー",
-        "llmSettings.apiKeyPlaceholder": "APIキーを入力",
-        "llmSettings.testConnection": "接続テスト",
-        "llmSettings.showApiKey": "表示",
-        "llmSettings.hideApiKey": "非表示",
-      };
-      if (key === "onboarding.step3TestError" && params) {
-        return `接続テストに失敗しました: ${params.message}`;
-      }
-      if (key === "onboarding.step3SaveError" && params) {
-        return `LLM設定の保存に失敗しました: ${params.message}`;
-      }
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", () => i18nMock);
 
 const mockInvokeFn = vi.fn();
 
@@ -53,7 +25,11 @@ describe("SetupWizardStep3", () => {
   it("renders the title and description", () => {
     render(<SetupWizardStep3 {...defaultProps} />);
     expect(screen.getByText("LLM設定")).toBeInTheDocument();
-    expect(screen.getByText("APIキーを設定します。")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Anthropic APIキーを設定すると、AI要約・リスク分析などの機能が利用できます。"
+      )
+    ).toBeInTheDocument();
   });
 
   it("renders input fields with default values", () => {

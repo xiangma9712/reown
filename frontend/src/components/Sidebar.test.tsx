@@ -3,36 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { Sidebar } from "./Sidebar";
 import { fixtures } from "../storybook/fixtures";
+import { i18nMock } from "../test/i18n-mock";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, opts?: Record<string, string>) => {
-      const translations: Record<string, string> = {
-        "app.title": "reown",
-        "repository.title": "Repositories",
-        "repository.empty": "リポジトリがありません",
-        "repository.emptyTitle": "リポジトリがありません",
-        "repository.emptyDescription":
-          "下の「リポジトリを追加」ボタンから追加してください。",
-        "repository.add": "リポジトリを追加",
-        "repository.remove": "削除",
-        "repository.addAriaLabel": "リポジトリを追加",
-        "repository.navAriaLabel": "リポジトリ一覧",
-        "tabs.settingsAriaLabel": "設定を開く",
-        "sidebar.close": "サイドバーを閉じる",
-        "common.confirm": "確認",
-        "common.cancel": "キャンセル",
-        "common.delete": "削除",
-        "common.loading": "読み込み中",
-      };
-      if (key === "repository.removeAriaLabel") return `${opts?.name} を削除`;
-      if (key === "repository.selectAriaLabel") return `${opts?.name} を選択`;
-      if (key === "repository.confirmRemove")
-        return `リポジトリ '${opts?.name}' を一覧から削除しますか？`;
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", () => i18nMock);
 
 const defaultProps = {
   repositories: fixtures.repositories,
@@ -57,7 +30,7 @@ describe("Sidebar", () => {
     const heading = screen.getByRole("heading", { level: 2 });
     expect(heading).toBeInTheDocument();
     expect(heading).toHaveAttribute("id", "sidebar-repositories-heading");
-    expect(heading.textContent).toBe("Repositories");
+    expect(heading.textContent).toBe("リポジトリ");
     const nav = screen.getByRole("navigation");
     expect(nav).toHaveAttribute(
       "aria-labelledby",
@@ -272,7 +245,7 @@ describe("Sidebar", () => {
     );
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveAttribute("aria-label", "読み込み中");
+    expect(status).toHaveAttribute("aria-label", "読み込み中…");
   });
 
   it("sets aria-busy on nav when loading", () => {
