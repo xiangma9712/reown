@@ -35,6 +35,15 @@ test.describe("CommitListPanel", () => {
     await expect(page.locator("#storybook-root")).toHaveScreenshot("empty.png");
   });
 
+  test("mixed prefixes", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-commitlistpanel--with-mixed-prefixes&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "with-mixed-prefixes.png"
+    );
+  });
+
   test("empty commit url fallback", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=components-commitlistpanel--empty-commit-url&viewMode=story"
