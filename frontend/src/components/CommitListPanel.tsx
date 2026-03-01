@@ -39,6 +39,16 @@ function parsePrefix(message: string): {
   return { prefix: null, rest: message };
 }
 
+function CommitMessage({ message }: { message: string }) {
+  const { prefix, rest } = parsePrefix(message);
+  return (
+    <span className="flex min-w-0 items-center gap-1.5">
+      {prefix && <Badge variant={prefixVariants[prefix]}>{prefix}</Badge>}
+      <span className="truncate text-sm text-text-primary">{rest}</span>
+    </span>
+  );
+}
+
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString(undefined, {
@@ -95,19 +105,7 @@ export function CommitListPanel({
                   {formatShortSha(commit.sha)}
                 </code>
               )}
-              {(() => {
-                const { prefix, rest } = parsePrefix(commit.message);
-                return (
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    {prefix && (
-                      <Badge variant={prefixVariants[prefix]}>{prefix}</Badge>
-                    )}
-                    <span className="truncate text-sm text-text-primary">
-                      {rest}
-                    </span>
-                  </span>
-                );
-              })()}
+              <CommitMessage message={commit.message} />
             </div>
             <div className="mt-0.5 flex items-center gap-2 pl-[calc(1.5rem+0.75rem+0.5rem)] text-xs text-text-secondary">
               <span>{commit.author}</span>
