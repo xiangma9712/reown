@@ -30,6 +30,15 @@ function interpolate(
   );
 }
 
+/** 安定した参照の t 関数（useCallback の deps で不要な再生成を防ぐ） */
+const t = (key: string, params?: Record<string, unknown>) => {
+  const template = translations[key];
+  if (template === undefined) return key;
+  return interpolate(template, params);
+};
+
+const translationResult = { t };
+
 /**
  * react-i18next の vi.mock 用ファクトリ。
  *
@@ -40,13 +49,7 @@ function interpolate(
  *   });
  */
 export const i18nMock = {
-  useTranslation: () => ({
-    t: (key: string, params?: Record<string, unknown>) => {
-      const template = translations[key];
-      if (template === undefined) return key;
-      return interpolate(template, params);
-    },
-  }),
+  useTranslation: () => translationResult,
 };
 
 /** vi.mock のファクトリ関数として直接渡す用 */
