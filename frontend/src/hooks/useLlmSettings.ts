@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { LlmConfig } from "../types";
@@ -70,6 +70,11 @@ export function useLlmSettings(
 
   const { t } = useTranslation();
 
+  const defaultEndpointRef = useRef(defaultEndpoint);
+  const defaultModelRef = useRef(defaultModel);
+  defaultEndpointRef.current = defaultEndpoint;
+  defaultModelRef.current = defaultModel;
+
   const [endpoint, setEndpoint] = useState(defaultEndpoint);
   const [model, setModel] = useState(defaultModel);
   const [apiKey, setApiKey] = useState("");
@@ -90,8 +95,8 @@ export function useLlmSettings(
     try {
       setLoading(true);
       const config = await invoke("load_llm_config");
-      setEndpoint(config.llm_endpoint || defaultEndpoint);
-      setModel(config.llm_model || defaultModel);
+      setEndpoint(config.llm_endpoint || defaultEndpointRef.current);
+      setModel(config.llm_model || defaultModelRef.current);
       setApiKeyStored(config.llm_api_key_stored);
       setApiKey("");
       setMessage(null);
@@ -105,7 +110,7 @@ export function useLlmSettings(
     } finally {
       setLoading(false);
     }
-  }, [t, loadErrorKey, defaultEndpoint, defaultModel]);
+  }, [t, loadErrorKey]);
 
   useEffect(() => {
     if (!loadOnMount) return;
