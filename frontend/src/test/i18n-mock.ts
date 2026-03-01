@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 import ja from "../i18n/locales/ja.json";
 
 type NestedRecord = { [key: string]: string | NestedRecord };
@@ -51,8 +50,3 @@ const translationResult = { t };
 export const i18nMock = {
   useTranslation: () => translationResult,
 };
-
-/** vi.mock のファクトリ関数として直接渡す用 */
-export function mockReactI18next() {
-  vi.mock("react-i18next", () => i18nMock);
-}
