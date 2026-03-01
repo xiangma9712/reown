@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn, userEvent, within, waitFor } from "storybook/test";
+import { fn, userEvent, within, waitFor, expect } from "storybook/test";
 import { TodoTab } from "./TodoTab";
 import {
   overrideInvoke,
@@ -148,11 +148,15 @@ export const WithNavigateToBranch: Story = {
   args: {
     onNavigateToBranch: fn(),
   },
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     // WorktreeListがworktreeを自動読み込みするのを待つ
     await waitFor(() => {
       canvas.getByText("feature/auth");
     });
+    // ブランチ名リンクをクリックしてコールバックが呼ばれることを検証
+    const branchLink = canvas.getByText("feature/auth");
+    await userEvent.click(branchLink);
+    await expect(args.onNavigateToBranch).toHaveBeenCalledWith("feature/auth");
   },
 };
