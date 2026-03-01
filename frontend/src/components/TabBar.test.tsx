@@ -20,7 +20,14 @@ describe("TabBar", () => {
   });
 
   it("renders keyboard shortcuts", () => {
-    render(<TabBar items={items} activeId="review" onSelect={vi.fn()} />);
+    render(
+      <TabBar
+        items={items}
+        activeId="review"
+        onSelect={vi.fn()}
+        showShortcuts
+      />
+    );
     expect(screen.getByText("R")).toBeInTheDocument();
     expect(screen.getByText("N")).toBeInTheDocument();
   });
@@ -76,7 +83,12 @@ describe("TabBar", () => {
 
   it("hides kbd shortcuts from screen readers", () => {
     const { container } = render(
-      <TabBar items={items} activeId="review" onSelect={vi.fn()} />
+      <TabBar
+        items={items}
+        activeId="review"
+        onSelect={vi.fn()}
+        showShortcuts
+      />
     );
     const kbds = container.querySelectorAll("kbd");
     kbds.forEach((kbd) => {
@@ -86,7 +98,12 @@ describe("TabBar", () => {
 
   it("renders keyboard icon inside shortcut badges", () => {
     const { container } = render(
-      <TabBar items={items} activeId="review" onSelect={vi.fn()} />
+      <TabBar
+        items={items}
+        activeId="review"
+        onSelect={vi.fn()}
+        showShortcuts
+      />
     );
     const kbds = container.querySelectorAll("kbd");
     kbds.forEach((kbd) => {
