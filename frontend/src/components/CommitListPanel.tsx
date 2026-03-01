@@ -81,14 +81,20 @@ export function CommitListPanel({
             className="border-b border-border px-3 py-2.5 last:border-b-0"
           >
             <div className="flex items-center gap-2">
-              <a
-                href={commit.commit_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 rounded bg-bg-hover px-1.5 py-0.5 font-mono text-xs text-info underline decoration-info/40 hover:decoration-info"
-              >
-                {formatShortSha(commit.sha)}
-              </a>
+              {commit.commit_url ? (
+                <a
+                  href={commit.commit_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 rounded bg-bg-hover px-1.5 py-0.5 font-mono text-xs text-info underline decoration-info/40 hover:decoration-info"
+                >
+                  {formatShortSha(commit.sha)}
+                </a>
+              ) : (
+                <code className="shrink-0 rounded bg-bg-hover px-1.5 py-0.5 font-mono text-xs text-text-secondary">
+                  {formatShortSha(commit.sha)}
+                </code>
+              )}
               {(() => {
                 const { prefix, rest } = parsePrefix(commit.message);
                 return (
