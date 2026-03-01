@@ -10,14 +10,14 @@ interface ReviewHistoryPanelProps {
 
 const categoryBadgeVariant: Record<
   string,
-  "success" | "danger" | "warning" | "info" | "default" | "purple"
+  "success" | "danger" | "warning" | "info" | "default" | "accent"
 > = {
   Logic: "warning",
   Refactor: "info",
   Test: "success",
   Config: "default",
   Documentation: "default",
-  CI: "purple",
+  CI: "accent",
   Dependency: "default",
   Other: "default",
 };

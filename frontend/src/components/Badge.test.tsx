@@ -18,7 +18,7 @@ describe("Badge", () => {
     "warning",
     "danger",
     "info",
-    "purple",
+    "accent",
     "default",
   ] as const)("renders %s variant", (variant) => {
     render(<Badge variant={variant}>Badge</Badge>);

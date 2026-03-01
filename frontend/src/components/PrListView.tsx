@@ -24,14 +24,14 @@ interface PrListViewProps {
 
 function stateVariant(
   state: string
-): "success" | "danger" | "purple" | "default" {
+): "success" | "danger" | "accent" | "default" {
   switch (state) {
     case "open":
       return "success";
     case "closed":
       return "danger";
     case "merged":
-      return "purple";
+      return "accent";
     default:
       return "default";
   }
