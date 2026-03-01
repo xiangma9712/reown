@@ -118,6 +118,8 @@
     "consistencyOk": "PR title/body is consistent with the actual changes",
     "consistencyWarning": "PR title/body may not match the actual changes",
     "consistencyWarnings": "Consistency Warnings",
+    "consistencyWarningLabel": "Mismatch",
+    "consistencyRecheck": "Re-check",
     "cancelGeneration": "Cancel",
     "summaryError": "Failed to generate AI summary",
     "approve": "Approve",
