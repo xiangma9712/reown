@@ -2109,6 +2109,53 @@ mod tests {
         mock.assert_async().await;
     }
 
+    /// Test enable_auto_merge returns error when mutation itself fails
+    /// (e.g., auto-merge is not allowed on the repository).
+    #[tokio::test]
+    async fn test_enable_auto_merge_mutation_error() {
+        let mut server = mockito::Server::new_async().await;
+
+        // Step 1: node ID fetch succeeds
+        let mock_node_id = server
+            .mock("POST", "/graphql")
+            .match_body(mockito::Matcher::PartialJsonString(
+                r#"{"query":"query { repository(owner: \"owner\", name: \"repo\") { pullRequest(number: 42) { id } } }"}"#.to_string(),
+            ))
+            .with_status(200)
+            .with_body(r#"{"data":{"repository":{"pullRequest":{"id":"PR_kwDOTest123"}}}}"#)
+            .create_async()
+            .await;
+
+        // Step 2: mutation returns GraphQL error (auto-merge not allowed)
+        let mock_mutation = server
+            .mock("POST", "/graphql")
+            .match_body(mockito::Matcher::PartialJsonString(
+                r#"{"query":"mutation { enablePullRequestAutoMerge(input: { pullRequestId: \"PR_kwDOTest123\", mergeMethod: SQUASH }) { pullRequest { autoMergeRequest { enabledAt } } } }"}"#.to_string(),
+            ))
+            .with_status(200)
+            .with_body(r#"{"data":null,"errors":[{"message":"Pull request is not in the correct state to enable auto-merge"}]}"#)
+            .create_async()
+            .await;
+
+        let graphql_url = format!("{}/graphql", server.url());
+        let result = GitHubClient::new()
+            .enable_auto_merge_with_base_url(
+                &graphql_url,
+                "test-token",
+                "owner",
+                "repo",
+                42,
+                MergeMethod::Squash,
+            )
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Pull request is not in the correct state"));
+        mock_node_id.assert_async().await;
+        mock_mutation.assert_async().await;
+    }
+
     /// Test enable_auto_merge returns error on HTTP failure.
     #[tokio::test]
     async fn test_enable_auto_merge_http_error() {
