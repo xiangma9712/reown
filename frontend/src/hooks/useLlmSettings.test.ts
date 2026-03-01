@@ -1,19 +1,29 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useLlmSettings } from "./useLlmSettings";
+import type { Commands } from "../invoke";
+import type { LlmConfig } from "../types";
 
 vi.mock("react-i18next", async () => {
   const { i18nMock } = await import("../test/i18n-mock");
   return i18nMock;
 });
 
-const mockInvokeFn = vi.fn();
+type MockInvoke = <C extends keyof Commands>(
+  command: C,
+  ...rest: Commands[C]["args"] extends Record<string, unknown> | undefined
+    ? [args?: Commands[C]["args"]]
+    : [args: Commands[C]["args"]]
+) => Promise<Commands[C]["ret"]>;
+
+const mockInvokeFn = vi.fn<MockInvoke>();
 
 vi.mock("../invoke", () => ({
-  invoke: (...args: unknown[]) => mockInvokeFn(...args),
+  invoke: (...args: unknown[]) =>
+    (mockInvokeFn as (...a: unknown[]) => unknown)(...args),
 }));
 
-const validConfig = {
+const validConfig: LlmConfig = {
   llm_endpoint: "https://api.anthropic.com",
   llm_model: "claude-sonnet-4-5-20250929",
   llm_api_key_stored: true,
@@ -64,11 +74,12 @@ describe("useLlmSettings – loadOnMount", () => {
   });
 
   it("uses default values for empty config fields", async () => {
-    mockInvokeFn.mockResolvedValueOnce({
+    const emptyConfig: LlmConfig = {
       llm_endpoint: "",
       llm_model: "",
       llm_api_key_stored: false,
-    });
+    };
+    mockInvokeFn.mockResolvedValueOnce(emptyConfig);
 
     const { result } = renderHook(() =>
       useLlmSettings({
@@ -148,11 +159,12 @@ describe("useLlmSettings – loadOnMount", () => {
     expect(result.current.endpoint).toBe("https://api.anthropic.com");
 
     // Reload with different config
-    mockInvokeFn.mockResolvedValueOnce({
+    const updatedConfig: LlmConfig = {
       llm_endpoint: "https://updated.api.com",
       llm_model: "updated-model",
       llm_api_key_stored: false,
-    });
+    };
+    mockInvokeFn.mockResolvedValueOnce(updatedConfig);
 
     await act(async () => {
       await result.current.loadConfig();
