@@ -9,15 +9,11 @@ interface RiskBadgeProps {
 
 const riskConfig: Record<
   RiskLevel,
-  { variant: "success" | "warning" | "danger"; emoji: string; labelKey: string }
+  { variant: "success" | "warning" | "danger"; labelKey: string }
 > = {
-  Low: { variant: "success", emoji: "\uD83D\uDFE2", labelKey: "pr.riskLow" },
-  Medium: {
-    variant: "warning",
-    emoji: "\uD83D\uDFE1",
-    labelKey: "pr.riskMedium",
-  },
-  High: { variant: "danger", emoji: "\uD83D\uDD34", labelKey: "pr.riskHigh" },
+  Low: { variant: "success", labelKey: "pr.riskLow" },
+  Medium: { variant: "warning", labelKey: "pr.riskMedium" },
+  High: { variant: "danger", labelKey: "pr.riskHigh" },
 };
 
 export function RiskBadge({ level, className }: RiskBadgeProps) {
@@ -26,7 +22,10 @@ export function RiskBadge({ level, className }: RiskBadgeProps) {
 
   return (
     <Badge variant={config.variant} className={className}>
-      {config.emoji} {t(config.labelKey)}
+      <span className="inline-flex items-center gap-1">
+        <span className="inline-block size-2 rounded-full bg-current" />
+        {t(config.labelKey)}
+      </span>
     </Badge>
   );
 }
