@@ -118,6 +118,8 @@
     "consistencyOk": "PRタイトル・本文と変更内容は一致しています",
     "consistencyWarning": "PRタイトル・本文と実際の変更内容に乖離があります",
     "consistencyWarnings": "整合性の警告",
+    "consistencyWarningLabel": "不一致",
+    "consistencyRecheck": "再チェック",
     "cancelGeneration": "キャンセル",
     "summaryError": "AI要約の生成に失敗しました",
     "approve": "Approve",
