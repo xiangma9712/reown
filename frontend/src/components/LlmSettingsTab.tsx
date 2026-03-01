@@ -3,7 +3,7 @@ import { Input } from "./Input";
 import { Button } from "./Button";
 import { useLlmSettings } from "../hooks/useLlmSettings";
 import { CardTitle } from "./Card";
-import { EyeIcon, EyeOffIcon } from "./icons";
+import { Eye, EyeOff } from "lucide-react";
 
 export function LlmSettingsTab() {
   const { t } = useTranslation();
@@ -62,7 +62,7 @@ export function LlmSettingsTab() {
                   : t("llmSettings.showApiKey")
               }
             >
-              {llm.showApiKey ? <EyeOffIcon /> : <EyeIcon />}
+              {llm.showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
           </div>
           {llm.apiKeyStored && (

@@ -5,7 +5,7 @@ import type { ConsistencyResult } from "../types";
 import { Card, CardTitle, Panel } from "./Card";
 import { Button } from "./Button";
 import { Spinner } from "./Loading";
-import { RefreshIcon } from "./icons";
+import { RefreshCw } from "lucide-react";
 
 interface ConsistencyCheckPanelProps {
   owner: string;
@@ -94,7 +94,7 @@ export function ConsistencyCheckPanel({
             onClick={handleCheck}
             className="gap-1.5"
           >
-            <RefreshIcon />
+            <RefreshCw size={14} />
             {t("pr.consistencyRecheck")}
           </Button>
         </div>
