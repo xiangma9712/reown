@@ -29,12 +29,10 @@ export const PanelDefault: Story = {
   args: { children: "placeholder" },
   render: () => (
     <Panel>
-      <h3 className="mb-2 text-base font-semibold text-text-heading">
+      <CardTitle as="h3" className="mb-2">
         Panel タイトル
-      </h3>
-      <p className="text-sm text-text-secondary">
-        Panelコンポーネントのサンプルコンテンツです。
-      </p>
+      </CardTitle>
+      <CardContent>Panelコンポーネントのサンプルコンテンツです。</CardContent>
     </Panel>
   ),
 };

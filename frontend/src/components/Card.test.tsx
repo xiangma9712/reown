@@ -26,6 +26,20 @@ describe("CardTitle", () => {
     render(<CardTitle className="mb-4">Title</CardTitle>);
     expect(screen.getByText("Title")).toHaveClass("mb-4");
   });
+
+  it("renders as h3 when as='h3' is specified", () => {
+    render(<CardTitle as="h3">H3 Title</CardTitle>);
+    const el = screen.getByText("H3 Title");
+    expect(el.tagName).toBe("H3");
+    expect(el).toHaveClass("font-semibold");
+  });
+
+  it("renders as h4 when as='h4' is specified", () => {
+    render(<CardTitle as="h4">H4 Title</CardTitle>);
+    const el = screen.getByText("H4 Title");
+    expect(el.tagName).toBe("H4");
+    expect(el).toHaveClass("font-semibold");
+  });
 });
 
 describe("CardContent", () => {

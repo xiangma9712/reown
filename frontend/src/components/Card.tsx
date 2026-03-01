@@ -20,16 +20,18 @@ export function Card({ children, className = "", style }: Props) {
 export function CardTitle({
   children,
   className = "",
+  as: Tag = "h2",
 }: {
   children: ReactNode;
   className?: string;
+  as?: "h2" | "h3" | "h4";
 }) {
   return (
-    <h2
+    <Tag
       className={`text-lg font-semibold leading-snug text-text-heading ${className}`}
     >
       {children}
-    </h2>
+    </Tag>
   );
 }
 
