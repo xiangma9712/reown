@@ -438,7 +438,7 @@ function PrAnalysisSection({
 
   return (
     <div className="space-y-4">
-      <CardTitle className="font-medium">{t("review.prAnalysis")}</CardTitle>
+      <CardTitle weight="medium">{t("review.prAnalysis")}</CardTitle>
 
       {/* Commit list */}
       <CommitListPanel

@@ -12,9 +12,7 @@ export function KeyboardShortcutSettingsTab({ enabled, onChange }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <CardTitle className="font-bold">
-          {t("keyboardShortcuts.label")}
-        </CardTitle>
+        <CardTitle weight="bold">{t("keyboardShortcuts.label")}</CardTitle>
         <p className="mt-1 text-sm text-text-muted">
           {t("keyboardShortcuts.description")}
         </p>

@@ -20,7 +20,7 @@ export function LlmSettingsTab() {
 
   return (
     <div className="space-y-6">
-      <CardTitle className="font-bold">{t("llmSettings.title")}</CardTitle>
+      <CardTitle weight="bold">{t("llmSettings.title")}</CardTitle>
 
       <div className="space-y-4">
         <Input

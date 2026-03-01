@@ -52,6 +52,20 @@ export const CardWithStyle: Story = {
   },
 };
 
+/** CardTitle weight バリアント */
+export const CardTitleWeights: Story = {
+  args: { children: "placeholder" },
+  render: () => (
+    <Card>
+      <div className="space-y-2">
+        <CardTitle weight="medium">font-medium</CardTitle>
+        <CardTitle>font-semibold（デフォルト）</CardTitle>
+        <CardTitle weight="bold">font-bold</CardTitle>
+      </div>
+    </Card>
+  ),
+};
+
 /** Card + Panel ネスト */
 export const CardWithPanel: Story = {
   args: { children: "placeholder" },

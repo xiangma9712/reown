@@ -37,7 +37,7 @@ export function ThemeSettingsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <CardTitle className="font-bold">{t("theme.label")}</CardTitle>
+        <CardTitle weight="bold">{t("theme.label")}</CardTitle>
       </div>
 
       <Card>

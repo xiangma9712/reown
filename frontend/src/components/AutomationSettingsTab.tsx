@@ -183,7 +183,7 @@ export function AutomationSettingsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <CardTitle className="font-bold">{t("automation.title")}</CardTitle>
+        <CardTitle weight="bold">{t("automation.title")}</CardTitle>
         <p className="mt-1 text-[0.85rem] text-text-muted">
           {t("automation.description")}
         </p>

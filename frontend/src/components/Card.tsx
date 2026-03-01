@@ -17,18 +17,26 @@ export function Card({ children, className = "", style }: Props) {
   );
 }
 
+const fontWeightMap = {
+  medium: "font-medium",
+  semibold: "font-semibold",
+  bold: "font-bold",
+} as const;
+
 export function CardTitle({
   children,
   className = "",
   as: Tag = "h2",
+  weight = "semibold",
 }: {
   children: ReactNode;
   className?: string;
   as?: "h2" | "h3" | "h4";
+  weight?: "medium" | "semibold" | "bold";
 }) {
   return (
     <Tag
-      className={`text-lg font-semibold leading-snug text-text-heading ${className}`}
+      className={`text-lg ${fontWeightMap[weight]} leading-snug text-text-heading ${className}`}
     >
       {children}
     </Tag>

@@ -99,7 +99,7 @@ export function GithubSettingsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <CardTitle className="font-bold">{t("githubSettings.title")}</CardTitle>
+        <CardTitle weight="bold">{t("githubSettings.title")}</CardTitle>
         <p className="mt-1 text-[0.85rem] text-text-muted">
           {t("githubSettings.description")}
         </p>

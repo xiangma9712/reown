@@ -28,6 +28,15 @@ test.describe("Card", () => {
     );
   });
 
+  test("card title weights", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-card--card-title-weights&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "card-title-weights.png"
+    );
+  });
+
   test("card with panel", async ({ page }) => {
     await page.goto(
       "/iframe.html?id=components-card--card-with-panel&viewMode=story"
