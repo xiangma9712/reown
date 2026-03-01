@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use tracing::warn;
+
 use crate::analysis::{AnalysisResult, ChangeCategory, RiskFactor, RiskLevel};
 use crate::config::{AutoApproveMaxRisk, AutomationConfig};
 use crate::github::pull_request::{add_labels, submit_review, ReviewEvent};
@@ -153,9 +155,10 @@ pub async fn execute_auto_approve(
                 )
                 .await
                 {
-                    eprintln!(
-                        "Warning: ラベル付与に失敗 (PR #{}): {}",
-                        candidate.pr_number, e
+                    warn!(
+                        pr_number = candidate.pr_number,
+                        error = %e,
+                        "ラベル付与に失敗"
                     );
                 }
 
