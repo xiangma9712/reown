@@ -40,6 +40,20 @@ describe("CardTitle", () => {
     expect(el.tagName).toBe("H4");
     expect(el).toHaveClass("font-semibold");
   });
+
+  it("applies font-bold when weight='bold'", () => {
+    render(<CardTitle weight="bold">Bold Title</CardTitle>);
+    const el = screen.getByText("Bold Title");
+    expect(el).toHaveClass("font-bold");
+    expect(el).not.toHaveClass("font-semibold");
+  });
+
+  it("applies font-medium when weight='medium'", () => {
+    render(<CardTitle weight="medium">Medium Title</CardTitle>);
+    const el = screen.getByText("Medium Title");
+    expect(el).toHaveClass("font-medium");
+    expect(el).not.toHaveClass("font-semibold");
+  });
 });
 
 describe("CardContent", () => {
