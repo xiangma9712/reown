@@ -35,9 +35,9 @@ export const Info: Story = {
   args: { variant: "info", children: "Renamed" },
 };
 
-/** Purple */
-export const Purple: Story = {
-  args: { variant: "purple", children: "Merged" },
+/** Accent */
+export const Accent: Story = {
+  args: { variant: "accent", children: "Merged" },
 };
 
 /** aria-label 付き（role="img" が自動付与される） */

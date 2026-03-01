@@ -34,10 +34,10 @@ test.describe("Badge", () => {
     await expect(page.locator("#storybook-root")).toHaveScreenshot("info.png");
   });
 
-  test("purple", async ({ page }) => {
-    await page.goto("/iframe.html?id=components-badge--purple&viewMode=story");
+  test("accent", async ({ page }) => {
+    await page.goto("/iframe.html?id=components-badge--accent&viewMode=story");
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "purple.png"
+      "accent.png"
     );
   });
 

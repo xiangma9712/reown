@@ -138,7 +138,7 @@ export function BranchSelector({ prs, selectedBranch, onSelectBranch }: Props) {
                       </Badge>
                     )}
                     {b.pr_number != null && (
-                      <Badge variant="purple">
+                      <Badge variant="accent">
                         {t("branchSelector.pr")} #{b.pr_number}
                       </Badge>
                     )}

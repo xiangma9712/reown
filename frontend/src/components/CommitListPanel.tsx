@@ -20,7 +20,7 @@ const prefixVariants: Record<string, ComponentProps<typeof Badge>["variant"]> =
   {
     feat: "success",
     fix: "danger",
-    refactor: "purple",
+    refactor: "accent",
     docs: "info",
     test: "warning",
     chore: "default",

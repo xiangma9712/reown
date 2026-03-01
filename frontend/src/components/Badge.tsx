@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-type Variant = "success" | "warning" | "danger" | "info" | "purple" | "default";
+type Variant = "success" | "warning" | "danger" | "info" | "accent" | "default";
 
 interface BadgeProps {
   variant?: Variant;
@@ -14,8 +14,8 @@ const variantClasses: Record<Variant, string> = {
   warning: "bg-status-modified-bg text-warning",
   danger: "bg-status-deleted-bg text-danger",
   info: "bg-status-renamed-bg text-info",
-  purple: "bg-pr-merged-bg text-purple",
-  default: "bg-btn-secondary text-text-secondary",
+  accent: "bg-pr-merged-bg text-purple",
+  default: "bg-btn-secondary text-text-primary ring-1 ring-border",
 };
 
 export function Badge({
