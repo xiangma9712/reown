@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { Fragment, ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 export interface DropdownItem {
@@ -29,7 +29,7 @@ export function Dropdown({ trigger, items, align = "end" }: DropdownProps) {
             const needsSeparator =
               item.variant === "danger" && prevItem?.variant !== "danger";
             return (
-              <span key={i}>
+              <Fragment key={i}>
                 {needsSeparator && (
                   <DropdownMenu.Separator className="my-1 h-px bg-border" />
                 )}
@@ -43,7 +43,7 @@ export function Dropdown({ trigger, items, align = "end" }: DropdownProps) {
                 >
                   {item.label}
                 </DropdownMenu.Item>
-              </span>
+              </Fragment>
             );
           })}
         </DropdownMenu.Content>
