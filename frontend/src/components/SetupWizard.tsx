@@ -29,12 +29,6 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
     }
   }, [currentIndex]);
 
-  const handleSkip = useCallback(() => {
-    if (currentIndex < STEPS.length - 1) {
-      setCurrentIndex((i) => i + 1);
-    }
-  }, [currentIndex]);
-
   const stepTitle = (step: Step): string => {
     switch (step) {
       case "repository":
@@ -111,7 +105,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={handleSkip}
+                onClick={handleNext}
                 className="cursor-pointer border-none bg-transparent text-sm text-text-muted hover:text-text-secondary hover:underline"
               >
                 {t("onboarding.skip")}
