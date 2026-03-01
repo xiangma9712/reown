@@ -185,17 +185,12 @@ impl Default for GitHubClient {
     }
 }
 
-/// Fetch pull requests from a GitHub repository.
-///
-/// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
-/// and merged PRs. Automatically paginates through all pages (up to `MAX_PAGES`).
-/// The token should be a GitHub personal access token or similar.
-pub async fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<Vec<PrInfo>> {
-    let client = GitHubClient::new();
-    client.list_pull_requests(owner, repo, token).await
-}
-
 impl GitHubClient {
+    /// Fetch pull requests from a GitHub repository.
+    ///
+    /// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
+    /// and merged PRs. Automatically paginates through all pages (up to `MAX_PAGES`).
+    /// The token should be a GitHub personal access token or similar.
     pub async fn list_pull_requests(
         &self,
         owner: &str,
@@ -251,21 +246,11 @@ impl GitHubClient {
     }
 }
 
-/// Fetch the list of commits for a pull request from GitHub API.
-///
-/// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/commits` and converts
-/// the response into `Vec<CommitInfo>`. Paginates up to `MAX_PAGES` pages.
-pub async fn list_pr_commits(
-    owner: &str,
-    repo: &str,
-    pr_number: u64,
-    token: &str,
-) -> Result<Vec<CommitInfo>> {
-    let client = GitHubClient::new();
-    client.list_pr_commits(owner, repo, pr_number, token).await
-}
-
 impl GitHubClient {
+    /// Fetch the list of commits for a pull request from GitHub API.
+    ///
+    /// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/commits` and converts
+    /// the response into `Vec<CommitInfo>`. Paginates up to `MAX_PAGES` pages.
     pub async fn list_pr_commits(
         &self,
         owner: &str,
@@ -465,23 +450,11 @@ impl GhPullRequestFile {
     }
 }
 
-/// Fetch the list of changed files for a pull request from GitHub API.
-///
-/// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/files` and converts
-/// the response into `Vec<FileDiff>`. Paginates up to 300 files (3 pages).
-pub async fn get_pull_request_files(
-    owner: &str,
-    repo: &str,
-    pr_number: u64,
-    token: &str,
-) -> Result<Vec<FileDiff>> {
-    let client = GitHubClient::new();
-    client
-        .get_pull_request_files(owner, repo, pr_number, token)
-        .await
-}
-
 impl GitHubClient {
+    /// Fetch the list of changed files for a pull request from GitHub API.
+    ///
+    /// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/files` and converts
+    /// the response into `Vec<FileDiff>`. Paginates up to 300 files (3 pages).
     pub async fn get_pull_request_files(
         &self,
         owner: &str,
@@ -540,25 +513,11 @@ impl GitHubClient {
     }
 }
 
-/// Submit a review on a pull request.
-///
-/// Calls `POST /repos/{owner}/{repo}/pulls/{pr_number}/reviews` with
-/// the specified event (APPROVE or REQUEST_CHANGES) and body text.
-pub async fn submit_review(
-    owner: &str,
-    repo: &str,
-    pr_number: u64,
-    event: ReviewEvent,
-    body: &str,
-    token: &str,
-) -> Result<()> {
-    let client = GitHubClient::new();
-    client
-        .submit_review(owner, repo, pr_number, event, body, token)
-        .await
-}
-
 impl GitHubClient {
+    /// Submit a review on a pull request.
+    ///
+    /// Calls `POST /repos/{owner}/{repo}/pulls/{pr_number}/reviews` with
+    /// the specified event (APPROVE or REQUEST_CHANGES) and body text.
     pub async fn submit_review(
         &self,
         owner: &str,
@@ -599,39 +558,11 @@ impl GitHubClient {
     }
 }
 
-/// Add labels to a pull request (via the Issues API).
-///
-/// Calls `POST /repos/{owner}/{repo}/issues/{issue_number}/labels` with
-/// the specified label names. Creates the labels if they don't exist.
-pub async fn add_labels(
-    owner: &str,
-    repo: &str,
-    issue_number: u64,
-    labels: &[String],
-    token: &str,
-) -> Result<()> {
-    let client = GitHubClient::new();
-    client
-        .add_labels(owner, repo, issue_number, labels, token)
-        .await
-}
-
-/// Internal implementation of add_labels that accepts a base URL for testability.
-async fn add_labels_with_base_url(
-    base_url: &str,
-    owner: &str,
-    repo: &str,
-    issue_number: u64,
-    labels: &[String],
-    token: &str,
-) -> Result<()> {
-    let client = GitHubClient::new();
-    client
-        .add_labels_with_base_url(base_url, owner, repo, issue_number, labels, token)
-        .await
-}
-
 impl GitHubClient {
+    /// Add labels to a pull request (via the Issues API).
+    ///
+    /// Calls `POST /repos/{owner}/{repo}/issues/{issue_number}/labels` with
+    /// the specified label names. Creates the labels if they don't exist.
     pub async fn add_labels(
         &self,
         owner: &str,
@@ -768,25 +699,12 @@ fn build_enable_auto_merge_mutation(
 
 const GITHUB_GRAPHQL_URL: &str = "https://api.github.com/graphql";
 
-/// Enable auto-merge for a pull request.
-///
-/// Uses GitHub's GraphQL API to:
-/// 1. Fetch the PR's node ID
-/// 2. Call the `enablePullRequestAutoMerge` mutation with the specified merge method
-pub async fn enable_auto_merge(
-    token: &str,
-    owner: &str,
-    repo: &str,
-    pr_number: u64,
-    merge_method: MergeMethod,
-) -> Result<()> {
-    let client = GitHubClient::new();
-    client
-        .enable_auto_merge(token, owner, repo, pr_number, merge_method)
-        .await
-}
-
 impl GitHubClient {
+    /// Enable auto-merge for a pull request.
+    ///
+    /// Uses GitHub's GraphQL API to:
+    /// 1. Fetch the PR's node ID
+    /// 2. Call the `enablePullRequestAutoMerge` mutation with the specified merge method
     pub async fn enable_auto_merge(
         &self,
         token: &str,
@@ -1611,9 +1529,9 @@ mod tests {
             .await;
 
         let labels = vec!["bug".to_string(), "urgent".to_string()];
-        let result =
-            add_labels_with_base_url(&server.url(), "owner", "repo", 42, &labels, "test-token")
-                .await;
+        let result = GitHubClient::new()
+            .add_labels_with_base_url(&server.url(), "owner", "repo", 42, &labels, "test-token")
+            .await;
 
         assert!(result.is_ok());
         mock.assert_async().await;
@@ -1634,8 +1552,9 @@ mod tests {
             .await;
 
         let labels = vec!["enhancement".to_string()];
-        let result =
-            add_labels_with_base_url(&server.url(), "owner", "repo", 1, &labels, "token").await;
+        let result = GitHubClient::new()
+            .add_labels_with_base_url(&server.url(), "owner", "repo", 1, &labels, "token")
+            .await;
 
         assert!(result.is_ok());
         mock.assert_async().await;
@@ -1654,8 +1573,9 @@ mod tests {
             .await;
 
         let labels: Vec<String> = vec![];
-        let result =
-            add_labels_with_base_url(&server.url(), "owner", "repo", 10, &labels, "token").await;
+        let result = GitHubClient::new()
+            .add_labels_with_base_url(&server.url(), "owner", "repo", 10, &labels, "token")
+            .await;
 
         assert!(result.is_ok());
         mock.assert_async().await;
@@ -1673,9 +1593,9 @@ mod tests {
             .await;
 
         let labels = vec!["bug".to_string()];
-        let result =
-            add_labels_with_base_url(&server.url(), "owner", "nonexistent", 1, &labels, "token")
-                .await;
+        let result = GitHubClient::new()
+            .add_labels_with_base_url(&server.url(), "owner", "nonexistent", 1, &labels, "token")
+            .await;
 
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
@@ -1695,8 +1615,9 @@ mod tests {
             .await;
 
         let labels = vec!["bug".to_string()];
-        let result =
-            add_labels_with_base_url(&server.url(), "owner", "repo", 5, &labels, "bad-token").await;
+        let result = GitHubClient::new()
+            .add_labels_with_base_url(&server.url(), "owner", "repo", 5, &labels, "bad-token")
+            .await;
 
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
@@ -1716,8 +1637,9 @@ mod tests {
             .await;
 
         let labels = vec!["invalid\0label".to_string()];
-        let result =
-            add_labels_with_base_url(&server.url(), "owner", "repo", 3, &labels, "token").await;
+        let result = GitHubClient::new()
+            .add_labels_with_base_url(&server.url(), "owner", "repo", 3, &labels, "token")
+            .await;
 
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
@@ -1737,8 +1659,9 @@ mod tests {
             .await;
 
         let labels = vec!["bug".to_string()];
-        let result =
-            add_labels_with_base_url(&server.url(), "owner", "repo", 7, &labels, "token").await;
+        let result = GitHubClient::new()
+            .add_labels_with_base_url(&server.url(), "owner", "repo", 7, &labels, "token")
+            .await;
 
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
