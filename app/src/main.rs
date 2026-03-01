@@ -86,7 +86,9 @@ async fn list_pull_requests(
     repo: String,
 ) -> Result<Vec<reown::github::PrInfo>, AppError> {
     let token = load_github_token()?;
-    reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+    let client = reown::github::GitHubClient::new();
+    client
+        .list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)
 }
@@ -98,10 +100,11 @@ async fn get_pull_request_files(
     pr_number: u64,
 ) -> Result<Vec<reown::analysis::CategorizedFileDiff>, AppError> {
     let token = load_github_token()?;
-    let diffs =
-        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
-            .await
-            .map_err(AppError::github)?;
+    let client = reown::github::GitHubClient::new();
+    let diffs = client
+        .get_pull_request_files(&owner, &repo, pr_number, &token)
+        .await
+        .map_err(AppError::github)?;
     Ok(reown::analysis::categorize_diffs(diffs))
 }
 
@@ -112,7 +115,9 @@ async fn list_pr_commits(
     pr_number: u64,
 ) -> Result<Vec<reown::github::CommitInfo>, AppError> {
     let token = load_github_token()?;
-    reown::github::pull_request::list_pr_commits(&owner, &repo, pr_number, &token)
+    let client = reown::github::GitHubClient::new();
+    client
+        .list_pr_commits(&owner, &repo, pr_number, &token)
         .await
         .map_err(AppError::github)
 }
@@ -126,7 +131,9 @@ async fn submit_pr_review(
     body: String,
 ) -> Result<(), AppError> {
     let token = load_github_token()?;
-    reown::github::pull_request::submit_review(&owner, &repo, pr_number, event, &body, &token)
+    let client = reown::github::GitHubClient::new();
+    client
+        .submit_review(&owner, &repo, pr_number, event, &body, &token)
         .await
         .map_err(AppError::github)
 }
@@ -139,7 +146,9 @@ async fn enable_pr_auto_merge(
     merge_method: reown::github::MergeMethod,
 ) -> Result<(), AppError> {
     let token = load_github_token()?;
-    reown::github::pull_request::enable_auto_merge(&token, &owner, &repo, pr_number, merge_method)
+    let client = reown::github::GitHubClient::new();
+    client
+        .enable_auto_merge(&token, &owner, &repo, pr_number, merge_method)
         .await
         .map_err(AppError::github)
 }
@@ -197,7 +206,9 @@ async fn analyze_pr_risk(
     pr_number: u64,
 ) -> Result<reown::analysis::AnalysisResult, AppError> {
     let token = load_github_token()?;
-    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+    let client = reown::github::GitHubClient::new();
+    let prs = client
+        .list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)?;
 
@@ -206,10 +217,10 @@ async fn analyze_pr_risk(
         .find(|p| p.number == pr_number)
         .ok_or_else(|| AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found")))?;
 
-    let diffs =
-        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
-            .await
-            .map_err(AppError::github)?;
+    let diffs = client
+        .get_pull_request_files(&owner, &repo, pr_number, &token)
+        .await
+        .map_err(AppError::github)?;
 
     Ok(reown::analysis::analyze_pr_risk(&pr, &diffs))
 }
@@ -223,8 +234,10 @@ async fn analyze_pr_risk_with_llm(
 ) -> Result<reown::analysis::HybridAnalysisResult, AppError> {
     let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
+    let client = reown::github::GitHubClient::new();
 
-    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+    let prs = client
+        .list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)?;
 
@@ -233,10 +246,10 @@ async fn analyze_pr_risk_with_llm(
         .find(|p| p.number == pr_number)
         .ok_or_else(|| AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found")))?;
 
-    let diffs =
-        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
-            .await
-            .map_err(AppError::github)?;
+    let diffs = client
+        .get_pull_request_files(&owner, &repo, pr_number, &token)
+        .await
+        .map_err(AppError::github)?;
 
     reown::analysis::analyze_pr_with_llm(&pr, &diffs, &llm_client)
         .await
@@ -545,16 +558,18 @@ async fn evaluate_auto_approve_candidates(
     let repo_id = format!("{owner}/{repo}");
     let automation_config = config.get_automation_config(&repo_id);
 
-    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+    let client = reown::github::GitHubClient::new();
+    let prs = client
+        .list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)?;
 
     let mut analyses = Vec::new();
     for pr in &prs {
-        let diffs =
-            reown::github::pull_request::get_pull_request_files(&owner, &repo, pr.number, &token)
-                .await
-                .map_err(AppError::github)?;
+        let diffs = client
+            .get_pull_request_files(&owner, &repo, pr.number, &token)
+            .await
+            .map_err(AppError::github)?;
         analyses.push(reown::analysis::analyze_pr_risk(pr, &diffs));
     }
 
@@ -703,7 +718,9 @@ async fn suggest_review_comments(
     let stats = reown::analysis::analyze_review_patterns(&records);
 
     // 3. PRの情報を取得してリスク分析する
-    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+    let client = reown::github::GitHubClient::new();
+    let prs = client
+        .list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)?;
 
@@ -712,10 +729,10 @@ async fn suggest_review_comments(
         .find(|p| p.number == pr_number)
         .ok_or_else(|| AppError::analysis(anyhow::anyhow!("PR #{pr_number} not found")))?;
 
-    let diffs =
-        reown::github::pull_request::get_pull_request_files(&owner, &repo, pr_number, &token)
-            .await
-            .map_err(AppError::github)?;
+    let diffs = client
+        .get_pull_request_files(&owner, &repo, pr_number, &token)
+        .await
+        .map_err(AppError::github)?;
 
     let analysis = reown::analysis::analyze_pr_risk(&pr, &diffs);
 
