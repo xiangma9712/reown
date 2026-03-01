@@ -17,10 +17,40 @@ export function Card({ children, className = "", style }: Props) {
   );
 }
 
+export function CardTitle({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <h2
+      className={`text-lg font-semibold leading-snug text-text-heading ${className}`}
+    >
+      {children}
+    </h2>
+  );
+}
+
+export function CardContent({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <p className={`text-sm leading-relaxed text-text-secondary ${className}`}>
+      {children}
+    </p>
+  );
+}
+
 export function Panel({ children, className = "" }: Props) {
   return (
     <div
-      className={`rounded-lg border border-border bg-bg-primary p-5 ${className}`}
+      className={`rounded-lg border-l-2 border-border bg-bg-primary p-5 ${className}`}
     >
       {children}
     </div>

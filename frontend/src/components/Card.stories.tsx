@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Card, Panel } from "./Card";
+import { Card, CardTitle, CardContent, Panel } from "./Card";
 
 const meta = {
   title: "Components/Card",
@@ -17,10 +17,8 @@ export const CardDefault: Story = {
   args: {
     children: (
       <div>
-        <h2 className="mb-2 text-lg text-text-heading">Card タイトル</h2>
-        <p className="text-sm text-text-secondary">
-          Cardコンポーネントのサンプルコンテンツです。
-        </p>
+        <CardTitle className="mb-2">Card タイトル</CardTitle>
+        <CardContent>Cardコンポーネントのサンプルコンテンツです。</CardContent>
       </div>
     ),
   },
@@ -31,7 +29,9 @@ export const PanelDefault: Story = {
   args: { children: "placeholder" },
   render: () => (
     <Panel>
-      <h3 className="mb-2 text-base text-text-heading">Panel タイトル</h3>
+      <h3 className="mb-2 text-base font-semibold text-text-heading">
+        Panel タイトル
+      </h3>
       <p className="text-sm text-text-secondary">
         Panelコンポーネントのサンプルコンテンツです。
       </p>
@@ -44,10 +44,10 @@ export const CardWithStyle: Story = {
   args: {
     children: (
       <div>
-        <h2 className="mb-2 text-lg text-text-heading">スタイル付き Card</h2>
-        <p className="text-sm text-text-secondary">
+        <CardTitle className="mb-2">スタイル付き Card</CardTitle>
+        <CardContent>
           style prop でカスタムスタイルを適用した例です。
-        </p>
+        </CardContent>
       </div>
     ),
     style: { maxWidth: 320, border: "2px solid #6366f1" },
@@ -59,7 +59,7 @@ export const CardWithPanel: Story = {
   args: { children: "placeholder" },
   render: () => (
     <Card>
-      <h2 className="mb-4 text-lg text-text-heading">外側のCard</h2>
+      <CardTitle className="mb-4">外側のCard</CardTitle>
       <Panel>
         <p className="text-sm text-text-secondary">内側のPanelコンテンツ</p>
       </Panel>
