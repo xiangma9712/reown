@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::git::diff::FileDiff;
-use crate::github::pull_request::{get_pull_request_files, list_pull_requests, PrInfo};
+use crate::github::pull_request::{GitHubClient, PrInfo};
 use crate::llm::client::LlmClient;
 use crate::llm::prompts::{Language, PrMetadata, PromptBuilder};
 
@@ -46,8 +46,9 @@ pub async fn summarize_pr(
     pr_number: u64,
     token: &str,
     llm_client: &LlmClient,
+    github_client: &GitHubClient,
 ) -> Result<PrSummary> {
-    let (pr, diffs) = fetch_pr_data(owner, repo, pr_number, token).await?;
+    let (pr, diffs) = fetch_pr_data(owner, repo, pr_number, token, github_client).await?;
 
     let metadata = PrMetadata {
         title: pr.title.clone(),
@@ -108,8 +109,9 @@ pub async fn check_pr_consistency(
     pr_number: u64,
     token: &str,
     llm_client: &LlmClient,
+    github_client: &GitHubClient,
 ) -> Result<ConsistencyResult> {
-    let (pr, diffs) = fetch_pr_data(owner, repo, pr_number, token).await?;
+    let (pr, diffs) = fetch_pr_data(owner, repo, pr_number, token, github_client).await?;
 
     let metadata = PrMetadata {
         title: pr.title.clone(),
@@ -143,8 +145,10 @@ async fn fetch_pr_data(
     repo: &str,
     pr_number: u64,
     token: &str,
+    github_client: &GitHubClient,
 ) -> Result<(PrInfo, Vec<FileDiff>)> {
-    let prs = list_pull_requests(owner, repo, token)
+    let prs = github_client
+        .list_pull_requests(owner, repo, token)
         .await
         .context("PRリストの取得に失敗しました")?;
 
@@ -153,7 +157,8 @@ async fn fetch_pr_data(
         .find(|p| p.number == pr_number)
         .with_context(|| format!("PR #{pr_number} が見つかりませんでした"))?;
 
-    let diffs = get_pull_request_files(owner, repo, pr_number, token)
+    let diffs = github_client
+        .get_pull_request_files(owner, repo, pr_number, token)
         .await
         .context("PR差分ファイルの取得に失敗しました")?;
 

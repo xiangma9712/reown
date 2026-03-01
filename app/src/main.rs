@@ -294,7 +294,8 @@ async fn summarize_pull_request(
 ) -> Result<reown::llm::summary::PrSummary, AppError> {
     let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
-    reown::llm::summary::summarize_pr(&owner, &repo, pr_number, &token, &llm_client)
+    let client = reown::github::GitHubClient::new();
+    reown::llm::summary::summarize_pr(&owner, &repo, pr_number, &token, &llm_client, &client)
         .await
         .map_err(AppError::llm)
 }
@@ -308,9 +309,17 @@ async fn check_pr_consistency(
 ) -> Result<reown::llm::summary::ConsistencyResult, AppError> {
     let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
-    reown::llm::summary::check_pr_consistency(&owner, &repo, pr_number, &token, &llm_client)
-        .await
-        .map_err(AppError::llm)
+    let client = reown::github::GitHubClient::new();
+    reown::llm::summary::check_pr_consistency(
+        &owner,
+        &repo,
+        pr_number,
+        &token,
+        &llm_client,
+        &client,
+    )
+    .await
+    .map_err(AppError::llm)
 }
 
 // ── LLM connection test ─────────────────────────────────────────────────────
