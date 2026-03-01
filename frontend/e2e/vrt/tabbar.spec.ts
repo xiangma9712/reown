@@ -44,7 +44,7 @@ test.describe("TabBar", () => {
     );
     await page.locator('[role="tab"]').first().hover();
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "shortcut-on-hover.png"
+      "shortcut-badge-visible-on-hover.png"
     );
   });
 
