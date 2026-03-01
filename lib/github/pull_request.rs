@@ -197,12 +197,22 @@ impl GitHubClient {
         repo: &str,
         token: &str,
     ) -> Result<Vec<PrInfo>> {
+        self.list_pull_requests_with_base_url("https://api.github.com", owner, repo, token)
+            .await
+    }
+
+    async fn list_pull_requests_with_base_url(
+        &self,
+        base_url: &str,
+        owner: &str,
+        repo: &str,
+        token: &str,
+    ) -> Result<Vec<PrInfo>> {
         let mut all_prs = Vec::new();
 
         for page in 1..=MAX_PAGES {
-            let url = format!(
-                "https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}"
-            );
+            let url =
+                format!("{base_url}/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}");
 
             let response = self
                 .http
@@ -258,11 +268,23 @@ impl GitHubClient {
         pr_number: u64,
         token: &str,
     ) -> Result<Vec<CommitInfo>> {
+        self.list_pr_commits_with_base_url("https://api.github.com", owner, repo, pr_number, token)
+            .await
+    }
+
+    async fn list_pr_commits_with_base_url(
+        &self,
+        base_url: &str,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        token: &str,
+    ) -> Result<Vec<CommitInfo>> {
         let mut all_commits = Vec::new();
 
         for page in 1..=MAX_PAGES {
             let url = format!(
-                "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
+                "{base_url}/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
             );
 
             let response = self
@@ -462,11 +484,29 @@ impl GitHubClient {
         pr_number: u64,
         token: &str,
     ) -> Result<Vec<FileDiff>> {
+        self.get_pull_request_files_with_base_url(
+            "https://api.github.com",
+            owner,
+            repo,
+            pr_number,
+            token,
+        )
+        .await
+    }
+
+    async fn get_pull_request_files_with_base_url(
+        &self,
+        base_url: &str,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        token: &str,
+    ) -> Result<Vec<FileDiff>> {
         let mut all_files = Vec::new();
 
         for page in 1..=MAX_FILE_PAGES {
             let url = format!(
-                "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/files?per_page=100&page={page}"
+                "{base_url}/repos/{owner}/{repo}/pulls/{pr_number}/files?per_page=100&page={page}"
             );
 
             let response = self
@@ -527,7 +567,30 @@ impl GitHubClient {
         body: &str,
         token: &str,
     ) -> Result<()> {
-        let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/reviews");
+        self.submit_review_with_base_url(
+            "https://api.github.com",
+            owner,
+            repo,
+            pr_number,
+            event,
+            body,
+            token,
+        )
+        .await
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn submit_review_with_base_url(
+        &self,
+        base_url: &str,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        event: ReviewEvent,
+        body: &str,
+        token: &str,
+    ) -> Result<()> {
+        let url = format!("{base_url}/repos/{owner}/{repo}/pulls/{pr_number}/reviews");
 
         let request_body = SubmitReviewRequest {
             event,
@@ -713,12 +776,32 @@ impl GitHubClient {
         pr_number: u64,
         merge_method: MergeMethod,
     ) -> Result<()> {
+        self.enable_auto_merge_with_base_url(
+            GITHUB_GRAPHQL_URL,
+            token,
+            owner,
+            repo,
+            pr_number,
+            merge_method,
+        )
+        .await
+    }
+
+    async fn enable_auto_merge_with_base_url(
+        &self,
+        graphql_url: &str,
+        token: &str,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        merge_method: MergeMethod,
+    ) -> Result<()> {
         // Step 1: Fetch the PR's node ID
         let node_id_body = build_pr_node_id_query(owner, repo, pr_number);
 
         let response = self
             .http
-            .post(GITHUB_GRAPHQL_URL)
+            .post(graphql_url)
             .header("Authorization", format!("Bearer {token}"))
             .header("User-Agent", "reown")
             .json(&node_id_body)
@@ -754,7 +837,7 @@ impl GitHubClient {
 
         let response = self
             .http
-            .post(GITHUB_GRAPHQL_URL)
+            .post(graphql_url)
             .header("Authorization", format!("Bearer {token}"))
             .header("User-Agent", "reown")
             .json(&mutation_body)
@@ -1666,6 +1749,391 @@ mod tests {
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("500"));
+        mock.assert_async().await;
+    }
+
+    /// Test submit_review succeeds with APPROVE event.
+    #[tokio::test]
+    async fn test_submit_review_approve_success() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/pulls/10/reviews")
+            .match_header("Accept", "application/vnd.github+json")
+            .match_header("Authorization", "Bearer test-token")
+            .match_header("User-Agent", "reown")
+            .match_header("X-GitHub-Api-Version", "2022-11-28")
+            .match_body(mockito::Matcher::Json(
+                serde_json::json!({"event": "APPROVE", "body": "LGTM!"}),
+            ))
+            .with_status(200)
+            .with_body(r#"{"id":1}"#)
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .submit_review_with_base_url(
+                &server.url(),
+                "owner",
+                "repo",
+                10,
+                ReviewEvent::Approve,
+                "LGTM!",
+                "test-token",
+            )
+            .await;
+
+        assert!(result.is_ok());
+        mock.assert_async().await;
+    }
+
+    /// Test submit_review succeeds with REQUEST_CHANGES event.
+    #[tokio::test]
+    async fn test_submit_review_request_changes_success() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/pulls/5/reviews")
+            .match_body(mockito::Matcher::Json(
+                serde_json::json!({"event": "REQUEST_CHANGES", "body": "Please fix."}),
+            ))
+            .with_status(200)
+            .with_body(r#"{"id":2}"#)
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .submit_review_with_base_url(
+                &server.url(),
+                "owner",
+                "repo",
+                5,
+                ReviewEvent::RequestChanges,
+                "Please fix.",
+                "token",
+            )
+            .await;
+
+        assert!(result.is_ok());
+        mock.assert_async().await;
+    }
+
+    /// Test submit_review returns error on 422 (e.g., already reviewed).
+    #[tokio::test]
+    async fn test_submit_review_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/repos/owner/repo/pulls/1/reviews")
+            .with_status(422)
+            .with_body(r#"{"message":"Validation Failed"}"#)
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .submit_review_with_base_url(
+                &server.url(),
+                "owner",
+                "repo",
+                1,
+                ReviewEvent::Approve,
+                "",
+                "token",
+            )
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("422"));
+        mock.assert_async().await;
+    }
+
+    /// Test list_pull_requests succeeds with a single page of results.
+    #[tokio::test]
+    async fn test_list_pull_requests_success() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock(
+                "GET",
+                "/repos/owner/repo/pulls?state=all&per_page=100&page=1",
+            )
+            .match_header("Accept", "application/vnd.github+json")
+            .match_header("Authorization", "Bearer test-token")
+            .match_header("User-Agent", "reown")
+            .match_header("X-GitHub-Api-Version", "2022-11-28")
+            .with_status(200)
+            .with_body(
+                r#"[{
+                "number": 1,
+                "title": "Test PR",
+                "state": "open",
+                "user": { "login": "alice" },
+                "head": { "ref": "feature" },
+                "base": { "ref": "main" },
+                "updated_at": "2025-01-15T10:30:00Z",
+                "additions": 10,
+                "deletions": 2,
+                "changed_files": 1,
+                "body": "Test body",
+                "html_url": "https://github.com/owner/repo/pull/1"
+            }]"#,
+            )
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .list_pull_requests_with_base_url(&server.url(), "owner", "repo", "test-token")
+            .await;
+
+        assert!(result.is_ok());
+        let prs = result.unwrap();
+        assert_eq!(prs.len(), 1);
+        assert_eq!(prs[0].number, 1);
+        assert_eq!(prs[0].title, "Test PR");
+        assert_eq!(prs[0].author, "alice");
+        mock.assert_async().await;
+    }
+
+    /// Test list_pull_requests returns error on API failure.
+    #[tokio::test]
+    async fn test_list_pull_requests_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock(
+                "GET",
+                "/repos/owner/repo/pulls?state=all&per_page=100&page=1",
+            )
+            .with_status(403)
+            .with_body(r#"{"message":"Forbidden"}"#)
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .list_pull_requests_with_base_url(&server.url(), "owner", "repo", "token")
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("403"));
+        mock.assert_async().await;
+    }
+
+    /// Test list_pr_commits succeeds with a single page of results.
+    #[tokio::test]
+    async fn test_list_pr_commits_success() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock(
+                "GET",
+                "/repos/owner/repo/pulls/42/commits?per_page=100&page=1",
+            )
+            .match_header("Accept", "application/vnd.github+json")
+            .match_header("Authorization", "Bearer test-token")
+            .match_header("User-Agent", "reown")
+            .with_status(200)
+            .with_body(
+                r#"[{
+                "sha": "abc123",
+                "commit": {
+                    "message": "feat: add feature",
+                    "author": { "name": "Alice", "date": "2025-01-15T10:30:00Z" }
+                },
+                "author": { "login": "alice" },
+                "html_url": "https://github.com/owner/repo/commit/abc123"
+            }]"#,
+            )
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .list_pr_commits_with_base_url(&server.url(), "owner", "repo", 42, "test-token")
+            .await;
+
+        assert!(result.is_ok());
+        let commits = result.unwrap();
+        assert_eq!(commits.len(), 1);
+        assert_eq!(commits[0].sha, "abc123");
+        assert_eq!(commits[0].author, "alice");
+        mock.assert_async().await;
+    }
+
+    /// Test list_pr_commits returns error on API failure.
+    #[tokio::test]
+    async fn test_list_pr_commits_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock(
+                "GET",
+                "/repos/owner/repo/pulls/1/commits?per_page=100&page=1",
+            )
+            .with_status(404)
+            .with_body(r#"{"message":"Not Found"}"#)
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .list_pr_commits_with_base_url(&server.url(), "owner", "repo", 1, "token")
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("404"));
+        mock.assert_async().await;
+    }
+
+    /// Test get_pull_request_files succeeds with a single page of results.
+    #[tokio::test]
+    async fn test_get_pull_request_files_success() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock(
+                "GET",
+                "/repos/owner/repo/pulls/10/files?per_page=100&page=1",
+            )
+            .match_header("Accept", "application/vnd.github+json")
+            .match_header("Authorization", "Bearer test-token")
+            .match_header("User-Agent", "reown")
+            .with_status(200)
+            .with_body(
+                r#"[{
+                "filename": "src/main.rs",
+                "status": "modified",
+                "patch": "@@ -1,3 +1,4 @@\n fn main() {\n+    println!(\"hello\");\n }"
+            }]"#,
+            )
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .get_pull_request_files_with_base_url(&server.url(), "owner", "repo", 10, "test-token")
+            .await;
+
+        assert!(result.is_ok());
+        let files = result.unwrap();
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].new_path.as_deref(), Some("src/main.rs"));
+        assert_eq!(files[0].status, FileStatus::Modified);
+        mock.assert_async().await;
+    }
+
+    /// Test get_pull_request_files returns error on API failure.
+    #[tokio::test]
+    async fn test_get_pull_request_files_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/repos/owner/repo/pulls/1/files?per_page=100&page=1")
+            .with_status(500)
+            .with_body(r#"{"message":"Internal Server Error"}"#)
+            .create_async()
+            .await;
+
+        let result = GitHubClient::new()
+            .get_pull_request_files_with_base_url(&server.url(), "owner", "repo", 1, "token")
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("500"));
+        mock.assert_async().await;
+    }
+
+    /// Test enable_auto_merge succeeds with mock GraphQL server.
+    #[tokio::test]
+    async fn test_enable_auto_merge_success() {
+        let mut server = mockito::Server::new_async().await;
+
+        // Mock both GraphQL calls to the same endpoint
+        let mock_node_id = server
+            .mock("POST", "/graphql")
+            .match_body(mockito::Matcher::PartialJsonString(
+                r#"{"query":"query { repository(owner: \"owner\", name: \"repo\") { pullRequest(number: 42) { id } } }"}"#.to_string(),
+            ))
+            .with_status(200)
+            .with_body(r#"{"data":{"repository":{"pullRequest":{"id":"PR_kwDOTest123"}}}}"#)
+            .create_async()
+            .await;
+
+        let mock_mutation = server
+            .mock("POST", "/graphql")
+            .match_body(mockito::Matcher::PartialJsonString(
+                r#"{"query":"mutation { enablePullRequestAutoMerge(input: { pullRequestId: \"PR_kwDOTest123\", mergeMethod: SQUASH }) { pullRequest { autoMergeRequest { enabledAt } } } }"}"#.to_string(),
+            ))
+            .with_status(200)
+            .with_body(r#"{"data":{"enablePullRequestAutoMerge":{"pullRequest":{"autoMergeRequest":{"enabledAt":"2025-01-15T10:30:00Z"}}}}}"#)
+            .create_async()
+            .await;
+
+        let graphql_url = format!("{}/graphql", server.url());
+        let result = GitHubClient::new()
+            .enable_auto_merge_with_base_url(
+                &graphql_url,
+                "test-token",
+                "owner",
+                "repo",
+                42,
+                MergeMethod::Squash,
+            )
+            .await;
+
+        assert!(result.is_ok());
+        mock_node_id.assert_async().await;
+        mock_mutation.assert_async().await;
+    }
+
+    /// Test enable_auto_merge returns error when node ID fetch fails.
+    #[tokio::test]
+    async fn test_enable_auto_merge_node_id_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/graphql")
+            .with_status(200)
+            .with_body(
+                r#"{"data":null,"errors":[{"message":"Could not resolve to a Repository"}]}"#,
+            )
+            .create_async()
+            .await;
+
+        let graphql_url = format!("{}/graphql", server.url());
+        let result = GitHubClient::new()
+            .enable_auto_merge_with_base_url(
+                &graphql_url,
+                "token",
+                "owner",
+                "repo",
+                1,
+                MergeMethod::Merge,
+            )
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Could not resolve to a Repository"));
+        mock.assert_async().await;
+    }
+
+    /// Test enable_auto_merge returns error on HTTP failure.
+    #[tokio::test]
+    async fn test_enable_auto_merge_http_error() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("POST", "/graphql")
+            .with_status(401)
+            .with_body(r#"{"message":"Bad credentials"}"#)
+            .create_async()
+            .await;
+
+        let graphql_url = format!("{}/graphql", server.url());
+        let result = GitHubClient::new()
+            .enable_auto_merge_with_base_url(
+                &graphql_url,
+                "bad-token",
+                "owner",
+                "repo",
+                1,
+                MergeMethod::Merge,
+            )
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("401"));
         mock.assert_async().await;
     }
 }
