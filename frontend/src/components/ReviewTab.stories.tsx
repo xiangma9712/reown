@@ -209,3 +209,37 @@ export const FileListResized: Story = {
     },
   ],
 };
+
+/** 外部からのブランチナビゲーション（差分あり） */
+export const NavigateToBranch: Story = {
+  args: {
+    navigateToBranch: "feature/auth",
+    onNavigateConsumed: () => {},
+  },
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        list_enriched_branches: () => fixtures.enrichedBranches,
+        diff_branches: () => fixtures.fileDiffs,
+      });
+      return <Story />;
+    },
+  ],
+};
+
+/** 外部からのブランチナビゲーション（差分なし） */
+export const NavigateToBranchEmpty: Story = {
+  args: {
+    navigateToBranch: "feature/dashboard",
+    onNavigateConsumed: () => {},
+  },
+  decorators: [
+    (Story) => {
+      overrideInvoke({
+        list_enriched_branches: () => fixtures.enrichedBranches,
+        diff_branches: () => [],
+      });
+      return <Story />;
+    },
+  ],
+};
