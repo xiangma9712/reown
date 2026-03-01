@@ -51,9 +51,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
           />
         );
       case "complete":
-        return (
-          <SetupWizardStep4 onComplete={onComplete} onBack={handleBack} />
-        );
+        return <SetupWizardStep4 onComplete={onComplete} onBack={handleBack} />;
     }
   };
 
