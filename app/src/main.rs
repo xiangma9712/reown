@@ -1866,6 +1866,58 @@ mod tests {
             .contains("JSON パースに失敗"));
     }
 
+    // ── save_github_token コマンドテスト ─────────────────────────────────
+
+    #[test]
+    fn test_cmd_save_github_token_ok() {
+        let save_result = super::save_github_token("gho_test-save-cmd-token".to_string());
+        if save_result.is_err() {
+            eprintln!("Skipping keychain test: keychain not available in this environment");
+            return;
+        }
+
+        // 保存後にログイン状態を確認
+        let status = super::get_github_auth_status().unwrap();
+        assert!(status);
+
+        // クリーンアップ
+        let _ = super::github_logout();
+    }
+
+    #[test]
+    fn test_cmd_save_github_token_empty_returns_storage_error() {
+        let result = super::save_github_token("".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Storage));
+    }
+
+    #[test]
+    fn test_cmd_save_github_token_whitespace_only_returns_storage_error() {
+        let result = super::save_github_token("   ".to_string());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err.kind, ErrorKind::Storage));
+    }
+
+    #[test]
+    fn test_cmd_save_github_token_roundtrip_with_logout() {
+        let save_result = super::save_github_token("gho_test-roundtrip-token".to_string());
+        if save_result.is_err() {
+            eprintln!("Skipping keychain test: keychain not available in this environment");
+            return;
+        }
+
+        // 保存後はログイン状態
+        let status = super::get_github_auth_status().unwrap();
+        assert!(status);
+
+        // ログアウト後は未ログイン状態
+        super::github_logout().unwrap();
+        let status = super::get_github_auth_status().unwrap();
+        assert!(!status);
+    }
+
     #[test]
     fn test_cmd_load_app_config_invalid_json_error() {
         let tmp = tempfile::TempDir::new().unwrap();
