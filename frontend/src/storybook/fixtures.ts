@@ -300,6 +300,20 @@ const commits: CommitInfo[] = [
     date: "2025-01-15T10:30:00Z",
     commit_url: "https://github.com/example/repo/commit/ghi789",
   },
+  {
+    sha: "jkl0123abcdef4567890abcdef1234567890abcdef",
+    message: "fix: トークンリフレッシュの修正",
+    author: "dev-user",
+    date: "2025-01-15T11:00:00Z",
+    commit_url: "https://github.com/example/repo/commit/jkl012",
+  },
+  {
+    sha: "mno3456abcdef7890123abcdef4567890abcdef12",
+    message: "初期コミット",
+    author: "dev-user",
+    date: "2025-01-15T08:00:00Z",
+    commit_url: "https://github.com/example/repo/commit/mno345",
+  },
 ];
 
 const repositories: RepositoryEntry[] = [

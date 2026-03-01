@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next";
 import type { CommitInfo } from "../types";
+import { Badge } from "./Badge";
 import { Card } from "./Card";
 import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
+import type { ComponentProps } from "react";
 
 interface CommitListPanelProps {
   commits: CommitInfo[];
@@ -12,6 +14,29 @@ interface CommitListPanelProps {
 
 function formatShortSha(sha: string): string {
   return sha.slice(0, 7);
+}
+
+const prefixVariants: Record<string, ComponentProps<typeof Badge>["variant"]> =
+  {
+    feat: "success",
+    fix: "danger",
+    refactor: "purple",
+    docs: "info",
+    test: "warning",
+    chore: "default",
+    perf: "info",
+    style: "default",
+  };
+
+function parsePrefix(message: string): {
+  prefix: string | null;
+  rest: string;
+} {
+  const match = message.match(/^(\w+):\s*/);
+  if (match && match[1] in prefixVariants) {
+    return { prefix: match[1], rest: message.slice(match[0].length) };
+  }
+  return { prefix: null, rest: message };
 }
 
 function formatDate(dateStr: string): string {
@@ -56,12 +81,27 @@ export function CommitListPanel({
             className="border-b border-border px-3 py-2.5 last:border-b-0"
           >
             <div className="flex items-center gap-2">
-              <code className="shrink-0 rounded bg-bg-hover px-1.5 py-0.5 text-xs text-info">
+              <a
+                href={commit.commit_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 rounded bg-bg-hover px-1.5 py-0.5 font-mono text-xs text-info underline decoration-info/40 hover:decoration-info"
+              >
                 {formatShortSha(commit.sha)}
-              </code>
-              <span className="truncate text-sm font-medium text-text-primary">
-                {commit.message}
-              </span>
+              </a>
+              {(() => {
+                const { prefix, rest } = parsePrefix(commit.message);
+                return (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    {prefix && (
+                      <Badge variant={prefixVariants[prefix]}>{prefix}</Badge>
+                    )}
+                    <span className="truncate text-sm text-text-primary">
+                      {rest}
+                    </span>
+                  </span>
+                );
+              })()}
             </div>
             <div className="mt-0.5 flex items-center gap-2 pl-[calc(1.5rem+0.75rem+0.5rem)] text-xs text-text-secondary">
               <span>{commit.author}</span>
