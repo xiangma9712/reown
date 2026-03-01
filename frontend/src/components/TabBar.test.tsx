@@ -167,4 +167,21 @@ describe("TabBar", () => {
     await user.keyboard("{ArrowRight}");
     expect(onSelect).toHaveBeenCalledWith("review");
   });
+
+  it("shortcut badges are hidden by default and become visible on group hover via CSS classes", () => {
+    const { container } = render(
+      <TabBar
+        items={items}
+        activeId="review"
+        onSelect={vi.fn()}
+        showShortcuts
+      />
+    );
+    const kbds = container.querySelectorAll("kbd");
+    expect(kbds).toHaveLength(2);
+    kbds.forEach((kbd) => {
+      expect(kbd).toHaveClass("hidden");
+      expect(kbd).toHaveClass("group-hover:inline-flex");
+    });
+  });
 });
