@@ -98,3 +98,39 @@ export const TabActive: Story = {
     children: "タブ（選択中）",
   },
 };
+
+/**
+ * active prop は filter / tab 以外の variant では無視される。
+ * 以下のストーリーは、active={true} を渡しても見た目が変わらないことを明示する。
+ */
+export const PrimaryActiveIgnored: Story = {
+  args: {
+    variant: "primary",
+    active: true,
+    children: "Primary (active無視)",
+  },
+};
+
+export const SecondaryActiveIgnored: Story = {
+  args: {
+    variant: "secondary",
+    active: true,
+    children: "Secondary (active無視)",
+  },
+};
+
+export const DestructiveActiveIgnored: Story = {
+  args: {
+    variant: "destructive",
+    active: true,
+    children: "Destructive (active無視)",
+  },
+};
+
+export const GhostActiveIgnored: Story = {
+  args: {
+    variant: "ghost",
+    active: true,
+    children: "Ghost (active無視)",
+  },
+};
