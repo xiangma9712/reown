@@ -27,9 +27,12 @@ test.describe("ConsistencyCheckPanel", () => {
       "/iframe.html?id=components-consistencycheckpanel--consistent&viewMode=story"
     );
     // play関数の結果表示を待つ
-    await page.waitForSelector("text=PRタイトル・本文と変更内容は一致しています", {
-      timeout: 10_000,
-    });
+    await page.waitForSelector(
+      "text=PRタイトル・本文と変更内容は一致しています",
+      {
+        timeout: 10_000,
+      }
+    );
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "consistent.png"
     );
@@ -57,8 +60,34 @@ test.describe("ConsistencyCheckPanel", () => {
     await page.waitForSelector("text=API rate limit exceeded", {
       timeout: 10_000,
     });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot("error.png");
+  });
+
+  test("recheck updates result", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-consistencycheckpanel--recheck-updates-result&viewMode=story"
+    );
+    // play関数の再チェック結果を待つ
+    await page.waitForSelector(
+      "text=PRタイトル・本文と実際の変更内容に乖離があります",
+      { timeout: 10_000 }
+    );
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "error.png"
+      "recheck-updates-result.png"
+    );
+  });
+
+  test("recheck recovery from error", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-consistencycheckpanel--recheck-recovery-from-error&viewMode=story"
+    );
+    // play関数の回復結果を待つ
+    await page.waitForSelector(
+      "text=PRタイトル・本文と変更内容は一致しています",
+      { timeout: 10_000 }
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "recheck-recovery-from-error.png"
     );
   });
 });
