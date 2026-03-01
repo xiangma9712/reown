@@ -115,4 +115,27 @@ test.describe("ReviewTab", () => {
       "file-list-resized.png"
     );
   });
+
+  test("navigate to branch", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-reviewtab--navigate-to-branch&viewMode=story"
+    );
+    await page.waitForSelector("text=差分概要", { timeout: 10_000 });
+    await page.waitForSelector("text=src/auth.ts", { timeout: 10_000 });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "navigate-to-branch.png"
+    );
+  });
+
+  test("navigate to branch empty", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-reviewtab--navigate-to-branch-empty&viewMode=story"
+    );
+    await page.waitForSelector("text=mainとの差分はありません", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "navigate-to-branch-empty.png"
+    );
+  });
 });
