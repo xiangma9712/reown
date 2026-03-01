@@ -1,107 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "./Input";
 import { Button } from "./Button";
-import { invoke } from "../invoke";
 import { useLlmSettings } from "../hooks/useLlmSettings";
 import { EyeIcon, EyeOffIcon } from "./icons";
 
 export function LlmSettingsTab() {
   const { t } = useTranslation();
-  const [apiKeyStored, setApiKeyStored] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  const llm = useLlmSettings();
+  const llm = useLlmSettings({ loadOnMount: true });
 
-  const loadConfig = useCallback(async () => {
-    try {
-      setLoading(true);
-      const config = await invoke("load_llm_config");
-      llm.setEndpoint(config.llm_endpoint);
-      llm.setModel(config.llm_model);
-      setApiKeyStored(config.llm_api_key_stored);
-      llm.setApiKey("");
-      llm.setMessage(null);
-    } catch (e) {
-      llm.setMessage({
-        type: "error",
-        text: t("llmSettings.loadError", {
-          message: e instanceof Error ? e.message : String(e),
-        }),
-      });
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]);
-
-  useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
-
-  const handleSave = useCallback(async () => {
-    try {
-      llm.setSaving(true);
-      llm.setMessage(null);
-
-      const llmConfig = {
-        llm_endpoint: llm.endpoint,
-        llm_model: llm.model,
-        llm_api_key_stored: llm.apiKey ? true : apiKeyStored,
-      };
-      await invoke("save_llm_config", { llmConfig });
-
-      if (llm.apiKey) {
-        await invoke("save_llm_api_key", { apiKey: llm.apiKey });
-        setApiKeyStored(true);
-        llm.setApiKey("");
-      }
-
-      llm.setMessage({
-        type: "success",
-        text: t("llmSettings.saveSuccess"),
-      });
-    } catch (e) {
-      llm.setMessage({
-        type: "error",
-        text: t("llmSettings.saveError", {
-          message: e instanceof Error ? e.message : String(e),
-        }),
-      });
-    } finally {
-      llm.setSaving(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [llm.endpoint, llm.model, llm.apiKey, apiKeyStored, t]);
-
-  const handleReset = useCallback(() => {
-    llm.setMessage(null);
-    loadConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadConfig]);
-
-  const handleDeleteApiKey = useCallback(async () => {
-    try {
-      llm.setMessage(null);
-      await invoke("delete_llm_api_key");
-      setApiKeyStored(false);
-      llm.setApiKey("");
-      llm.setMessage({
-        type: "success",
-        text: t("llmSettings.apiKeyDeleted"),
-      });
-    } catch (e) {
-      llm.setMessage({
-        type: "error",
-        text: t("common.error", {
-          message: e instanceof Error ? e.message : String(e),
-        }),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]);
-
-  if (loading) {
+  if (llm.loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-text-muted">{t("common.loading")}</p>
@@ -139,7 +47,7 @@ export function LlmSettingsTab() {
                 value={llm.apiKey}
                 onChange={(e) => llm.setApiKey(e.target.value)}
                 placeholder={
-                  apiKeyStored
+                  llm.apiKeyStored
                     ? t("llmSettings.apiKeyStoredPlaceholder")
                     : t("llmSettings.apiKeyPlaceholder")
                 }
@@ -158,13 +66,13 @@ export function LlmSettingsTab() {
               {llm.showApiKey ? <EyeOffIcon /> : <EyeIcon />}
             </Button>
           </div>
-          {apiKeyStored && (
+          {llm.apiKeyStored && (
             <div className="mt-1 flex items-center gap-2">
               <span className="text-[0.75rem] text-success">
                 {t("llmSettings.apiKeyStored")}
               </span>
               <button
-                onClick={handleDeleteApiKey}
+                onClick={llm.handleDeleteApiKey}
                 className="cursor-pointer border-none bg-transparent text-[0.75rem] text-danger hover:underline"
               >
                 {t("llmSettings.deleteApiKey")}
@@ -187,10 +95,10 @@ export function LlmSettingsTab() {
       )}
 
       <div className="flex items-center gap-3">
-        <Button onClick={handleSave} variant="primary" loading={llm.saving}>
+        <Button onClick={llm.handleSave} variant="primary" loading={llm.saving}>
           {t("llmSettings.save")}
         </Button>
-        <Button onClick={handleReset} variant="secondary">
+        <Button onClick={llm.handleReset} variant="secondary">
           {t("llmSettings.reset")}
         </Button>
         <Button
