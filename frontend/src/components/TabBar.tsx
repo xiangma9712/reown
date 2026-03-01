@@ -12,9 +12,15 @@ interface Props {
   items: NavItem[];
   activeId: string;
   onSelect: (id: string) => void;
+  showShortcuts?: boolean;
 }
 
-export function TabBar({ items, activeId, onSelect }: Props) {
+export function TabBar({
+  items,
+  activeId,
+  onSelect,
+  showShortcuts = false,
+}: Props) {
   const { t } = useTranslation();
   const tablistRef = useRef<HTMLDivElement>(null);
 
@@ -71,49 +77,51 @@ export function TabBar({ items, activeId, onSelect }: Props) {
             aria-keyshortcuts={item.shortcut}
           >
             <span>{t(item.labelKey)}</span>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <kbd
-                  aria-hidden="true"
-                  className="ml-2 hidden cursor-default items-center gap-0.5 rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted group-hover:inline-flex"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="shrink-0"
+            {showShortcuts && (
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <kbd
+                    aria-hidden="true"
+                    className="ml-2 hidden cursor-default items-center gap-0.5 rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted group-hover:inline-flex"
                   >
-                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                    <line x1="6" y1="8" x2="6" y2="8" />
-                    <line x1="10" y1="8" x2="10" y2="8" />
-                    <line x1="14" y1="8" x2="14" y2="8" />
-                    <line x1="18" y1="8" x2="18" y2="8" />
-                    <line x1="6" y1="12" x2="6" y2="12" />
-                    <line x1="10" y1="12" x2="10" y2="12" />
-                    <line x1="14" y1="12" x2="14" y2="12" />
-                    <line x1="18" y1="12" x2="18" y2="12" />
-                    <line x1="8" y1="16" x2="16" y2="16" />
-                  </svg>
-                  {item.shortcut}
-                </kbd>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="z-50 rounded bg-bg-tooltip px-3 py-2 text-sm text-text-tooltip shadow-md"
-                  side="bottom"
-                  sideOffset={8}
-                >
-                  {t("tabs.shortcutTooltip", { key: item.shortcut })}
-                  <Tooltip.Arrow className="fill-bg-tooltip" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="shrink-0"
+                    >
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <line x1="6" y1="8" x2="6" y2="8" />
+                      <line x1="10" y1="8" x2="10" y2="8" />
+                      <line x1="14" y1="8" x2="14" y2="8" />
+                      <line x1="18" y1="8" x2="18" y2="8" />
+                      <line x1="6" y1="12" x2="6" y2="12" />
+                      <line x1="10" y1="12" x2="10" y2="12" />
+                      <line x1="14" y1="12" x2="14" y2="12" />
+                      <line x1="18" y1="12" x2="18" y2="12" />
+                      <line x1="8" y1="16" x2="16" y2="16" />
+                    </svg>
+                    {item.shortcut}
+                  </kbd>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="z-50 rounded bg-bg-tooltip px-3 py-2 text-sm text-text-tooltip shadow-md"
+                    side="bottom"
+                    sideOffset={8}
+                  >
+                    {t("tabs.shortcutTooltip", { key: item.shortcut })}
+                    <Tooltip.Arrow className="fill-bg-tooltip" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            )}
           </button>
         ))}
       </div>

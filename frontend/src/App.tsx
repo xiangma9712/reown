@@ -7,13 +7,14 @@ import { GithubSettingsTab } from "./components/GithubSettingsTab";
 import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { ThemeSettingsTab } from "./components/ThemeSettingsTab";
+import { KeyboardShortcutSettingsTab } from "./components/KeyboardShortcutSettingsTab";
 import { Layout } from "./components/Layout";
 import { Loading } from "./components/Loading";
 import { OnboardingPlaceholder } from "./components/OnboardingPlaceholder";
 import { RepositoryProvider } from "./RepositoryContext";
 import { ThemeProvider } from "./ThemeContext";
 import { invoke } from "./invoke";
-import type { RepositoryEntry, RepoInfo, PrInfo } from "./types";
+import type { RepositoryEntry, RepoInfo, PrInfo, AppConfig } from "./types";
 import "./style.css";
 
 const NAV_ITEMS = [
@@ -40,6 +41,7 @@ export function App() {
   const [addingRepo, setAddingRepo] = useState(false);
   const [addRepoError, setAddRepoError] = useState<string | null>(null);
   const [loadingRepos, setLoadingRepos] = useState(true);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const addErrorTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
@@ -48,6 +50,14 @@ export function App() {
     invoke("check_onboarding_needed")
       .then((needed) => setOnboardingNeeded(needed))
       .catch(() => setOnboardingNeeded(false));
+  }, []);
+
+  useEffect(() => {
+    invoke("load_app_config")
+      .then((config: AppConfig) =>
+        setShowKeyboardShortcuts(config.show_keyboard_shortcuts)
+      )
+      .catch(() => {});
   }, []);
 
   const handleSkipOnboarding = useCallback(async () => {
@@ -137,6 +147,21 @@ export function App() {
       setAddingRepo(false);
     }
   }, [t]);
+
+  const handleToggleKeyboardShortcuts = useCallback(
+    async (enabled: boolean) => {
+      setShowKeyboardShortcuts(enabled);
+      try {
+        const config = await invoke("load_app_config");
+        await invoke("save_app_config", {
+          config: { ...config, show_keyboard_shortcuts: enabled },
+        });
+      } catch {
+        // continue even if save fails — UI already updated
+      }
+    },
+    []
+  );
 
   const handleNavigateToBranch = useCallback((branch: string) => {
     setNavigateToBranch(branch);
@@ -263,9 +288,14 @@ export function App() {
           }}
           settingsOpen={settingsOpen}
           onToggleSettings={() => setSettingsOpen((prev) => !prev)}
+          showShortcuts={showKeyboardShortcuts}
           settingsContent={
             <div className="mx-auto max-w-xl space-y-8">
               <ThemeSettingsTab />
+              <KeyboardShortcutSettingsTab
+                enabled={showKeyboardShortcuts}
+                onChange={handleToggleKeyboardShortcuts}
+              />
               <GithubSettingsTab />
               <LlmSettingsTab />
               <AutomationSettingsTab />

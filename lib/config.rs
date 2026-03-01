@@ -297,6 +297,9 @@ pub struct AppConfig {
     /// オンボーディング完了フラグ
     #[serde(default)]
     pub onboarding_completed: bool,
+    /// キーボードショートカット表示フラグ（デフォルト: 非表示）
+    #[serde(default)]
+    pub show_keyboard_shortcuts: bool,
 }
 
 impl AppConfig {
@@ -533,6 +536,7 @@ mod tests {
         assert_eq!(config.default_owner, "");
         assert_eq!(config.default_repo, "");
         assert!(!config.onboarding_completed);
+        assert!(!config.show_keyboard_shortcuts);
     }
 
     #[test]
@@ -1107,6 +1111,38 @@ mod tests {
         let loaded = load_config(&config_path).unwrap();
         assert_eq!(loaded, config);
         assert!(loaded.onboarding_completed);
+    }
+
+    // ── Keyboard Shortcuts テスト ────────────────────────────────────────
+
+    #[test]
+    fn test_backward_compat_load_without_show_keyboard_shortcuts_field() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+        // show_keyboard_shortcutsフィールドなしの旧形式JSON
+        let old_json = r#"{"default_owner":"o","default_repo":"r"}"#;
+        std::fs::write(&config_path, old_json).unwrap();
+        let config = load_config(&config_path).unwrap();
+        assert_eq!(config.default_owner, "o");
+        assert!(!config.show_keyboard_shortcuts);
+    }
+
+    #[test]
+    fn test_save_and_load_config_with_show_keyboard_shortcuts() {
+        let tmp = TempDir::new().unwrap();
+        let config_path = tmp.path().join("config.json");
+
+        let config = AppConfig {
+            default_owner: "org".to_string(),
+            default_repo: "repo".to_string(),
+            show_keyboard_shortcuts: true,
+            ..Default::default()
+        };
+
+        save_config(&config_path, &config).unwrap();
+        let loaded = load_config(&config_path).unwrap();
+        assert_eq!(loaded, config);
+        assert!(loaded.show_keyboard_shortcuts);
     }
 
     // ── GitHub Token マイグレーションテスト ──────────────────────────────

@@ -310,6 +310,12 @@
     "dark": "Dark",
     "system": "System"
   },
+  "keyboardShortcuts": {
+    "label": "Keyboard Shortcuts",
+    "description": "Show keyboard shortcut badges on tabs and sidebar.",
+    "show": "Show",
+    "hide": "Hide"
+  },
   "todo": {
     "title": "TODO / FIXME",
     "empty": "No TODO/FIXME comments found.",

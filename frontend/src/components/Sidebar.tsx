@@ -55,6 +55,7 @@ interface Props {
   onToggleCollapse?: () => void;
   width?: number;
   loading?: boolean;
+  showShortcuts?: boolean;
 }
 
 export function Sidebar({

@@ -356,6 +356,7 @@ const appConfig: AppConfig = {
   llm: llmConfig,
   automation: automationConfig,
   onboarding_completed: false,
+  show_keyboard_shortcuts: true,
 };
 
 const prSummary: PrSummary = {
