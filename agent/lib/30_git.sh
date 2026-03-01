@@ -123,7 +123,7 @@ git_add_safe() {
 # Commit uncommitted changes with formatter retry on pre-commit hook failure.
 # If `git commit` fails (e.g. pre-commit hook), re-runs formatters and retries.
 # Usage: commit_with_formatter_retry "commit message"
-# Returns 0 if committed (or nothing to commit), non-zero on failure.
+# Returns 0 always (best-effort commit; callers do not check return value).
 commit_with_formatter_retry() {
   local commit_msg="$1"
   cd "$REPO_ROOT"
