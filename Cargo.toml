@@ -26,7 +26,7 @@ tracing = "0.1"
 
 [dev-dependencies]
 tempfile = "3.25.0"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "test-util"] }
 http = "1"
 mockito = "1"
 serial_test = "3"
