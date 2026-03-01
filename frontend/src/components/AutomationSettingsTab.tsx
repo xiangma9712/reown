@@ -481,7 +481,7 @@ export function AutomationSettingsTab() {
                     if (!isNaN(val)) {
                       setRiskConfig((prev) => ({
                         ...prev,
-                        missing_test_penalty: val,
+                        missing_test_penalty: Math.max(0, Math.min(val, 50)),
                       }));
                     }
                   }}
