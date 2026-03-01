@@ -1,13 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { userEvent, within } from "storybook/test";
-import { Dropdown } from "./Dropdown";
+import { Dropdown, ChevronDown } from "./Dropdown";
 import { Button } from "./Button";
 
 const meta = {
   title: "Components/Dropdown",
   component: Dropdown,
   args: {
-    trigger: <Button variant="secondary">メニュー</Button>,
+    trigger: (
+      <Button variant="secondary">
+        メニュー
+        <ChevronDown />
+      </Button>
+    ),
     items: [
       { label: "編集", onSelect: () => {} },
       { label: "複製", onSelect: () => {} },

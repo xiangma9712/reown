@@ -41,4 +41,24 @@ describe("Dropdown", () => {
     expect(screen.queryByText("Edit")).not.toBeInTheDocument();
     expect(screen.queryByText("Delete")).not.toBeInTheDocument();
   });
+
+  it("renders a separator before danger items", async () => {
+    const user = userEvent.setup();
+    render(<Dropdown trigger={<button>Open</button>} items={items} />);
+
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("separator")).toBeInTheDocument();
+  });
+
+  it("does not render a separator when no danger items exist", async () => {
+    const user = userEvent.setup();
+    const safeItems: DropdownItem[] = [
+      { label: "Edit", onSelect: vi.fn() },
+      { label: "Copy", onSelect: vi.fn() },
+    ];
+    render(<Dropdown trigger={<button>Open</button>} items={safeItems} />);
+
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument();
+  });
 });
