@@ -26,7 +26,9 @@ describe("ConfirmDialog", () => {
 
   it("renders confirm and cancel buttons", () => {
     render(<ConfirmDialog {...defaultProps} />);
-    expect(screen.getByRole("button", { name: "キャンセル" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "キャンセル" })
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
   });
 

@@ -52,9 +52,7 @@ describe("Layout", () => {
       </Layout>
     );
     expect(
-      screen.getByText(
-        "左のサイドメニューからリポジトリを選択してください。"
-      )
+      screen.getByText("左のサイドメニューからリポジトリを選択してください。")
     ).toBeInTheDocument();
     expect(screen.queryByText("Content")).not.toBeInTheDocument();
   });

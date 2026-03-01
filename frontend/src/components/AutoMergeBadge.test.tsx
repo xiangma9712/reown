@@ -112,7 +112,9 @@ describe("AutoMergeBadge", () => {
       expect(screen.queryByText("Auto Merge: 失敗")).not.toBeInTheDocument();
 
       rerender(<AutoMergeBadge status={null} />);
-      expect(screen.queryByText("Auto Merge: スキップ")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Auto Merge: スキップ")
+      ).not.toBeInTheDocument();
       expect(screen.queryByText("Auto Merge: 有効")).not.toBeInTheDocument();
       expect(screen.queryByText("Auto Merge: 失敗")).not.toBeInTheDocument();
     });

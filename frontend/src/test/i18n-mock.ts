@@ -22,12 +22,11 @@ const translations = flatten(ja as unknown as NestedRecord);
 /** {{param}} を実際の値に置換する簡易インターポレーション */
 function interpolate(
   template: string,
-  params?: Record<string, unknown>,
+  params?: Record<string, unknown>
 ): string {
   if (!params) return template;
-  return template.replace(
-    /\{\{(\w+)\}\}/g,
-    (_, key: string) => String(params[key] ?? `{{${key}}}`),
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) =>
+    String(params[key] ?? `{{${key}}}`)
   );
 }
 
