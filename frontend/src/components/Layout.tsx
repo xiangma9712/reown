@@ -37,6 +37,7 @@ interface Props {
   onSelectTab: (id: string) => void;
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
+  showShortcuts?: boolean;
   settingsContent?: ReactNode;
   children: ReactNode;
 }
@@ -56,6 +57,7 @@ export function Layout({
   onSelectTab,
   settingsOpen,
   onToggleSettings,
+  showShortcuts,
   settingsContent,
   children,
 }: Props) {
@@ -203,6 +205,7 @@ export function Layout({
           collapsed={collapsed}
           onToggleCollapse={toggleCollapse}
           width={collapsed ? undefined : sidebarWidth}
+          showShortcuts={showShortcuts}
         />
         {!collapsed && (
           <div
@@ -248,6 +251,7 @@ export function Layout({
               settingsOpen={settingsOpen}
               onToggleSettings={onToggleSettings}
               onClose={closeDrawer}
+              showShortcuts={showShortcuts}
             />
           </div>
         </div>
