@@ -14,5 +14,6 @@ export const Default: Story = {
   args: {
     onNext: () => {},
     onSkip: () => {},
+    onBack: () => {},
   },
 };
