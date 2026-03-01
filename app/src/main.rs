@@ -1005,7 +1005,7 @@ mod tests {
 
     #[test]
     fn test_app_error_display_all_variants() {
-        let cases = vec![
+        let cases = [
             AppError::git(anyhow::anyhow!("git error msg")),
             AppError::github(anyhow::anyhow!("github error msg")),
             AppError::storage(anyhow::anyhow!("storage error msg")),
@@ -1712,7 +1712,6 @@ mod tests {
         if result.is_err() {
             // キーが存在しない or keychainが利用できない場合はエラーが返される
             // これは正常な異常系の動作
-            return;
         }
     }
 
@@ -1947,6 +1946,20 @@ mod tests {
         super::github_logout().unwrap();
         let status = super::get_github_auth_status().unwrap();
         assert!(!status);
+    }
+
+    #[test]
+    fn test_cmd_load_default_risk_config() {
+        let config = super::load_default_risk_config();
+        assert_eq!(config, reown::config::RiskConfig::default());
+
+        // IPC経由でJSON化されることを確認
+        let json = serde_json::to_value(&config).unwrap();
+        assert!(json["category_weights"].is_object());
+        assert!(json["sensitive_patterns"].is_array());
+        assert!(json["file_count_thresholds"].is_array());
+        assert!(json["line_count_thresholds"].is_array());
+        assert_eq!(json["missing_test_penalty"], 15);
     }
 
     #[test]
