@@ -74,6 +74,7 @@ export function Sidebar({
   onToggleCollapse,
   width,
   loading = false,
+  showShortcuts = false,
 }: Props) {
   const { t } = useTranslation();
   const [removingRepo, setRemovingRepo] = useState<RepositoryEntry | null>(
@@ -436,12 +437,14 @@ export function Sidebar({
               >
                 <SettingsGearIcon />
                 {t("tabs.settings")}
-                <kbd
-                  aria-hidden="true"
-                  className="ml-auto rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted"
-                >
-                  S
-                </kbd>
+                {showShortcuts && (
+                  <kbd
+                    aria-hidden="true"
+                    className="ml-auto rounded border border-border-hover bg-bg-hint px-1.5 text-[0.7rem] text-text-muted"
+                  >
+                    S
+                  </kbd>
+                )}
               </button>
             </div>
           )}

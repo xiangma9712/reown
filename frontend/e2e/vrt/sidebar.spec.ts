@@ -11,9 +11,7 @@ test.describe("Sidebar", () => {
   });
 
   test("empty state", async ({ page }) => {
-    await page.goto(
-      "/iframe.html?id=components-sidebar--empty&viewMode=story"
-    );
+    await page.goto("/iframe.html?id=components-sidebar--empty&viewMode=story");
     await expect(page.locator("#storybook-root")).toHaveScreenshot("empty.png");
   });
 
@@ -71,7 +69,7 @@ test.describe("Sidebar", () => {
       "my-very-long-repository-name-that-exceeds-sidebar-width"
     );
     await repoButton.hover();
-    await page.waitForSelector('[data-radix-popper-content-wrapper]');
+    await page.waitForSelector("[data-radix-popper-content-wrapper]");
     await expect(page).toHaveScreenshot("tooltip-visible.png");
   });
 
@@ -138,6 +136,15 @@ test.describe("Sidebar", () => {
     );
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "collapsed-settings-open.png"
+    );
+  });
+
+  test("with shortcuts visible", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-sidebar--with-shortcuts&viewMode=story"
+    );
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "with-shortcuts.png"
     );
   });
 

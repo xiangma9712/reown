@@ -132,9 +132,18 @@ describe("Sidebar", () => {
     expect(settingsButton).toHaveAttribute("aria-keyshortcuts", "S");
   });
 
-  it("hides kbd shortcut from screen readers", () => {
+  it("hides kbd shortcut badge when showShortcuts is false", () => {
     const { container } = render(<Sidebar {...defaultProps} />);
     const kbd = container.querySelector("kbd");
+    expect(kbd).not.toBeInTheDocument();
+  });
+
+  it("shows kbd shortcut badge when showShortcuts is true", () => {
+    const { container } = render(
+      <Sidebar {...defaultProps} showShortcuts={true} />
+    );
+    const kbd = container.querySelector("kbd");
+    expect(kbd).toBeInTheDocument();
     expect(kbd).toHaveAttribute("aria-hidden", "true");
   });
 
