@@ -39,6 +39,12 @@ export const SettingsOpen: Story = {
   },
 };
 
+export const WithShortcuts: Story = {
+  args: {
+    showShortcuts: true,
+  },
+};
+
 export const LongRepoName: Story = {
   args: {
     repositories: [
