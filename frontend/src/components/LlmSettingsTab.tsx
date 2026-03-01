@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "./Input";
 import { Button } from "./Button";
 import { useLlmSettings } from "../hooks/useLlmSettings";
+import { CardTitle } from "./Card";
 import { EyeIcon, EyeOffIcon } from "./icons";
 
 export function LlmSettingsTab() {
@@ -19,9 +20,7 @@ export function LlmSettingsTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-bold text-text-heading">
-        {t("llmSettings.title")}
-      </h2>
+      <CardTitle className="font-bold">{t("llmSettings.title")}</CardTitle>
 
       <div className="space-y-4">
         <Input

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { ReviewRecord } from "../types";
 import { Badge } from "./Badge";
 import { RiskBadge } from "./RiskBadge";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 
 interface ReviewHistoryPanelProps {
   records: ReviewRecord[];
@@ -37,9 +37,7 @@ export function ReviewHistoryPanel({ records }: ReviewHistoryPanelProps) {
   return (
     <Card>
       <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
-        <h2 className="text-lg text-text-heading">
-          {t("reviewHistory.title")}
-        </h2>
+        <CardTitle>{t("reviewHistory.title")}</CardTitle>
         {sorted.length > 0 && (
           <span className="text-xs text-text-muted">
             {t("reviewHistory.count", { count: sorted.length })}

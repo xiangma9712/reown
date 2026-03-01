@@ -6,7 +6,7 @@ import type {
   AutomationConfig,
   ApproveWithMergeOutcome,
 } from "../types";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { Button } from "./Button";
 import { EmptyState } from "./EmptyState";
 import { RiskBadge } from "./RiskBadge";
@@ -86,9 +86,9 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
 
   return (
     <Card>
-      <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+      <CardTitle className="mb-3 border-b border-border pb-2">
         {t("automationPanel.title")}
-      </h2>
+      </CardTitle>
 
       {/* Idle / Evaluate button */}
       {phase === "idle" && (

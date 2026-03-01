@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { CommitInfo } from "../types";
 import { Badge } from "./Badge";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
 import type { ComponentProps } from "react";
@@ -67,9 +67,9 @@ export function CommitListPanel({
 
   return (
     <Card>
-      <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+      <CardTitle className="mb-3 border-b border-border pb-2">
         {t("pr.commits")}
-      </h2>
+      </CardTitle>
 
       {loading && <Loading />}
 

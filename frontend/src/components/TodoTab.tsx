@@ -5,7 +5,7 @@ import { useRepository } from "../RepositoryContext";
 import type { TodoItem, TodoKind } from "../types";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
 import { WorktreeList } from "./WorktreeList";
@@ -184,14 +184,14 @@ export function TodoTab({ onNavigateToBranch }: TodoTabProps) {
     <div className="space-y-6">
       <WorktreeList onNavigateToBranch={onNavigateToBranch} />
       <Card className="flex flex-col">
-        <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
+        <CardTitle className="mb-4 border-b border-border pb-2">
           {t("todo.title")}
           {todos.length > 0 && (
             <span className="ml-2 text-sm text-text-secondary">
               {t("todo.count", { count: filtered.length })}
             </span>
           )}
-        </h2>
+        </CardTitle>
 
         {todos.length > 0 && (
           <div className="mb-3 flex items-center gap-2">

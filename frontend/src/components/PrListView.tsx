@@ -4,7 +4,7 @@ import type { PrInfo, CommitInfo, RiskLevel } from "../types";
 import { invoke } from "../invoke";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { CommitListPanel } from "./CommitListPanel";
 import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
@@ -142,9 +142,9 @@ export function PrListView({
 
   return (
     <Card>
-      <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+      <CardTitle className="mb-3 border-b border-border pb-2">
         {t("pr.title")}
-      </h2>
+      </CardTitle>
 
       <div className="mb-4 flex gap-1">
         {filters.map((f) => (
