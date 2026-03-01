@@ -14,12 +14,18 @@ pub struct AutoApproveCandidate {
     /// リスクレベル
     pub risk_level: RiskLevel,
     /// リスクスコア（0〜100）
+    ///
+    /// Tauri IPC経由でフロントエンドからデシリアライズされる際、省略可能にするため `default` を指定
     #[serde(default)]
     pub risk_score: u32,
     /// 変更カテゴリ一覧
+    ///
+    /// Tauri IPC経由でフロントエンドからデシリアライズされる際、省略可能にするため `default` を指定
     #[serde(default)]
     pub categories: Vec<ChangeCategory>,
     /// 主要リスク要因の内訳
+    ///
+    /// Tauri IPC経由でフロントエンドからデシリアライズされる際、省略可能にするため `default` を指定
     #[serde(default)]
     pub factors: Vec<RiskFactor>,
     /// approve対象になった理由
