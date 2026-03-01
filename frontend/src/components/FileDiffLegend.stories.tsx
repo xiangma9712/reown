@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import i18n from "../i18n";
-import { FileDiffLegend } from "./AnalysisDetailPanel";
+import { FileDiffLegend } from "./FileDiffLegend";
 
 const meta = {
   title: "Components/FileDiffLegend",
