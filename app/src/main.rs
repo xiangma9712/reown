@@ -84,9 +84,9 @@ fn load_github_token() -> Result<String, AppError> {
 async fn list_pull_requests(
     owner: String,
     repo: String,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<Vec<reown::github::PrInfo>, AppError> {
     let token = load_github_token()?;
-    let client = reown::github::GitHubClient::new();
     client
         .list_pull_requests(&owner, &repo, &token)
         .await
@@ -98,9 +98,9 @@ async fn get_pull_request_files(
     owner: String,
     repo: String,
     pr_number: u64,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<Vec<reown::analysis::CategorizedFileDiff>, AppError> {
     let token = load_github_token()?;
-    let client = reown::github::GitHubClient::new();
     let diffs = client
         .get_pull_request_files(&owner, &repo, pr_number, &token)
         .await
@@ -113,9 +113,9 @@ async fn list_pr_commits(
     owner: String,
     repo: String,
     pr_number: u64,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<Vec<reown::github::CommitInfo>, AppError> {
     let token = load_github_token()?;
-    let client = reown::github::GitHubClient::new();
     client
         .list_pr_commits(&owner, &repo, pr_number, &token)
         .await
@@ -129,9 +129,9 @@ async fn submit_pr_review(
     pr_number: u64,
     event: reown::github::ReviewEvent,
     body: String,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<(), AppError> {
     let token = load_github_token()?;
-    let client = reown::github::GitHubClient::new();
     client
         .submit_review(&owner, &repo, pr_number, event, &body, &token)
         .await
@@ -144,9 +144,9 @@ async fn enable_pr_auto_merge(
     repo: String,
     pr_number: u64,
     merge_method: reown::github::MergeMethod,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<(), AppError> {
     let token = load_github_token()?;
-    let client = reown::github::GitHubClient::new();
     client
         .enable_auto_merge(&token, &owner, &repo, pr_number, merge_method)
         .await
@@ -204,9 +204,9 @@ async fn analyze_pr_risk(
     owner: String,
     repo: String,
     pr_number: u64,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<reown::analysis::AnalysisResult, AppError> {
     let token = load_github_token()?;
-    let client = reown::github::GitHubClient::new();
     let prs = client
         .list_pull_requests(&owner, &repo, &token)
         .await
@@ -231,10 +231,10 @@ async fn analyze_pr_risk_with_llm(
     repo: String,
     pr_number: u64,
     app_handle: tauri::AppHandle,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<reown::analysis::HybridAnalysisResult, AppError> {
     let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
-    let client = reown::github::GitHubClient::new();
 
     let prs = client
         .list_pull_requests(&owner, &repo, &token)
@@ -291,10 +291,10 @@ async fn summarize_pull_request(
     repo: String,
     pr_number: u64,
     app_handle: tauri::AppHandle,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<reown::llm::summary::PrSummary, AppError> {
     let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
-    let client = reown::github::GitHubClient::new();
     reown::llm::summary::summarize_pr(&owner, &repo, pr_number, &token, &llm_client, &client)
         .await
         .map_err(AppError::llm)
@@ -306,10 +306,10 @@ async fn check_pr_consistency(
     repo: String,
     pr_number: u64,
     app_handle: tauri::AppHandle,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<reown::llm::summary::ConsistencyResult, AppError> {
     let token = load_github_token()?;
     let llm_client = build_llm_client(&app_handle)?;
-    let client = reown::github::GitHubClient::new();
     reown::llm::summary::check_pr_consistency(
         &owner,
         &repo,
@@ -556,6 +556,7 @@ async fn evaluate_auto_approve_candidates(
     owner: String,
     repo: String,
     app_handle: tauri::AppHandle,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<Vec<reown::automation::AutoApproveCandidate>, AppError> {
     let token = load_github_token()?;
     let app_data_dir = app_handle
@@ -567,7 +568,6 @@ async fn evaluate_auto_approve_candidates(
     let repo_id = format!("{owner}/{repo}");
     let automation_config = config.get_automation_config(&repo_id);
 
-    let client = reown::github::GitHubClient::new();
     let prs = client
         .list_pull_requests(&owner, &repo, &token)
         .await
@@ -593,6 +593,7 @@ async fn run_auto_approve(
     owner: String,
     repo: String,
     app_handle: tauri::AppHandle,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<reown::automation::AutoApproveResult, AppError> {
     let token = load_github_token()?;
     let app_data_dir = app_handle
@@ -603,8 +604,6 @@ async fn run_auto_approve(
     let config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
     let repo_id = format!("{owner}/{repo}");
     let automation_config = config.get_automation_config(&repo_id);
-
-    let client = reown::github::GitHubClient::new();
 
     let prs = client
         .list_pull_requests(&owner, &repo, &token)
@@ -638,9 +637,9 @@ async fn run_auto_approve_with_merge(
     repo: String,
     candidates: Vec<reown::automation::AutoApproveCandidate>,
     automation_config: reown::config::AutomationConfig,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<reown::automation::AutoApproveWithMergeResult, AppError> {
     let token = load_github_token()?;
-    let client = reown::github::GitHubClient::new();
     Ok(reown::automation::execute_auto_approve_with_merge(
         &candidates,
         &owner,
@@ -712,6 +711,7 @@ async fn suggest_review_comments(
     owner: String,
     repo: String,
     pr_number: u64,
+    client: tauri::State<'_, reown::github::GitHubClient>,
 ) -> Result<Vec<reown::analysis::ReviewSuggestion>, AppError> {
     let token = load_github_token()?;
     // 1. レビュー履歴を読み込む
@@ -727,7 +727,6 @@ async fn suggest_review_comments(
     let stats = reown::analysis::analyze_review_patterns(&records);
 
     // 3. PRの情報を取得してリスク分析する
-    let client = reown::github::GitHubClient::new();
     let prs = client
         .list_pull_requests(&owner, &repo, &token)
         .await
@@ -786,6 +785,9 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            // GitHubClient をアプリ全体で共有し、reqwest::Client の接続プールを再利用する
+            app.manage(reown::github::GitHubClient::new());
+
             // config.json の github_token を Keychain にマイグレーション
             if let Ok(app_data_dir) = app.path().app_data_dir() {
                 let config_path = reown::config::default_config_path(&app_data_dir);
