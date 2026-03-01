@@ -103,21 +103,20 @@ cd "$REPO_ROOT"
 
 # Install a pre-commit hook that fails on first run, succeeds on second
 mkdir -p .git/hooks
-cat > .git/hooks/pre-commit << 'HOOK'
+HOOK_MARKER="$(mktemp /tmp/test_ci_fallback_hook_marker.XXXXXX)"
+rm -f "$HOOK_MARKER"  # remove so first check sees it missing
+cat > .git/hooks/pre-commit << HOOK
 #!/usr/bin/env bash
 # Fail once, then succeed — simulates formatter fixing issues
-MARKER="/tmp/test_ci_fallback_hook_marker"
-if [[ ! -f "$MARKER" ]]; then
-  touch "$MARKER"
+MARKER="$HOOK_MARKER"
+if [[ ! -f "\$MARKER" ]]; then
+  touch "\$MARKER"
   exit 1
 fi
-rm -f "$MARKER"
+rm -f "\$MARKER"
 exit 0
 HOOK
 chmod +x .git/hooks/pre-commit
-
-# Clean up marker in case it exists from a prior run
-rm -f /tmp/test_ci_fallback_hook_marker
 
 echo "needs formatting" > file.txt
 commit_before=$(git rev-list --count HEAD)
@@ -138,7 +137,7 @@ else
 fi
 
 # Clean up hook and marker
-rm -f .git/hooks/pre-commit /tmp/test_ci_fallback_hook_marker
+rm -f .git/hooks/pre-commit "$HOOK_MARKER"
 
 # ── Test 6: Staged changes (--cached) are also detected ─────────────────────
 cd "$REPO_ROOT"
