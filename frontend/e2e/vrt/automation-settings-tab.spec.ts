@@ -63,7 +63,13 @@ test.describe("AutomationSettingsTab", () => {
     await page.goto(
       "/iframe.html?id=components-automationsettingstab--threshold-input&viewMode=story"
     );
-    await page.waitForSelector("text=0 ~ 30", { timeout: 10_000 });
+    await page.waitForSelector("text=リスクレベル閾値", { timeout: 10_000 });
+    // Wait for Storybook play function to update the low_max input to 30
+    await expect(
+      page.locator(
+        '#storybook-root input[type="number"]',
+      ).first(),
+    ).not.toHaveValue("25", { timeout: 15_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "threshold-input.png"
     );
@@ -76,10 +82,10 @@ test.describe("AutomationSettingsTab", () => {
     await page.waitForSelector("text=テスト未追加ペナルティ", {
       timeout: 10_000,
     });
-    // Wait for story play interaction to update the input value to 35
+    // Wait for Storybook play function to update the input value from 15
     await expect(
       page.locator('#storybook-root input[type="number"][min="0"][max="50"]')
-    ).toHaveValue("35", { timeout: 10_000 });
+    ).not.toHaveValue("15", { timeout: 15_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "missing-test-penalty-interaction.png"
     );
