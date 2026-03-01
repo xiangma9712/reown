@@ -580,16 +580,19 @@ async fn run_auto_approve(
     let repo_id = format!("{owner}/{repo}");
     let automation_config = config.get_automation_config(&repo_id);
 
-    let prs = reown::github::pull_request::list_pull_requests(&owner, &repo, &token)
+    let client = reown::github::GitHubClient::new();
+
+    let prs = client
+        .list_pull_requests(&owner, &repo, &token)
         .await
         .map_err(AppError::github)?;
 
     let mut analyses = Vec::new();
     for pr in &prs {
-        let diffs =
-            reown::github::pull_request::get_pull_request_files(&owner, &repo, pr.number, &token)
-                .await
-                .map_err(AppError::github)?;
+        let diffs = client
+            .get_pull_request_files(&owner, &repo, pr.number, &token)
+            .await
+            .map_err(AppError::github)?;
         analyses.push(reown::analysis::analyze_pr_risk(pr, &diffs));
     }
 
@@ -600,6 +603,7 @@ async fn run_auto_approve(
         &repo,
         &token,
         automation_config,
+        &client,
     )
     .await)
 }
@@ -612,12 +616,14 @@ async fn run_auto_approve_with_merge(
     automation_config: reown::config::AutomationConfig,
 ) -> Result<reown::automation::AutoApproveWithMergeResult, AppError> {
     let token = load_github_token()?;
+    let client = reown::github::GitHubClient::new();
     Ok(reown::automation::execute_auto_approve_with_merge(
         &candidates,
         &owner,
         &repo,
         &token,
         &automation_config,
+        &client,
     )
     .await)
 }

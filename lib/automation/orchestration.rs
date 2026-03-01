@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::config::AutomationConfig;
-use crate::github::pull_request::{enable_auto_merge, MergeMethod};
+use crate::github::pull_request::{GitHubClient, MergeMethod};
 
 use super::auto_approve::{execute_auto_approve, ApproveOutcome, AutoApproveCandidate};
 
@@ -51,14 +51,15 @@ pub async fn execute_auto_approve_with_merge(
     repo: &str,
     token: &str,
     config: &AutomationConfig,
+    client: &GitHubClient,
 ) -> AutoApproveWithMergeResult {
-    let approve_result = execute_auto_approve(candidates, owner, repo, token, config).await;
+    let approve_result = execute_auto_approve(candidates, owner, repo, token, config, client).await;
 
     let mut outcomes = Vec::new();
 
     for approve_outcome in &approve_result.outcomes {
         let auto_merge_status =
-            determine_and_execute_merge(approve_outcome, config, owner, repo, token).await;
+            determine_and_execute_merge(approve_outcome, config, owner, repo, token, client).await;
 
         outcomes.push(ApproveWithMergeOutcome {
             pr_number: approve_outcome.pr_number,
@@ -81,6 +82,7 @@ async fn determine_and_execute_merge(
     owner: &str,
     repo: &str,
     token: &str,
+    client: &GitHubClient,
 ) -> AutoMergeStatus {
     if !approve_outcome.success {
         return AutoMergeStatus::SkippedDueToApproveFail;
@@ -96,7 +98,10 @@ async fn determine_and_execute_merge(
         crate::config::MergeMethod::Rebase => MergeMethod::Rebase,
     };
 
-    match enable_auto_merge(token, owner, repo, approve_outcome.pr_number, merge_method).await {
+    match client
+        .enable_auto_merge(token, owner, repo, approve_outcome.pr_number, merge_method)
+        .await
+    {
         Ok(()) => AutoMergeStatus::Enabled,
         Err(e) => AutoMergeStatus::Failed(e.to_string()),
     }
@@ -209,10 +214,11 @@ mod tests {
             error: Some("fail".to_string()),
         };
         let config = config_with_merge(true);
+        let client = GitHubClient::new();
 
         let rt = tokio::runtime::Runtime::new().unwrap();
         let status = rt.block_on(determine_and_execute_merge(
-            &outcome, &config, "owner", "repo", "token",
+            &outcome, &config, "owner", "repo", "token", &client,
         ));
         assert_eq!(status, AutoMergeStatus::SkippedDueToApproveFail);
     }
@@ -225,10 +231,11 @@ mod tests {
             error: None,
         };
         let config = config_with_merge(false);
+        let client = GitHubClient::new();
 
         let rt = tokio::runtime::Runtime::new().unwrap();
         let status = rt.block_on(determine_and_execute_merge(
-            &outcome, &config, "owner", "repo", "token",
+            &outcome, &config, "owner", "repo", "token", &client,
         ));
         assert_eq!(status, AutoMergeStatus::Skipped);
     }

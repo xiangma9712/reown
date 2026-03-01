@@ -4,7 +4,7 @@ use tracing::warn;
 
 use crate::analysis::{AnalysisResult, ChangeCategory, RiskFactor, RiskLevel};
 use crate::config::{AutoApproveMaxRisk, AutomationConfig};
-use crate::github::pull_request::{add_labels, submit_review, ReviewEvent};
+use crate::github::pull_request::{GitHubClient, ReviewEvent};
 
 /// approve対象PRの候補
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -128,32 +128,35 @@ pub async fn execute_auto_approve(
     repo: &str,
     token: &str,
     config: &AutomationConfig,
+    client: &GitHubClient,
 ) -> AutoApproveResult {
     let mut outcomes = Vec::new();
 
     for candidate in candidates {
         let body = build_approve_comment(candidate);
 
-        match submit_review(
-            owner,
-            repo,
-            candidate.pr_number,
-            ReviewEvent::Approve,
-            &body,
-            token,
-        )
-        .await
+        match client
+            .submit_review(
+                owner,
+                repo,
+                candidate.pr_number,
+                ReviewEvent::Approve,
+                &body,
+                token,
+            )
+            .await
         {
             Ok(()) => {
                 // ラベルを付与（失敗してもapprove自体は成功扱い）
-                if let Err(e) = add_labels(
-                    owner,
-                    repo,
-                    candidate.pr_number,
-                    std::slice::from_ref(&config.auto_approve_label),
-                    token,
-                )
-                .await
+                if let Err(e) = client
+                    .add_labels(
+                        owner,
+                        repo,
+                        candidate.pr_number,
+                        std::slice::from_ref(&config.auto_approve_label),
+                        token,
+                    )
+                    .await
                 {
                     warn!(
                         pr_number = candidate.pr_number,
