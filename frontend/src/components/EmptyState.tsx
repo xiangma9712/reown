@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { ReactNode } from "react";
 
 interface EmptyStateProps {
@@ -17,7 +18,10 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center px-4 py-6 text-center${className ? ` ${className}` : ""}`}
+      className={clsx(
+        "flex flex-col items-center justify-center px-4 py-6 text-center",
+        className
+      )}
     >
       {icon && (
         <div className="mb-3 text-text-muted/50" aria-hidden="true">
