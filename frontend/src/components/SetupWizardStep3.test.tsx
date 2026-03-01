@@ -171,6 +171,14 @@ describe("SetupWizardStep3", () => {
         apiKey: "sk-test-key",
       });
     });
+    // APIキーありの場合、llm_api_key_stored: true で保存される
+    expect(mockInvokeFn).toHaveBeenCalledWith("save_llm_config", {
+      llmConfig: {
+        llm_endpoint: "https://api.anthropic.com",
+        llm_model: "claude-sonnet-4-5-20250929",
+        llm_api_key_stored: true,
+      },
+    });
   });
 
   it("shows save error when save fails", async () => {
