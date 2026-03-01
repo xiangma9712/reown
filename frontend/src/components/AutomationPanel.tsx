@@ -29,6 +29,7 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
   const [automationConfig, setAutomationConfig] =
     useState<AutomationConfig | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [evaluated, setEvaluated] = useState(false);
 
   const handleEvaluate = useCallback(async () => {
     setPhase("evaluating");
@@ -49,6 +50,7 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
         repo,
       });
       setCandidates(result);
+      setEvaluated(true);
       if (result.length === 0) {
         setPhase("idle");
       } else {
@@ -96,8 +98,15 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
               {t("pr.autoApproveError")}: {error}
             </p>
           )}
-          {candidates.length === 0 && outcomes.length === 0 && (
-            <EmptyState message={t("automationPanel.description")} />
+          {/* ③ 評価済みで候補なしの場合、専用の空状態メッセージを表示 */}
+          {evaluated && candidates.length === 0 && outcomes.length === 0 && (
+            <EmptyState message={t("pr.autoApproveNoCandidates")} />
+          )}
+          {/* ① 未評価時は説明テキストを表示してボタンのコンテキストを明確にする */}
+          {!evaluated && outcomes.length === 0 && (
+            <p className="text-[0.85rem] text-text-secondary">
+              {t("automationPanel.description")}
+            </p>
           )}
           <Button onClick={handleEvaluate} variant="primary">
             {t("pr.autoApproveRun")}
@@ -115,10 +124,17 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
         </div>
       )}
 
-      {/* Confirm dialog with candidate list */}
+      {/* ② Confirm dialog with candidate list inside dialog */}
       {phase === "confirm" && (
-        <div className="space-y-3">
-          <div className="space-y-2">
+        <ConfirmDialog
+          open={true}
+          message={t("pr.autoApproveConfirm")}
+          onConfirm={handleExecute}
+          onCancel={() => setPhase("idle")}
+          confirmLabel={t("pr.autoApproveRun")}
+          confirmVariant="primary"
+        >
+          <div className="mb-4 space-y-2">
             {candidates.map((c) => (
               <div
                 key={c.pr_number}
@@ -134,15 +150,7 @@ export function AutomationPanel({ owner, repo }: AutomationPanelProps) {
               </div>
             ))}
           </div>
-          <ConfirmDialog
-            open={true}
-            message={t("pr.autoApproveConfirm")}
-            onConfirm={handleExecute}
-            onCancel={() => setPhase("idle")}
-            confirmLabel={t("pr.autoApproveRun")}
-            confirmVariant="primary"
-          />
-        </div>
+        </ConfirmDialog>
       )}
 
       {/* Executing */}

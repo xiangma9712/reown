@@ -20,8 +20,10 @@ test.describe("AutomationPanel", () => {
     await page.waitForSelector("text=オートメーション実行", {
       timeout: 10_000,
     });
-    // Wait for the evaluate to complete (no candidates message appears in idle)
-    await page.waitForTimeout(500);
+    // Wait for the evaluate to complete and empty state message to appear
+    await page.waitForSelector("text=自動Approveの対象となるPRはありません", {
+      timeout: 10_000,
+    });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "no-candidates.png"
     );
@@ -34,10 +36,10 @@ test.describe("AutomationPanel", () => {
     await page.waitForSelector("text=オートメーション実行", {
       timeout: 10_000,
     });
-    // Wait for evaluate to finish and candidates to appear
+    // Wait for evaluate to finish and confirm dialog with candidates to appear
     await page.waitForSelector("text=#38", { timeout: 10_000 });
-    await expect(page.locator("#storybook-root")).toHaveScreenshot(
-      "with-candidates.png"
-    );
+    await expect(page).toHaveScreenshot("with-candidates.png", {
+      fullPage: true,
+    });
   });
 });
