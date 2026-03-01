@@ -2,17 +2,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { SetupWizard } from "./SetupWizard";
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, params?: Record<string, unknown>) => {
-      if (key === "onboarding.stepIndicator" && params) {
-        return `ステップ ${params.current} / ${params.total}`;
-      }
-      return key;
-    },
-  }),
-}));
+vi.mock("react-i18next", async () => {
+  const { i18nMock } = await import("../test/i18n-mock");
+  return i18nMock;
+});
 
 // Mock step components to isolate navigation logic
 vi.mock("./SetupWizardStep1", () => ({

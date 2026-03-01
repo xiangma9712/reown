@@ -4,35 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TodoTab } from "./TodoTab";
 import { RepositoryProvider } from "../RepositoryContext";
 import { fixtures } from "../storybook/fixtures";
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, params?: Record<string, unknown>) => {
-      const translations: Record<string, string> = {
-        "todo.title": "TODO / FIXME",
-        "todo.empty": "TODOアイテムがありません",
-        "todo.loadButton": "TODOを抽出",
-        "todo.loading": "抽出中…",
-        "todo.filterAll": "すべて",
-        "todo.filterTodo": "TODO",
-        "todo.filterFixme": "FIXME",
-        "todo.expandAll": "全て展開",
-        "todo.collapseAll": "全て折りたたみ",
-        "common.loading": "Loading…",
-      };
-      if (key === "todo.count" && params) {
-        return `${params.count}件`;
-      }
-      if (key === "todo.groupCount" && params) {
-        return `${params.count}件`;
-      }
-      if (key === "common.error" && params) {
-        return `エラー: ${params.message}`;
-      }
-      return translations[key] ?? key;
-    },
-  }),
-}));
+vi.mock("react-i18next", async () => {
+  const { i18nMock } = await import("../test/i18n-mock");
+  return i18nMock;
+});
 
 const mockInvokeFn = vi.fn();
 
@@ -68,12 +43,14 @@ describe("TodoTab", () => {
   it("renders initial state with load button", () => {
     renderWithProvider(<TodoTab />);
     expect(screen.getByText("TODO / FIXME")).toBeInTheDocument();
-    expect(screen.getByText("TODOを抽出")).toBeInTheDocument();
+    expect(screen.getByText("TODO/FIXMEを抽出")).toBeInTheDocument();
   });
 
   it("shows empty state before loading", () => {
     renderWithProvider(<TodoTab />);
-    expect(screen.getByText("TODOアイテムがありません")).toBeInTheDocument();
+    expect(
+      screen.getByText("TODO/FIXMEコメントは見つかりませんでした。")
+    ).toBeInTheDocument();
   });
 
   it("shows loading state while fetching", async () => {
@@ -83,14 +60,14 @@ describe("TodoTab", () => {
       return new Promise(() => {});
     });
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
   it("displays todo items after loading", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(
         screen.getByText("リフレッシュトークンの実装")
@@ -103,7 +80,7 @@ describe("TodoTab", () => {
   it("shows file path and line number", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(screen.getByText("src/auth.ts:25")).toBeInTheDocument();
     });
@@ -112,7 +89,7 @@ describe("TodoTab", () => {
   it("shows TODO and FIXME badges", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       // 2 TODO badges + 1 TODO filter button = 3
       expect(screen.getAllByText("TODO")).toHaveLength(3);
@@ -124,10 +101,10 @@ describe("TodoTab", () => {
   it("shows count after loading", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(
-        screen.getByText("3件", { selector: "h2 span" })
+        screen.getByText("3 件", { selector: "h2 span" })
       ).toBeInTheDocument();
     });
   });
@@ -135,7 +112,7 @@ describe("TodoTab", () => {
   it("shows module group headers", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       // fixture items: src/auth.ts -> "src", src/components/LoginForm.tsx -> "src/components", src/legacy/old-auth.ts -> "src/legacy"
       expect(screen.getByText("src/legacy")).toBeInTheDocument();
@@ -146,7 +123,7 @@ describe("TodoTab", () => {
   it("sorts FIXME items before TODO items", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
     });
@@ -163,7 +140,7 @@ describe("TodoTab", () => {
   it("collapses and expands groups", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
     });
@@ -182,7 +159,7 @@ describe("TodoTab", () => {
   it("toggles individual group", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
     });
@@ -200,7 +177,7 @@ describe("TodoTab", () => {
   it("filters by TODO", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(
         screen.getByText("リフレッシュトークンの実装")
@@ -215,7 +192,7 @@ describe("TodoTab", () => {
     await user.click(todoFilterBtn!);
     await waitFor(() => {
       expect(
-        screen.getByText("2件", { selector: "h2 span" })
+        screen.getByText("2 件", { selector: "h2 span" })
       ).toBeInTheDocument();
     });
     expect(screen.getByText("リフレッシュトークンの実装")).toBeInTheDocument();
@@ -227,7 +204,7 @@ describe("TodoTab", () => {
   it("filters by FIXME", async () => {
     const user = userEvent.setup();
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(
         screen.getByText("リフレッシュトークンの実装")
@@ -241,7 +218,7 @@ describe("TodoTab", () => {
     await user.click(fixmeFilterBtn!);
     await waitFor(() => {
       expect(
-        screen.getByText("1件", { selector: "h2 span" })
+        screen.getByText("1 件", { selector: "h2 span" })
       ).toBeInTheDocument();
     });
     expect(screen.getByText("このファイルは削除予定")).toBeInTheDocument();
@@ -257,7 +234,7 @@ describe("TodoTab", () => {
       return Promise.reject(new Error("extract failed"));
     });
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(screen.getByText(/エラー:.*extract failed/)).toBeInTheDocument();
     });
@@ -272,7 +249,7 @@ describe("TodoTab", () => {
       return Promise.reject(new Error(`Unhandled command: ${command}`));
     });
     renderWithProvider(<TodoTab />);
-    await user.click(screen.getByText("TODOを抽出"));
+    await user.click(screen.getByText("TODO/FIXMEを抽出"));
     await waitFor(() => {
       expect(screen.getByText("lib/git")).toBeInTheDocument();
     });
