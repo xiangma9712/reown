@@ -38,3 +38,25 @@ export const Empty: Story = {
     commits: [],
   },
 };
+
+/** commit_url が空の場合のフォールバック表示 */
+export const EmptyCommitUrl: Story = {
+  args: {
+    commits: [
+      {
+        sha: "abc1234567890abcdef1234567890abcdef123456",
+        message: "feat: commit_url がある場合",
+        author: "dev-user",
+        date: "2025-01-15T09:00:00Z",
+        commit_url: "https://github.com/example/repo/commit/abc123",
+      },
+      {
+        sha: "def4567890abcdef1234567890abcdef456789ab",
+        message: "fix: commit_url が空の場合",
+        author: "dev-user",
+        date: "2025-01-15T10:00:00Z",
+        commit_url: "",
+      },
+    ],
+  },
+};
