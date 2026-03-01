@@ -229,6 +229,38 @@ mod tests {
         success_mock.assert_async().await;
     }
 
+    #[tokio::test(start_paused = true)]
+    async fn test_poll_for_token_retries_on_slow_down() {
+        let mut server = mockito::Server::new_async().await;
+        // 1回目: slow_down → 追加で5秒待機してリトライ
+        let slow_mock = server
+            .mock("POST", "/")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"error": "slow_down"}"#)
+            .expect(1)
+            .create_async()
+            .await;
+        // 2回目: トークン返却
+        let success_mock = server
+            .mock("POST", "/")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"access_token": "gho_after_slow_down"}"#)
+            .expect(1)
+            .create_async()
+            .await;
+
+        let token_url = server.url();
+        let token = poll_for_token_with_url(&token_url, "test_client", "dc_test", 0)
+            .await
+            .unwrap();
+
+        assert_eq!(token, "gho_after_slow_down");
+        slow_mock.assert_async().await;
+        success_mock.assert_async().await;
+    }
+
     #[tokio::test]
     async fn test_poll_for_token_fails_on_expired_token() {
         let mut server = mockito::Server::new_async().await;
