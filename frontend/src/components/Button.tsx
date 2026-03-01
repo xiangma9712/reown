@@ -30,11 +30,10 @@ const variantClasses: Record<Variant, string> = {
   tab: "border-b-2 border-b-transparent bg-transparent text-text-secondary hover:bg-bg-hover hover:text-text-primary",
 };
 
-const filterActiveClasses =
-  "bg-accent text-white font-bold shadow-sm ring-1 ring-accent";
-
-const tabActiveClasses =
-  "border-b-2 border-b-accent bg-accent/10 font-bold text-accent";
+const activeClasses: Partial<Record<Variant, string>> = {
+  filter: "bg-accent text-white font-bold shadow-sm ring-1 ring-accent",
+  tab: "border-b-2 border-b-accent bg-accent/10 font-bold text-accent",
+};
 
 const sizeClasses: Record<Size, string> = {
   sm: "px-2 py-1 text-sm",
@@ -57,11 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const variantClass =
-      variant === "filter" && active
-        ? filterActiveClasses
-        : variant === "tab" && active
-          ? tabActiveClasses
-          : variantClasses[variant];
+      (active && activeClasses[variant]) || variantClasses[variant];
 
     const roundedClass =
       variant === "tab" ? "rounded-none rounded-t" : "rounded";
