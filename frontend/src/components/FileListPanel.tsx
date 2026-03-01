@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { FileDiff } from "../types";
 import { Badge } from "./Badge";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { Loading } from "./Loading";
 
 function statusLabel(status: string): string {
@@ -154,7 +154,7 @@ export function FileListPanel({
             style={{ width: fileListWidth }}
           >
             <div className="mb-4 flex items-center justify-between border-b border-border pb-2">
-              <h2 className="text-lg text-text-heading">{title}</h2>
+              <CardTitle>{title}</CardTitle>
               <CollapseToggleButton
                 collapsed={false}
                 onToggle={onToggleCollapse}

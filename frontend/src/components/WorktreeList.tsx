@@ -4,7 +4,7 @@ import { invoke } from "../invoke";
 import { useRepository } from "../RepositoryContext";
 import type { WorktreeInfo } from "../types";
 import { Badge } from "./Badge";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { Loading } from "./Loading";
 
 interface WorktreeListProps {
@@ -51,14 +51,14 @@ export function WorktreeList({ onNavigateToBranch }: WorktreeListProps) {
 
   return (
     <Card className="flex flex-col">
-      <h2 className="mb-4 border-b border-border pb-2 text-lg text-text-heading">
+      <CardTitle className="mb-4 border-b border-border pb-2">
         {t("worktree.title")}
         {worktrees.length > 0 && (
           <span className="ml-2 text-sm text-text-secondary">
             {t("worktree.count", { count: worktrees.length })}
           </span>
         )}
-      </h2>
+      </CardTitle>
 
       <div className="scrollbar-custom min-h-[80px] max-h-[400px] flex-1 overflow-y-auto">
         {loading && <Loading />}

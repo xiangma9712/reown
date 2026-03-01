@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { ConsistencyResult } from "../types";
-import { Card, Panel } from "./Card";
+import { Card, CardTitle, Panel } from "./Card";
 import { Button } from "./Button";
 import { Spinner } from "./Loading";
 import { RefreshIcon } from "./icons";
@@ -55,9 +55,7 @@ export function ConsistencyCheckPanel({
   return (
     <Card className="mt-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg text-text-heading">
-          {t("pr.consistencyCheck")}
-        </h2>
+        <CardTitle>{t("pr.consistencyCheck")}</CardTitle>
         {!hasResult && !loading && (
           <Button variant="primary" size="sm" onClick={handleCheck}>
             {t("pr.consistencyRun")}

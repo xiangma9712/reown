@@ -13,7 +13,7 @@ import type {
 } from "../types";
 import { Badge } from "./Badge";
 import { BranchSelector } from "./BranchSelector";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { EmptyState } from "./EmptyState";
 import { Loading } from "./Loading";
 import { DiffViewer } from "./DiffViewer";
@@ -232,9 +232,9 @@ export function ReviewTab({
           {/* PR info + diff overview (if PR exists) */}
           {matchedPr && (
             <Card>
-              <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+              <CardTitle className="mb-3 border-b border-border pb-2">
                 {t("review.prInfo")}
-              </h2>
+              </CardTitle>
               <div className="space-y-1 text-sm">
                 <p className="font-medium text-text-primary">
                   {t("review.prTitle", {
@@ -274,9 +274,9 @@ export function ReviewTab({
           {/* No PR: branch diff overview */}
           {!matchedPr && !loading && !error && diffs.length > 0 && (
             <Card>
-              <h2 className="mb-3 border-b border-border pb-2 text-lg text-text-heading">
+              <CardTitle className="mb-3 border-b border-border pb-2">
                 {t("review.diffOverview")}
-              </h2>
+              </CardTitle>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-text-secondary">
                   {t("review.diffOverviewFiles", { count: diffs.length })}
@@ -438,9 +438,7 @@ function PrAnalysisSection({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-medium text-text-heading">
-        {t("review.prAnalysis")}
-      </h2>
+      <CardTitle className="font-medium">{t("review.prAnalysis")}</CardTitle>
 
       {/* Commit list */}
       <CommitListPanel

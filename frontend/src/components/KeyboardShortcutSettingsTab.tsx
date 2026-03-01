@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 
 interface Props {
   enabled: boolean;
@@ -12,9 +12,9 @@ export function KeyboardShortcutSettingsTab({ enabled, onChange }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-text-heading">
+        <CardTitle className="font-bold">
           {t("keyboardShortcuts.label")}
-        </h2>
+        </CardTitle>
         <p className="mt-1 text-sm text-text-muted">
           {t("keyboardShortcuts.description")}
         </p>

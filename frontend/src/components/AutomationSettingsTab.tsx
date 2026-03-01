@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { Button } from "./Button";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { invoke } from "../invoke";
@@ -183,9 +183,7 @@ export function AutomationSettingsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-text-heading">
-          {t("automation.title")}
-        </h2>
+        <CardTitle className="font-bold">{t("automation.title")}</CardTitle>
         <p className="mt-1 text-[0.85rem] text-text-muted">
           {t("automation.description")}
         </p>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { Input } from "./Input";
 import { Button } from "./Button";
 import { invoke } from "../invoke";
@@ -99,9 +99,7 @@ export function GithubSettingsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-text-heading">
-          {t("githubSettings.title")}
-        </h2>
+        <CardTitle className="font-bold">{t("githubSettings.title")}</CardTitle>
         <p className="mt-1 text-[0.85rem] text-text-muted">
           {t("githubSettings.description")}
         </p>

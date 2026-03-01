@@ -1,6 +1,6 @@
 import { useCallback, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "./Card";
+import { Card, CardTitle } from "./Card";
 import { useTheme, type Theme } from "../ThemeContext";
 
 const THEME_OPTIONS: Theme[] = ["light", "dark", "system"];
@@ -37,9 +37,7 @@ export function ThemeSettingsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-text-heading">
-          {t("theme.label")}
-        </h2>
+        <CardTitle className="font-bold">{t("theme.label")}</CardTitle>
       </div>
 
       <Card>

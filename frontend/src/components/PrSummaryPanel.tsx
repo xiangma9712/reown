@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { invoke } from "../invoke";
 import type { PrSummary } from "../types";
-import { Card, Panel } from "./Card";
+import { Card, CardTitle, Panel } from "./Card";
 import { Button } from "./Button";
 import { Spinner } from "./Loading";
 
@@ -99,7 +99,7 @@ export function PrSummaryPanel({ owner, repo, prNumber }: PrSummaryPanelProps) {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg text-text-heading">{t("pr.prSummary")}</h2>
+        <CardTitle>{t("pr.prSummary")}</CardTitle>
         {loading ? (
           <Button variant="secondary" size="sm" onClick={handleCancel}>
             {t("pr.cancelGeneration")}
