@@ -1,10 +1,8 @@
-import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "./Card";
 import { Input } from "./Input";
 import { Button } from "./Button";
-import { invoke } from "../invoke";
-import type { LlmConfig } from "../types";
+import { useLlmSettings } from "../hooks/useLlmSettings";
 
 interface SetupWizardStep3Props {
   onNext: () => void;
@@ -14,74 +12,30 @@ interface SetupWizardStep3Props {
 export function SetupWizardStep3({ onNext, onSkip }: SetupWizardStep3Props) {
   const { t } = useTranslation();
 
-  const [endpoint, setEndpoint] = useState("https://api.anthropic.com");
-  const [model, setModel] = useState("claude-sonnet-4-5-20250929");
-  const [apiKey, setApiKey] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<"success" | "error" | null>(
-    null
-  );
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
-  const handleTest = useCallback(async () => {
-    try {
-      setTesting(true);
-      setMessage(null);
-      setTestResult(null);
-      await invoke("test_llm_connection", {
-        endpoint,
-        model,
-        apiKey: apiKey || undefined,
-      });
-      setTestResult("success");
-      setMessage({ type: "success", text: t("onboarding.step3TestSuccess") });
-    } catch (e) {
-      setTestResult("error");
-      setMessage({
-        type: "error",
-        text: t("onboarding.step3TestError", {
-          message: e instanceof Error ? e.message : String(e),
-        }),
-      });
-    } finally {
-      setTesting(false);
-    }
-  }, [endpoint, model, apiKey, t]);
-
-  const handleSave = useCallback(async () => {
-    try {
-      setSaving(true);
-      setMessage(null);
-
-      const llmConfig: LlmConfig = {
-        llm_endpoint: endpoint,
-        llm_model: model,
-        llm_api_key_stored: !!apiKey,
-      };
-      await invoke("save_llm_config", { llmConfig });
-
-      if (apiKey) {
-        await invoke("save_llm_api_key", { apiKey });
-      }
-
-      setMessage({ type: "success", text: t("onboarding.step3SaveSuccess") });
-      onNext();
-    } catch (e) {
-      setMessage({
-        type: "error",
-        text: t("onboarding.step3SaveError", {
-          message: e instanceof Error ? e.message : String(e),
-        }),
-      });
-    } finally {
-      setSaving(false);
-    }
-  }, [endpoint, model, apiKey, t, onNext]);
+  const {
+    endpoint,
+    setEndpoint,
+    model,
+    setModel,
+    apiKey,
+    setApiKey,
+    showApiKey,
+    toggleShowApiKey,
+    saving,
+    testing,
+    testResult,
+    message,
+    handleTest,
+    handleSave,
+  } = useLlmSettings({
+    defaultEndpoint: "https://api.anthropic.com",
+    defaultModel: "claude-sonnet-4-5-20250929",
+    testSuccessKey: "onboarding.step3TestSuccess",
+    testErrorKey: "onboarding.step3TestError",
+    saveSuccessKey: "onboarding.step3SaveSuccess",
+    saveErrorKey: "onboarding.step3SaveError",
+    onSaveSuccess: onNext,
+  });
 
   const isConfigured = testResult === "success";
 
@@ -127,7 +81,7 @@ export function SetupWizardStep3({ onNext, onSkip }: SetupWizardStep3Props) {
                 <Button
                   variant="ghost"
                   size="md"
-                  onClick={() => setShowApiKey((v) => !v)}
+                  onClick={toggleShowApiKey}
                   className="mb-0"
                 >
                   {showApiKey
