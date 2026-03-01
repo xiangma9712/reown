@@ -30,6 +30,7 @@ export function SetupWizardStep3({ onNext, onSkip }: SetupWizardStep3Props) {
   } = useLlmSettings({
     defaultEndpoint: "https://api.anthropic.com",
     defaultModel: "claude-sonnet-4-5-20250929",
+    loadOnMount: true,
     testSuccessKey: "onboarding.step3TestSuccess",
     testErrorKey: "onboarding.step3TestError",
     saveSuccessKey: "onboarding.step3SaveSuccess",

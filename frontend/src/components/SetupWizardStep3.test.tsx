@@ -118,7 +118,9 @@ describe("SetupWizardStep3", () => {
 
   it("shows error message when test fails", async () => {
     const user = userEvent.setup();
-    mockInvokeFn.mockRejectedValueOnce(new Error("Invalid API key"));
+    mockInvokeFn
+      .mockRejectedValueOnce(new Error("config not found")) // load_llm_config on mount
+      .mockRejectedValueOnce(new Error("Invalid API key")); // test_llm_connection
     render(<SetupWizardStep3 {...defaultProps} />);
     await user.click(screen.getByText("接続テスト"));
     await waitFor(() => {
@@ -130,7 +132,9 @@ describe("SetupWizardStep3", () => {
 
   it("does not show next button after test failure", async () => {
     const user = userEvent.setup();
-    mockInvokeFn.mockRejectedValueOnce(new Error("fail"));
+    mockInvokeFn
+      .mockRejectedValueOnce(new Error("config not found")) // load_llm_config on mount
+      .mockRejectedValueOnce(new Error("fail")); // test_llm_connection
     render(<SetupWizardStep3 {...defaultProps} />);
     await user.click(screen.getByText("接続テスト"));
     await waitFor(() => {
@@ -195,6 +199,7 @@ describe("SetupWizardStep3", () => {
   it("shows save error when save fails", async () => {
     const user = userEvent.setup();
     mockInvokeFn
+      .mockRejectedValueOnce(new Error("config not found")) // load_llm_config on mount
       .mockResolvedValueOnce(undefined) // test_llm_connection succeeds
       .mockRejectedValueOnce(new Error("Save failed")); // save_llm_config fails
     render(<SetupWizardStep3 {...defaultProps} />);

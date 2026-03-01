@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "../invoke";
 import type { LlmConfig } from "../types";
@@ -8,6 +8,8 @@ export interface UseLlmSettingsOptions {
   defaultEndpoint?: string;
   /** Initial model value (used when not loading from backend) */
   defaultModel?: string;
+  /** Load existing config from backend on mount (falls back to defaults) */
+  loadOnMount?: boolean;
   /** Translation key for test success message */
   testSuccessKey?: string;
   /** Translation key for test error message */
@@ -45,6 +47,7 @@ export function useLlmSettings(
   const {
     defaultEndpoint = "",
     defaultModel = "",
+    loadOnMount = false,
     testSuccessKey = "llmSettings.testSuccess",
     testErrorKey = "llmSettings.testError",
     saveSuccessKey = "llmSettings.saveSuccess",
@@ -67,6 +70,19 @@ export function useLlmSettings(
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!loadOnMount) return;
+    (async () => {
+      try {
+        const config = await invoke("load_llm_config");
+        if (config.llm_endpoint) setEndpoint(config.llm_endpoint);
+        if (config.llm_model) setModel(config.llm_model);
+      } catch {
+        // Config not found or error — keep defaults
+      }
+    })();
+  }, [loadOnMount]);
 
   const toggleShowApiKey = useCallback(() => {
     setShowApiKey((v) => !v);
