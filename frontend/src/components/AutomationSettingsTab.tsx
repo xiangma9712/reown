@@ -15,12 +15,12 @@ import type {
 
 const ALL_CATEGORIES: ChangeCategory[] = [
   "Logic",
+  "Refactor",
   "Test",
   "Config",
-  "CI",
   "Documentation",
+  "CI",
   "Dependency",
-  "Refactor",
   "Other",
 ];
 
