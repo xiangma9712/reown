@@ -43,7 +43,7 @@ vi.mock("react-i18next", () => ({
 
 const mockInvokeFn = vi.fn();
 
-vi.mock("@tauri-apps/api/core", () => ({
+vi.mock("../invoke", () => ({
   invoke: (...args: unknown[]) => mockInvokeFn(...args),
 }));
 
