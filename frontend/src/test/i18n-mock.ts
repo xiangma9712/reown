@@ -34,7 +34,10 @@ function interpolate(
  * react-i18next の vi.mock 用ファクトリ。
  *
  * 使い方:
- *   vi.mock("react-i18next", () => i18nMock);
+ *   vi.mock("react-i18next", async () => {
+ *     const { i18nMock } = await import("../test/i18n-mock");
+ *     return i18nMock;
+ *   });
  */
 export const i18nMock = {
   useTranslation: () => ({

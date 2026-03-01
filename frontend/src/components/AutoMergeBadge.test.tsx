@@ -2,9 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { AutoMergeBadge } from "./AutoMergeBadge";
 import type { AutoMergeStatus } from "../types";
-import { i18nMock } from "../test/i18n-mock";
-
-vi.mock("react-i18next", () => i18nMock);
+vi.mock("react-i18next", async () => {
+  const { i18nMock } = await import("../test/i18n-mock");
+  return i18nMock;
+});
 
 describe("AutoMergeBadge", () => {
   describe("表示/非表示", () => {

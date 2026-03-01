@@ -2,9 +2,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { i18nMock } from "../test/i18n-mock";
-
-vi.mock("react-i18next", () => i18nMock);
+vi.mock("react-i18next", async () => {
+  const { i18nMock } = await import("../test/i18n-mock");
+  return i18nMock;
+});
 
 describe("ConfirmDialog", () => {
   const defaultProps = {

@@ -4,9 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TodoTab } from "./TodoTab";
 import { RepositoryProvider } from "../RepositoryContext";
 import { fixtures } from "../storybook/fixtures";
-import { i18nMock } from "../test/i18n-mock";
-
-vi.mock("react-i18next", () => i18nMock);
+vi.mock("react-i18next", async () => {
+  const { i18nMock } = await import("../test/i18n-mock");
+  return i18nMock;
+});
 
 const mockInvokeFn = vi.fn();
 

@@ -2,9 +2,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { SetupWizard } from "./SetupWizard";
-import { i18nMock } from "../test/i18n-mock";
-
-vi.mock("react-i18next", () => i18nMock);
+vi.mock("react-i18next", async () => {
+  const { i18nMock } = await import("../test/i18n-mock");
+  return i18nMock;
+});
 
 // Mock step components to isolate navigation logic
 vi.mock("./SetupWizardStep1", () => ({
