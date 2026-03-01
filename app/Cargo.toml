@@ -18,3 +18,4 @@ reown = { path = ".." }
 [dev-dependencies]
 tempfile = "3"
 git2 = "0.20"
+serial_test = "3"

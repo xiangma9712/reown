@@ -858,6 +858,7 @@ mod tests {
     use reown::git::diff::{DiffChunk, DiffLineInfo, FileDiff, FileStatus, LineOrigin};
     use reown::git::worktree::WorktreeInfo;
     use reown::github::PrInfo;
+    use serial_test::serial;
     use std::path::PathBuf;
 
     #[test]
@@ -1895,6 +1896,7 @@ mod tests {
     // ── save_github_token コマンドテスト ─────────────────────────────────
 
     #[test]
+    #[serial]
     fn test_cmd_save_github_token_ok() {
         let save_result = super::save_github_token("gho_test-save-cmd-token".to_string());
         if save_result.is_err() {
@@ -1927,6 +1929,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_cmd_save_github_token_roundtrip_with_logout() {
         let save_result = super::save_github_token("gho_test-roundtrip-token".to_string());
         if save_result.is_err() {

@@ -460,6 +460,7 @@ pub fn delete_github_token() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
     use tempfile::TempDir;
 
     #[test]
@@ -1142,6 +1143,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_migrate_github_token_to_keychain_success() {
         // keychainが利用可能かチェック
         let test_result = save_github_token("gho_migration-test-probe");
@@ -1199,6 +1201,7 @@ mod tests {
     // ── GitHub Token Keychain テスト ────────────────────────────────────
 
     #[test]
+    #[serial]
     fn test_save_and_delete_github_token() {
         let save_result = save_github_token("gho_test-github-token-for-reown-test");
         if save_result.is_err() {
