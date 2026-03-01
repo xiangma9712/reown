@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::git::diff::{DiffChunk, DiffLineInfo, FileDiff, FileStatus, LineOrigin};
 
+/// GitHub API クライアント。内部で `reqwest::Client` を共有し、接続プールを再利用する。
+#[derive(Clone)]
+pub struct GitHubClient {
+    http: reqwest::Client,
+}
+
 /// Merge method for auto-merge.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -164,56 +170,85 @@ fn has_next_page(link_header: &str) -> bool {
         .any(|part| part.contains("rel=\"next\""))
 }
 
+impl GitHubClient {
+    /// 新しい `GitHubClient` を作成する。
+    pub fn new() -> Self {
+        Self {
+            http: reqwest::Client::new(),
+        }
+    }
+}
+
+impl Default for GitHubClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Fetch pull requests from a GitHub repository.
 ///
 /// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
 /// and merged PRs. Automatically paginates through all pages (up to `MAX_PAGES`).
 /// The token should be a GitHub personal access token or similar.
 pub async fn list_pull_requests(owner: &str, repo: &str, token: &str) -> Result<Vec<PrInfo>> {
-    let client = reqwest::Client::new();
-    let mut all_prs = Vec::new();
+    let client = GitHubClient::new();
+    client.list_pull_requests(owner, repo, token).await
+}
 
-    for page in 1..=MAX_PAGES {
-        let url = format!(
-            "https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}"
-        );
+impl GitHubClient {
+    pub async fn list_pull_requests(
+        &self,
+        owner: &str,
+        repo: &str,
+        token: &str,
+    ) -> Result<Vec<PrInfo>> {
+        let mut all_prs = Vec::new();
 
-        let response = client
-            .get(&url)
-            .header("Accept", "application/vnd.github+json")
-            .header("Authorization", format!("Bearer {token}"))
-            .header("User-Agent", "reown")
-            .header("X-GitHub-Api-Version", "2022-11-28")
-            .send()
-            .await
-            .with_context(|| format!("Failed to fetch PRs from {owner}/{repo} (page {page})"))?;
+        for page in 1..=MAX_PAGES {
+            let url = format!(
+                "https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}"
+            );
 
-        if !response.status().is_success() {
-            let status = response.status();
-            let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("GitHub API returned {status}: {body}");
+            let response = self
+                .http
+                .get(&url)
+                .header("Accept", "application/vnd.github+json")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("User-Agent", "reown")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .send()
+                .await
+                .with_context(|| {
+                    format!("Failed to fetch PRs from {owner}/{repo} (page {page})")
+                })?;
+
+            if !response.status().is_success() {
+                let status = response.status();
+                let body = response.text().await.unwrap_or_default();
+                anyhow::bail!("GitHub API returned {status}: {body}");
+            }
+
+            let has_next = response
+                .headers()
+                .get("link")
+                .and_then(|v| v.to_str().ok())
+                .is_some_and(has_next_page);
+
+            let prs: Vec<GhPullRequest> = response
+                .json()
+                .await
+                .context("Failed to parse GitHub PR response")?;
+
+            let is_empty = prs.is_empty();
+            all_prs.extend(prs.into_iter().map(PrInfo::from));
+
+            if is_empty || !has_next {
+                break;
+            }
         }
 
-        let has_next = response
-            .headers()
-            .get("link")
-            .and_then(|v| v.to_str().ok())
-            .is_some_and(has_next_page);
-
-        let prs: Vec<GhPullRequest> = response
-            .json()
-            .await
-            .context("Failed to parse GitHub PR response")?;
-
-        let is_empty = prs.is_empty();
-        all_prs.extend(prs.into_iter().map(PrInfo::from));
-
-        if is_empty || !has_next {
-            break;
-        }
+        Ok(all_prs)
     }
-
-    Ok(all_prs)
 }
 
 /// Fetch the list of commits for a pull request from GitHub API.
@@ -226,52 +261,67 @@ pub async fn list_pr_commits(
     pr_number: u64,
     token: &str,
 ) -> Result<Vec<CommitInfo>> {
-    let client = reqwest::Client::new();
-    let mut all_commits = Vec::new();
+    let client = GitHubClient::new();
+    client.list_pr_commits(owner, repo, pr_number, token).await
+}
 
-    for page in 1..=MAX_PAGES {
-        let url = format!(
-            "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
-        );
+impl GitHubClient {
+    pub async fn list_pr_commits(
+        &self,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        token: &str,
+    ) -> Result<Vec<CommitInfo>> {
+        let mut all_commits = Vec::new();
 
-        let response = client
-            .get(&url)
-            .header("Accept", "application/vnd.github+json")
-            .header("Authorization", format!("Bearer {token}"))
-            .header("User-Agent", "reown")
-            .header("X-GitHub-Api-Version", "2022-11-28")
-            .send()
-            .await
-            .with_context(|| {
-                format!("Failed to fetch PR #{pr_number} commits from {owner}/{repo} (page {page})")
-            })?;
+        for page in 1..=MAX_PAGES {
+            let url = format!(
+                "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
+            );
 
-        if !response.status().is_success() {
-            let status = response.status();
-            let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("GitHub API returned {status}: {body}");
+            let response = self
+                .http
+                .get(&url)
+                .header("Accept", "application/vnd.github+json")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("User-Agent", "reown")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .send()
+                .await
+                .with_context(|| {
+                    format!(
+                        "Failed to fetch PR #{pr_number} commits from {owner}/{repo} (page {page})"
+                    )
+                })?;
+
+            if !response.status().is_success() {
+                let status = response.status();
+                let body = response.text().await.unwrap_or_default();
+                anyhow::bail!("GitHub API returned {status}: {body}");
+            }
+
+            let has_next = response
+                .headers()
+                .get("link")
+                .and_then(|v| v.to_str().ok())
+                .is_some_and(has_next_page);
+
+            let commits: Vec<GhCommit> = response
+                .json()
+                .await
+                .context("Failed to parse GitHub PR commits response")?;
+
+            let is_empty = commits.is_empty();
+            all_commits.extend(commits.into_iter().map(CommitInfo::from));
+
+            if is_empty || !has_next {
+                break;
+            }
         }
 
-        let has_next = response
-            .headers()
-            .get("link")
-            .and_then(|v| v.to_str().ok())
-            .is_some_and(has_next_page);
-
-        let commits: Vec<GhCommit> = response
-            .json()
-            .await
-            .context("Failed to parse GitHub PR commits response")?;
-
-        let is_empty = commits.is_empty();
-        all_commits.extend(commits.into_iter().map(CommitInfo::from));
-
-        if is_empty || !has_next {
-            break;
-        }
+        Ok(all_commits)
     }
-
-    Ok(all_commits)
 }
 
 /// Raw GitHub API response for a single file in a pull request.
@@ -425,52 +475,69 @@ pub async fn get_pull_request_files(
     pr_number: u64,
     token: &str,
 ) -> Result<Vec<FileDiff>> {
-    let client = reqwest::Client::new();
-    let mut all_files = Vec::new();
+    let client = GitHubClient::new();
+    client
+        .get_pull_request_files(owner, repo, pr_number, token)
+        .await
+}
 
-    for page in 1..=MAX_FILE_PAGES {
-        let url = format!(
-            "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/files?per_page=100&page={page}"
-        );
+impl GitHubClient {
+    pub async fn get_pull_request_files(
+        &self,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        token: &str,
+    ) -> Result<Vec<FileDiff>> {
+        let mut all_files = Vec::new();
 
-        let response = client
-            .get(&url)
-            .header("Accept", "application/vnd.github+json")
-            .header("Authorization", format!("Bearer {token}"))
-            .header("User-Agent", "reown")
-            .header("X-GitHub-Api-Version", "2022-11-28")
-            .send()
-            .await
-            .with_context(|| {
-                format!("Failed to fetch PR #{pr_number} files from {owner}/{repo} (page {page})")
-            })?;
+        for page in 1..=MAX_FILE_PAGES {
+            let url = format!(
+                "https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/files?per_page=100&page={page}"
+            );
 
-        if !response.status().is_success() {
-            let status = response.status();
-            let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("GitHub API returned {status}: {body}");
+            let response = self
+                .http
+                .get(&url)
+                .header("Accept", "application/vnd.github+json")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("User-Agent", "reown")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .send()
+                .await
+                .with_context(|| {
+                    format!(
+                        "Failed to fetch PR #{pr_number} files from {owner}/{repo} (page {page})"
+                    )
+                })?;
+
+            if !response.status().is_success() {
+                let status = response.status();
+                let body = response.text().await.unwrap_or_default();
+                anyhow::bail!("GitHub API returned {status}: {body}");
+            }
+
+            let has_next = response
+                .headers()
+                .get("link")
+                .and_then(|v| v.to_str().ok())
+                .is_some_and(has_next_page);
+
+            let files: Vec<GhPullRequestFile> = response
+                .json()
+                .await
+                .context("Failed to parse GitHub PR files response")?;
+
+            let is_empty = files.is_empty();
+            all_files.extend(files.into_iter().map(GhPullRequestFile::into_file_diff));
+
+            if is_empty || !has_next {
+                break;
+            }
         }
 
-        let has_next = response
-            .headers()
-            .get("link")
-            .and_then(|v| v.to_str().ok())
-            .is_some_and(has_next_page);
-
-        let files: Vec<GhPullRequestFile> = response
-            .json()
-            .await
-            .context("Failed to parse GitHub PR files response")?;
-
-        let is_empty = files.is_empty();
-        all_files.extend(files.into_iter().map(GhPullRequestFile::into_file_diff));
-
-        if is_empty || !has_next {
-            break;
-        }
+        Ok(all_files)
     }
-
-    Ok(all_files)
 }
 
 /// Submit a review on a pull request.
@@ -485,34 +552,51 @@ pub async fn submit_review(
     body: &str,
     token: &str,
 ) -> Result<()> {
-    let client = reqwest::Client::new();
-    let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/reviews");
-
-    let request_body = SubmitReviewRequest {
-        event,
-        body: body.to_string(),
-    };
-
-    let response = client
-        .post(&url)
-        .header("Accept", "application/vnd.github+json")
-        .header("Authorization", format!("Bearer {token}"))
-        .header("User-Agent", "reown")
-        .header("X-GitHub-Api-Version", "2022-11-28")
-        .json(&request_body)
-        .send()
+    let client = GitHubClient::new();
+    client
+        .submit_review(owner, repo, pr_number, event, body, token)
         .await
-        .with_context(|| {
-            format!("Failed to submit review for PR #{pr_number} in {owner}/{repo}")
-        })?;
+}
 
-    if !response.status().is_success() {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("GitHub API returned {status}: {body}");
+impl GitHubClient {
+    pub async fn submit_review(
+        &self,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        event: ReviewEvent,
+        body: &str,
+        token: &str,
+    ) -> Result<()> {
+        let url = format!("https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/reviews");
+
+        let request_body = SubmitReviewRequest {
+            event,
+            body: body.to_string(),
+        };
+
+        let response = self
+            .http
+            .post(&url)
+            .header("Accept", "application/vnd.github+json")
+            .header("Authorization", format!("Bearer {token}"))
+            .header("User-Agent", "reown")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .json(&request_body)
+            .send()
+            .await
+            .with_context(|| {
+                format!("Failed to submit review for PR #{pr_number} in {owner}/{repo}")
+            })?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("GitHub API returned {status}: {body}");
+        }
+
+        Ok(())
     }
-
-    Ok(())
 }
 
 /// Add labels to a pull request (via the Issues API).
@@ -526,15 +610,10 @@ pub async fn add_labels(
     labels: &[String],
     token: &str,
 ) -> Result<()> {
-    add_labels_with_base_url(
-        "https://api.github.com",
-        owner,
-        repo,
-        issue_number,
-        labels,
-        token,
-    )
-    .await
+    let client = GitHubClient::new();
+    client
+        .add_labels(owner, repo, issue_number, labels, token)
+        .await
 }
 
 /// Internal implementation of add_labels that accepts a base URL for testability.
@@ -546,31 +625,67 @@ async fn add_labels_with_base_url(
     labels: &[String],
     token: &str,
 ) -> Result<()> {
-    let client = reqwest::Client::new();
-    let url = format!("{base_url}/repos/{owner}/{repo}/issues/{issue_number}/labels");
-
-    let body = serde_json::json!({ "labels": labels });
-
-    let response = client
-        .post(&url)
-        .header("Accept", "application/vnd.github+json")
-        .header("Authorization", format!("Bearer {token}"))
-        .header("User-Agent", "reown")
-        .header("X-GitHub-Api-Version", "2022-11-28")
-        .json(&body)
-        .send()
+    let client = GitHubClient::new();
+    client
+        .add_labels_with_base_url(base_url, owner, repo, issue_number, labels, token)
         .await
-        .with_context(|| {
-            format!("Failed to add labels to issue/PR #{issue_number} in {owner}/{repo}")
-        })?;
+}
 
-    if !response.status().is_success() {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("GitHub API returned {status}: {body}");
+impl GitHubClient {
+    pub async fn add_labels(
+        &self,
+        owner: &str,
+        repo: &str,
+        issue_number: u64,
+        labels: &[String],
+        token: &str,
+    ) -> Result<()> {
+        self.add_labels_with_base_url(
+            "https://api.github.com",
+            owner,
+            repo,
+            issue_number,
+            labels,
+            token,
+        )
+        .await
     }
 
-    Ok(())
+    async fn add_labels_with_base_url(
+        &self,
+        base_url: &str,
+        owner: &str,
+        repo: &str,
+        issue_number: u64,
+        labels: &[String],
+        token: &str,
+    ) -> Result<()> {
+        let url = format!("{base_url}/repos/{owner}/{repo}/issues/{issue_number}/labels");
+
+        let body = serde_json::json!({ "labels": labels });
+
+        let response = self
+            .http
+            .post(&url)
+            .header("Accept", "application/vnd.github+json")
+            .header("Authorization", format!("Bearer {token}"))
+            .header("User-Agent", "reown")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .json(&body)
+            .send()
+            .await
+            .with_context(|| {
+                format!("Failed to add labels to issue/PR #{issue_number} in {owner}/{repo}")
+            })?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("GitHub API returned {status}: {body}");
+        }
+
+        Ok(())
+    }
 }
 
 /// GraphQL response for fetching a PR's node ID.
@@ -665,74 +780,90 @@ pub async fn enable_auto_merge(
     pr_number: u64,
     merge_method: MergeMethod,
 ) -> Result<()> {
-    let client = reqwest::Client::new();
-
-    // Step 1: Fetch the PR's node ID
-    let node_id_body = build_pr_node_id_query(owner, repo, pr_number);
-
-    let response = client
-        .post(GITHUB_GRAPHQL_URL)
-        .header("Authorization", format!("Bearer {token}"))
-        .header("User-Agent", "reown")
-        .json(&node_id_body)
-        .send()
+    let client = GitHubClient::new();
+    client
+        .enable_auto_merge(token, owner, repo, pr_number, merge_method)
         .await
-        .with_context(|| {
-            format!("Failed to fetch node ID for PR #{pr_number} in {owner}/{repo}")
-        })?;
+}
 
-    if !response.status().is_success() {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("GitHub GraphQL API returned {status}: {body}");
+impl GitHubClient {
+    pub async fn enable_auto_merge(
+        &self,
+        token: &str,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        merge_method: MergeMethod,
+    ) -> Result<()> {
+        // Step 1: Fetch the PR's node ID
+        let node_id_body = build_pr_node_id_query(owner, repo, pr_number);
+
+        let response = self
+            .http
+            .post(GITHUB_GRAPHQL_URL)
+            .header("Authorization", format!("Bearer {token}"))
+            .header("User-Agent", "reown")
+            .json(&node_id_body)
+            .send()
+            .await
+            .with_context(|| {
+                format!("Failed to fetch node ID for PR #{pr_number} in {owner}/{repo}")
+            })?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("GitHub GraphQL API returned {status}: {body}");
+        }
+
+        let node_id_response: GhGraphQlResponse<GhPrNodeIdData> = response
+            .json()
+            .await
+            .context("Failed to parse GraphQL response for PR node ID")?;
+
+        if let Some(errors) = node_id_response.errors {
+            let messages: Vec<String> = errors.into_iter().map(|e| e.message).collect();
+            anyhow::bail!("GraphQL errors: {}", messages.join(", "));
+        }
+
+        let pull_request_id = node_id_response
+            .data
+            .map(|d| d.repository.pull_request.id)
+            .ok_or_else(|| anyhow::anyhow!("No data in GraphQL response for PR #{pr_number}"))?;
+
+        // Step 2: Call enablePullRequestAutoMerge mutation
+        let mutation_body = build_enable_auto_merge_mutation(&pull_request_id, &merge_method);
+
+        let response = self
+            .http
+            .post(GITHUB_GRAPHQL_URL)
+            .header("Authorization", format!("Bearer {token}"))
+            .header("User-Agent", "reown")
+            .json(&mutation_body)
+            .send()
+            .await
+            .with_context(|| {
+                format!("Failed to enable auto-merge for PR #{pr_number} in {owner}/{repo}")
+            })?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("GitHub GraphQL API returned {status}: {body}");
+        }
+
+        let mutation_response: GhGraphQlResponse<GhEnableAutoMergeData> = response
+            .json()
+            .await
+            .context("Failed to parse GraphQL response for enablePullRequestAutoMerge")?;
+
+        if let Some(errors) = mutation_response.errors {
+            let messages: Vec<String> = errors.into_iter().map(|e| e.message).collect();
+            anyhow::bail!("GraphQL errors: {}", messages.join(", "));
+        }
+
+        Ok(())
     }
-
-    let node_id_response: GhGraphQlResponse<GhPrNodeIdData> = response
-        .json()
-        .await
-        .context("Failed to parse GraphQL response for PR node ID")?;
-
-    if let Some(errors) = node_id_response.errors {
-        let messages: Vec<String> = errors.into_iter().map(|e| e.message).collect();
-        anyhow::bail!("GraphQL errors: {}", messages.join(", "));
-    }
-
-    let pull_request_id = node_id_response
-        .data
-        .map(|d| d.repository.pull_request.id)
-        .ok_or_else(|| anyhow::anyhow!("No data in GraphQL response for PR #{pr_number}"))?;
-
-    // Step 2: Call enablePullRequestAutoMerge mutation
-    let mutation_body = build_enable_auto_merge_mutation(&pull_request_id, &merge_method);
-
-    let response = client
-        .post(GITHUB_GRAPHQL_URL)
-        .header("Authorization", format!("Bearer {token}"))
-        .header("User-Agent", "reown")
-        .json(&mutation_body)
-        .send()
-        .await
-        .with_context(|| {
-            format!("Failed to enable auto-merge for PR #{pr_number} in {owner}/{repo}")
-        })?;
-
-    if !response.status().is_success() {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("GitHub GraphQL API returned {status}: {body}");
-    }
-
-    let mutation_response: GhGraphQlResponse<GhEnableAutoMergeData> = response
-        .json()
-        .await
-        .context("Failed to parse GraphQL response for enablePullRequestAutoMerge")?;
-
-    if let Some(errors) = mutation_response.errors {
-        let messages: Vec<String> = errors.into_iter().map(|e| e.message).collect();
-        anyhow::bail!("GraphQL errors: {}", messages.join(", "));
-    }
-
-    Ok(())
 }
 
 #[cfg(test)]
