@@ -278,7 +278,7 @@ impl Default for LlmConfig {
     }
 }
 
-/// アプリ設定（GitHub トークン等を永続化する）
+/// アプリ設定（リポジトリ既定値・LLM・オートメーション等を永続化する）
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AppConfig {
     /// デフォルトの GitHub owner
