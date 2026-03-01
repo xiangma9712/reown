@@ -170,167 +170,6 @@ fn has_next_page(link_header: &str) -> bool {
         .any(|part| part.contains("rel=\"next\""))
 }
 
-impl GitHubClient {
-    /// 新しい `GitHubClient` を作成する。
-    pub fn new() -> Self {
-        Self {
-            http: reqwest::Client::new(),
-        }
-    }
-}
-
-impl Default for GitHubClient {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl GitHubClient {
-    /// Fetch pull requests from a GitHub repository.
-    ///
-    /// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
-    /// and merged PRs. Automatically paginates through all pages (up to `MAX_PAGES`).
-    /// The token should be a GitHub personal access token or similar.
-    pub async fn list_pull_requests(
-        &self,
-        owner: &str,
-        repo: &str,
-        token: &str,
-    ) -> Result<Vec<PrInfo>> {
-        self.list_pull_requests_with_base_url("https://api.github.com", owner, repo, token)
-            .await
-    }
-
-    async fn list_pull_requests_with_base_url(
-        &self,
-        base_url: &str,
-        owner: &str,
-        repo: &str,
-        token: &str,
-    ) -> Result<Vec<PrInfo>> {
-        let mut all_prs = Vec::new();
-
-        for page in 1..=MAX_PAGES {
-            let url =
-                format!("{base_url}/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}");
-
-            let response = self
-                .http
-                .get(&url)
-                .header("Accept", "application/vnd.github+json")
-                .header("Authorization", format!("Bearer {token}"))
-                .header("User-Agent", "reown")
-                .header("X-GitHub-Api-Version", "2022-11-28")
-                .send()
-                .await
-                .with_context(|| {
-                    format!("Failed to fetch PRs from {owner}/{repo} (page {page})")
-                })?;
-
-            if !response.status().is_success() {
-                let status = response.status();
-                let body = response.text().await.unwrap_or_default();
-                anyhow::bail!("GitHub API returned {status}: {body}");
-            }
-
-            let has_next = response
-                .headers()
-                .get("link")
-                .and_then(|v| v.to_str().ok())
-                .is_some_and(has_next_page);
-
-            let prs: Vec<GhPullRequest> = response
-                .json()
-                .await
-                .context("Failed to parse GitHub PR response")?;
-
-            let is_empty = prs.is_empty();
-            all_prs.extend(prs.into_iter().map(PrInfo::from));
-
-            if is_empty || !has_next {
-                break;
-            }
-        }
-
-        Ok(all_prs)
-    }
-}
-
-impl GitHubClient {
-    /// Fetch the list of commits for a pull request from GitHub API.
-    ///
-    /// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/commits` and converts
-    /// the response into `Vec<CommitInfo>`. Paginates up to `MAX_PAGES` pages.
-    pub async fn list_pr_commits(
-        &self,
-        owner: &str,
-        repo: &str,
-        pr_number: u64,
-        token: &str,
-    ) -> Result<Vec<CommitInfo>> {
-        self.list_pr_commits_with_base_url("https://api.github.com", owner, repo, pr_number, token)
-            .await
-    }
-
-    async fn list_pr_commits_with_base_url(
-        &self,
-        base_url: &str,
-        owner: &str,
-        repo: &str,
-        pr_number: u64,
-        token: &str,
-    ) -> Result<Vec<CommitInfo>> {
-        let mut all_commits = Vec::new();
-
-        for page in 1..=MAX_PAGES {
-            let url = format!(
-                "{base_url}/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
-            );
-
-            let response = self
-                .http
-                .get(&url)
-                .header("Accept", "application/vnd.github+json")
-                .header("Authorization", format!("Bearer {token}"))
-                .header("User-Agent", "reown")
-                .header("X-GitHub-Api-Version", "2022-11-28")
-                .send()
-                .await
-                .with_context(|| {
-                    format!(
-                        "Failed to fetch PR #{pr_number} commits from {owner}/{repo} (page {page})"
-                    )
-                })?;
-
-            if !response.status().is_success() {
-                let status = response.status();
-                let body = response.text().await.unwrap_or_default();
-                anyhow::bail!("GitHub API returned {status}: {body}");
-            }
-
-            let has_next = response
-                .headers()
-                .get("link")
-                .and_then(|v| v.to_str().ok())
-                .is_some_and(has_next_page);
-
-            let commits: Vec<GhCommit> = response
-                .json()
-                .await
-                .context("Failed to parse GitHub PR commits response")?;
-
-            let is_empty = commits.is_empty();
-            all_commits.extend(commits.into_iter().map(CommitInfo::from));
-
-            if is_empty || !has_next {
-                break;
-            }
-        }
-
-        Ok(all_commits)
-    }
-}
-
 /// Raw GitHub API response for a single file in a pull request.
 #[derive(Debug, Deserialize)]
 struct GhPullRequestFile {
@@ -473,6 +312,155 @@ impl GhPullRequestFile {
 }
 
 impl GitHubClient {
+    /// 新しい `GitHubClient` を作成する。
+    pub fn new() -> Self {
+        Self {
+            http: reqwest::Client::new(),
+        }
+    }
+
+    /// Fetch pull requests from a GitHub repository.
+    ///
+    /// Calls `GET /repos/{owner}/{repo}/pulls` with `state=all` to include open, closed,
+    /// and merged PRs. Automatically paginates through all pages (up to `MAX_PAGES`).
+    /// The token should be a GitHub personal access token or similar.
+    pub async fn list_pull_requests(
+        &self,
+        owner: &str,
+        repo: &str,
+        token: &str,
+    ) -> Result<Vec<PrInfo>> {
+        self.list_pull_requests_with_base_url("https://api.github.com", owner, repo, token)
+            .await
+    }
+
+    async fn list_pull_requests_with_base_url(
+        &self,
+        base_url: &str,
+        owner: &str,
+        repo: &str,
+        token: &str,
+    ) -> Result<Vec<PrInfo>> {
+        let mut all_prs = Vec::new();
+
+        for page in 1..=MAX_PAGES {
+            let url =
+                format!("{base_url}/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}");
+
+            let response = self
+                .http
+                .get(&url)
+                .header("Accept", "application/vnd.github+json")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("User-Agent", "reown")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .send()
+                .await
+                .with_context(|| {
+                    format!("Failed to fetch PRs from {owner}/{repo} (page {page})")
+                })?;
+
+            if !response.status().is_success() {
+                let status = response.status();
+                let body = response.text().await.unwrap_or_default();
+                anyhow::bail!("GitHub API returned {status}: {body}");
+            }
+
+            let has_next = response
+                .headers()
+                .get("link")
+                .and_then(|v| v.to_str().ok())
+                .is_some_and(has_next_page);
+
+            let prs: Vec<GhPullRequest> = response
+                .json()
+                .await
+                .context("Failed to parse GitHub PR response")?;
+
+            let is_empty = prs.is_empty();
+            all_prs.extend(prs.into_iter().map(PrInfo::from));
+
+            if is_empty || !has_next {
+                break;
+            }
+        }
+
+        Ok(all_prs)
+    }
+
+    /// Fetch the list of commits for a pull request from GitHub API.
+    ///
+    /// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/commits` and converts
+    /// the response into `Vec<CommitInfo>`. Paginates up to `MAX_PAGES` pages.
+    pub async fn list_pr_commits(
+        &self,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        token: &str,
+    ) -> Result<Vec<CommitInfo>> {
+        self.list_pr_commits_with_base_url("https://api.github.com", owner, repo, pr_number, token)
+            .await
+    }
+
+    async fn list_pr_commits_with_base_url(
+        &self,
+        base_url: &str,
+        owner: &str,
+        repo: &str,
+        pr_number: u64,
+        token: &str,
+    ) -> Result<Vec<CommitInfo>> {
+        let mut all_commits = Vec::new();
+
+        for page in 1..=MAX_PAGES {
+            let url = format!(
+                "{base_url}/repos/{owner}/{repo}/pulls/{pr_number}/commits?per_page=100&page={page}"
+            );
+
+            let response = self
+                .http
+                .get(&url)
+                .header("Accept", "application/vnd.github+json")
+                .header("Authorization", format!("Bearer {token}"))
+                .header("User-Agent", "reown")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .send()
+                .await
+                .with_context(|| {
+                    format!(
+                        "Failed to fetch PR #{pr_number} commits from {owner}/{repo} (page {page})"
+                    )
+                })?;
+
+            if !response.status().is_success() {
+                let status = response.status();
+                let body = response.text().await.unwrap_or_default();
+                anyhow::bail!("GitHub API returned {status}: {body}");
+            }
+
+            let has_next = response
+                .headers()
+                .get("link")
+                .and_then(|v| v.to_str().ok())
+                .is_some_and(has_next_page);
+
+            let commits: Vec<GhCommit> = response
+                .json()
+                .await
+                .context("Failed to parse GitHub PR commits response")?;
+
+            let is_empty = commits.is_empty();
+            all_commits.extend(commits.into_iter().map(CommitInfo::from));
+
+            if is_empty || !has_next {
+                break;
+            }
+        }
+
+        Ok(all_commits)
+    }
+
     /// Fetch the list of changed files for a pull request from GitHub API.
     ///
     /// Calls `GET /repos/{owner}/{repo}/pulls/{pr_number}/files` and converts
@@ -551,9 +539,7 @@ impl GitHubClient {
 
         Ok(all_files)
     }
-}
 
-impl GitHubClient {
     /// Submit a review on a pull request.
     ///
     /// Calls `POST /repos/{owner}/{repo}/pulls/{pr_number}/reviews` with
@@ -619,9 +605,7 @@ impl GitHubClient {
 
         Ok(())
     }
-}
 
-impl GitHubClient {
     /// Add labels to a pull request (via the Issues API).
     ///
     /// Calls `POST /repos/{owner}/{repo}/issues/{issue_number}/labels` with
@@ -680,89 +664,7 @@ impl GitHubClient {
 
         Ok(())
     }
-}
 
-/// GraphQL response for fetching a PR's node ID.
-#[derive(Debug, Deserialize)]
-struct GhGraphQlResponse<T> {
-    data: Option<T>,
-    errors: Option<Vec<GhGraphQlError>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhGraphQlError {
-    message: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhPrNodeIdData {
-    repository: GhRepositoryNode,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhRepositoryNode {
-    #[serde(rename = "pullRequest")]
-    pull_request: GhPrNode,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhPrNode {
-    id: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhEnableAutoMergeData {
-    #[serde(rename = "enablePullRequestAutoMerge")]
-    enable_pull_request_auto_merge: Option<GhAutoMergePayload>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhAutoMergePayload {
-    #[serde(rename = "pullRequest")]
-    pull_request: Option<GhAutoMergePrInfo>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhAutoMergePrInfo {
-    #[serde(rename = "autoMergeRequest")]
-    auto_merge_request: Option<GhAutoMergeRequest>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GhAutoMergeRequest {
-    #[serde(rename = "enabledAt")]
-    enabled_at: Option<String>,
-}
-
-/// Build the GraphQL request body for fetching a PR's node ID.
-fn build_pr_node_id_query(owner: &str, repo: &str, pr_number: u64) -> serde_json::Value {
-    serde_json::json!({
-        "query": format!(
-            r#"query {{ repository(owner: "{owner}", name: "{repo}") {{ pullRequest(number: {pr_number}) {{ id }} }} }}"#
-        )
-    })
-}
-
-/// Build the GraphQL request body for the enablePullRequestAutoMerge mutation.
-fn build_enable_auto_merge_mutation(
-    pull_request_id: &str,
-    merge_method: &MergeMethod,
-) -> serde_json::Value {
-    let method = match merge_method {
-        MergeMethod::Merge => "MERGE",
-        MergeMethod::Squash => "SQUASH",
-        MergeMethod::Rebase => "REBASE",
-    };
-    serde_json::json!({
-        "query": format!(
-            r#"mutation {{ enablePullRequestAutoMerge(input: {{ pullRequestId: "{pull_request_id}", mergeMethod: {method} }}) {{ pullRequest {{ autoMergeRequest {{ enabledAt }} }} }} }}"#
-        )
-    })
-}
-
-const GITHUB_GRAPHQL_URL: &str = "https://api.github.com/graphql";
-
-impl GitHubClient {
     /// Enable auto-merge for a pull request.
     ///
     /// Uses GitHub's GraphQL API to:
@@ -867,6 +769,92 @@ impl GitHubClient {
         Ok(())
     }
 }
+
+impl Default for GitHubClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// GraphQL response for fetching a PR's node ID.
+#[derive(Debug, Deserialize)]
+struct GhGraphQlResponse<T> {
+    data: Option<T>,
+    errors: Option<Vec<GhGraphQlError>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhGraphQlError {
+    message: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhPrNodeIdData {
+    repository: GhRepositoryNode,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhRepositoryNode {
+    #[serde(rename = "pullRequest")]
+    pull_request: GhPrNode,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhPrNode {
+    id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhEnableAutoMergeData {
+    #[serde(rename = "enablePullRequestAutoMerge")]
+    enable_pull_request_auto_merge: Option<GhAutoMergePayload>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhAutoMergePayload {
+    #[serde(rename = "pullRequest")]
+    pull_request: Option<GhAutoMergePrInfo>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhAutoMergePrInfo {
+    #[serde(rename = "autoMergeRequest")]
+    auto_merge_request: Option<GhAutoMergeRequest>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhAutoMergeRequest {
+    #[serde(rename = "enabledAt")]
+    enabled_at: Option<String>,
+}
+
+/// Build the GraphQL request body for fetching a PR's node ID.
+fn build_pr_node_id_query(owner: &str, repo: &str, pr_number: u64) -> serde_json::Value {
+    serde_json::json!({
+        "query": format!(
+            r#"query {{ repository(owner: "{owner}", name: "{repo}") {{ pullRequest(number: {pr_number}) {{ id }} }} }}"#
+        )
+    })
+}
+
+/// Build the GraphQL request body for the enablePullRequestAutoMerge mutation.
+fn build_enable_auto_merge_mutation(
+    pull_request_id: &str,
+    merge_method: &MergeMethod,
+) -> serde_json::Value {
+    let method = match merge_method {
+        MergeMethod::Merge => "MERGE",
+        MergeMethod::Squash => "SQUASH",
+        MergeMethod::Rebase => "REBASE",
+    };
+    serde_json::json!({
+        "query": format!(
+            r#"mutation {{ enablePullRequestAutoMerge(input: {{ pullRequestId: "{pull_request_id}", mergeMethod: {method} }}) {{ pullRequest {{ autoMergeRequest {{ enabledAt }} }} }} }}"#
+        )
+    })
+}
+
+const GITHUB_GRAPHQL_URL: &str = "https://api.github.com/graphql";
 
 #[cfg(test)]
 mod tests {
