@@ -8,6 +8,7 @@ import { LlmSettingsTab } from "./components/LlmSettingsTab";
 import { AutomationSettingsTab } from "./components/AutomationSettingsTab";
 import { ThemeSettingsTab } from "./components/ThemeSettingsTab";
 import { KeyboardShortcutSettingsTab } from "./components/KeyboardShortcutSettingsTab";
+import { RerunWizardSection } from "./components/RerunWizardSection";
 import { Layout } from "./components/Layout";
 import { Loading } from "./components/Loading";
 import { OnboardingPlaceholder } from "./components/OnboardingPlaceholder";
@@ -67,6 +68,16 @@ export function App() {
       // continue even if save fails
     }
     setOnboardingNeeded(false);
+  }, []);
+
+  const handleRerunWizard = useCallback(async () => {
+    try {
+      await invoke("reset_onboarding");
+    } catch {
+      // continue even if reset fails
+    }
+    setSettingsOpen(false);
+    setOnboardingNeeded(true);
   }, []);
 
   useEffect(() => {
@@ -299,6 +310,7 @@ export function App() {
               <GithubSettingsTab />
               <LlmSettingsTab />
               <AutomationSettingsTab />
+              <RerunWizardSection onRerun={handleRerunWizard} />
             </div>
           }
         >

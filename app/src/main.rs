@@ -72,6 +72,11 @@ fn diff_branches(
     reown::git::diff::diff_branches(&repo_path, &base_ref, &head_ref).map_err(AppError::git)
 }
 
+#[tauri::command]
+fn get_ref_commit_hash(repo_path: String, ref_name: String) -> Result<String, AppError> {
+    reown::git::branch::get_ref_commit_hash(&repo_path, &ref_name).map_err(AppError::git)
+}
+
 // ── GitHub commands ─────────────────────────────────────────────────────────
 
 /// Keychainに保存されたGitHubトークンを取得する。未設定時はエラーを返す。
@@ -549,6 +554,18 @@ fn complete_onboarding(app_handle: tauri::AppHandle) -> Result<(), AppError> {
     reown::config::save_config(&config_path, &config).map_err(AppError::storage)
 }
 
+#[tauri::command]
+fn reset_onboarding(app_handle: tauri::AppHandle) -> Result<(), AppError> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| AppError::storage(anyhow::anyhow!("{e}")))?;
+    let config_path = reown::config::default_config_path(&app_data_dir);
+    let mut config = reown::config::load_config(&config_path).map_err(AppError::storage)?;
+    config.onboarding_completed = false;
+    reown::config::save_config(&config_path, &config).map_err(AppError::storage)
+}
+
 // ── Automation commands ───────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -808,6 +825,7 @@ fn main() {
             diff_workdir,
             diff_commit,
             diff_branches,
+            get_ref_commit_hash,
             list_pull_requests,
             get_pull_request_files,
             list_pr_commits,
@@ -843,6 +861,7 @@ fn main() {
             add_review_record,
             check_onboarding_needed,
             complete_onboarding,
+            reset_onboarding,
             save_github_token,
             start_github_device_flow,
             poll_github_device_flow,

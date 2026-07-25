@@ -9,12 +9,7 @@ vi.mock("react-i18next", async () => {
   return i18nMock;
 });
 
-type MockInvoke = <C extends keyof Commands>(
-  command: C,
-  ...rest: Commands[C]["args"] extends Record<string, unknown> | undefined
-    ? [args?: Commands[C]["args"]]
-    : [args: Commands[C]["args"]]
-) => Promise<Commands[C]["ret"]>;
+import type { MockInvoke } from "../test/tauri-mock";
 
 const mockInvokeFn = vi.fn<MockInvoke>();
 

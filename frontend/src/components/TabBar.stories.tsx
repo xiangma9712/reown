@@ -4,8 +4,8 @@ import { TabBar } from "./TabBar";
 
 const tabs = [
   { id: "review", labelKey: "tabs.review", shortcut: "R" },
-  { id: "nextAction", labelKey: "tabs.nextAction", shortcut: "N" },
-  { id: "settings", labelKey: "tabs.settings", shortcut: "S" },
+  { id: "next-action", labelKey: "tabs.nextAction", shortcut: "N" },
+  { id: "automate", labelKey: "tabs.automate", shortcut: "A" },
 ];
 
 const meta = {
@@ -26,12 +26,12 @@ export const FirstActive: Story = {};
 
 /** 2番目のタブがアクティブ */
 export const SecondActive: Story = {
-  args: { activeId: "nextAction" },
+  args: { activeId: "next-action" },
 };
 
 /** 3番目のタブがアクティブ */
 export const ThirdActive: Story = {
-  args: { activeId: "settings" },
+  args: { activeId: "automate" },
 };
 
 /** ホバー時にショートカットキーが表示される */

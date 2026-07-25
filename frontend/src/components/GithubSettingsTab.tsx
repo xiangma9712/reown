@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardTitle } from "./Card";
 import { Input } from "./Input";
 import { Button } from "./Button";
+import { DeviceFlowDialog } from "./DeviceFlowDialog";
 import { invoke } from "../invoke";
 
 export function GithubSettingsTab() {
@@ -12,6 +13,7 @@ export function GithubSettingsTab() {
   const [showToken, setShowToken] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deviceDialogOpen, setDeviceDialogOpen] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -106,7 +108,48 @@ export function GithubSettingsTab() {
       </div>
 
       <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-text-primary">
+                {tokenStored
+                  ? t("githubSettings.authenticated", "GitHub にログイン済み")
+                  : t("githubSettings.unauthenticated", "未ログイン")}
+              </span>
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  tokenStored ? "bg-success" : "bg-text-muted"
+                }`}
+              />
+            </div>
+            <p className="mt-1 text-xs text-text-muted">
+              {t(
+                "githubSettings.deviceFlowDescription",
+                "Device Flow を使用してブラウザから安全にログインします。"
+              )}
+            </p>
+          </div>
+          {tokenStored ? (
+            <Button variant="secondary" onClick={handleDelete}>
+              {t("githubSettings.logoutButton", "ログアウト")}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={() => setDeviceDialogOpen(true)}
+              data-testid="github-login-button"
+            >
+              {t("githubSettings.loginButton", "GitHub にログイン")}
+            </Button>
+          )}
+        </div>
+      </Card>
+
+      <Card>
         <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-text-primary">
+            {t("githubSettings.manualTokenTitle", "手動トークン設定（フォールバック）")}
+          </h4>
           <div>
             <div className="flex items-end gap-2">
               <div className="flex-1">
@@ -133,19 +176,6 @@ export function GithubSettingsTab() {
                   : t("githubSettings.showToken")}
               </Button>
             </div>
-            {tokenStored && (
-              <div className="mt-1 flex items-center gap-2">
-                <span className="text-[0.75rem] text-success">
-                  {t("githubSettings.tokenStored")}
-                </span>
-                <button
-                  onClick={handleDelete}
-                  className="cursor-pointer border-none bg-transparent text-[0.75rem] text-danger hover:underline"
-                >
-                  {t("githubSettings.deleteToken")}
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </Card>
@@ -175,6 +205,15 @@ export function GithubSettingsTab() {
           {t("githubSettings.reset")}
         </Button>
       </div>
+
+      <DeviceFlowDialog
+        open={deviceDialogOpen}
+        onClose={() => setDeviceDialogOpen(false)}
+        onAuthenticated={() => {
+          setDeviceDialogOpen(false);
+          loadConfig();
+        }}
+      />
     </div>
   );
 }

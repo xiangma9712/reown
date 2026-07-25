@@ -15,7 +15,7 @@ pub struct BranchInfo {
 
 /// ブランチの状態情報を統合した型。
 /// ローカルブランチ・リモートブランチ・worktree・PR の情報をまとめて持つ。
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct EnrichedBranchInfo {
     pub name: String,
     pub is_head: bool,
@@ -26,6 +26,9 @@ pub struct EnrichedBranchInfo {
     pub worktree_path: Option<PathBuf>,
     pub pr_number: Option<u64>,
     pub pr_title: Option<String>,
+    pub commit_timestamp: Option<i64>,
+    pub is_merged: Option<bool>,
+    pub is_remote_deleted: Option<bool>,
 }
 
 /// List all local branches for the repository at `repo_path`.
@@ -50,6 +53,18 @@ pub fn list_branches(repo_path: &str) -> Result<Vec<BranchInfo>> {
     }
 
     Ok(branches)
+}
+
+/// Get the commit OID hex string for a given git ref (e.g. "main", "feature/auth", "HEAD").
+pub fn get_ref_commit_hash(repo_path: &str, ref_name: &str) -> Result<String> {
+    let repo = open_repo(repo_path)?;
+    let obj = repo
+        .revparse_single(ref_name)
+        .with_context(|| format!("Ref '{ref_name}' not found"))?;
+    let commit = obj
+        .peel_to_commit()
+        .with_context(|| format!("Failed to peel '{ref_name}' to commit"))?;
+    Ok(commit.id().to_string())
 }
 
 /// Create a new local branch from HEAD.
@@ -132,7 +147,14 @@ pub fn list_enriched_branches(
         }
     }
 
-    let enriched = branches
+    // main ブランチの commit OID
+    let main_commit_id = repo
+        .revparse_single("main")
+        .ok()
+        .and_then(|o| o.peel_to_commit().ok())
+        .map(|c| c.id());
+
+    let mut enriched: Vec<EnrichedBranchInfo> = branches
         .into_iter()
         .map(|b| {
             // worktree のマッチング: worktree の branch 名と一致するか
@@ -145,6 +167,29 @@ pub fn list_enriched_branches(
                 .iter()
                 .find(|p| p.head_branch == b.name && p.state == "open");
 
+            let branch_ref = format!("refs/heads/{}", b.name);
+            let commit = repo
+                .find_reference(&branch_ref)
+                .ok()
+                .and_then(|r| r.peel_to_commit().ok());
+
+            let commit_timestamp = commit.as_ref().map(|c| c.time().seconds());
+            let branch_commit_id = commit.as_ref().map(|c| c.id());
+
+            let is_merged = match (main_commit_id, branch_commit_id) {
+                (Some(m_id), Some(b_id)) if m_id != b_id => {
+                    repo.merge_base(m_id, b_id).ok() == Some(b_id)
+                }
+                _ => false,
+            };
+
+            let is_remote_deleted = if let Some(ref up) = b.upstream {
+                let upstream_short = up.split_once('/').map(|(_, s)| s).unwrap_or(up.as_str());
+                !remote_branch_names.contains(upstream_short)
+            } else {
+                false
+            };
+
             EnrichedBranchInfo {
                 is_local: true,
                 is_remote: remote_branch_names.contains(&b.name),
@@ -155,9 +200,19 @@ pub fn list_enriched_branches(
                 name: b.name,
                 is_head: b.is_head,
                 upstream: b.upstream,
+                commit_timestamp,
+                is_merged: Some(is_merged),
+                is_remote_deleted: Some(is_remote_deleted),
             }
         })
         .collect();
+
+    // commit_timestamp の降順でソート
+    enriched.sort_by(|a, b| {
+        b.commit_timestamp
+            .unwrap_or(0)
+            .cmp(&a.commit_timestamp.unwrap_or(0))
+    });
 
     Ok(enriched)
 }
@@ -299,5 +354,20 @@ mod tests {
         let enriched = list_enriched_branches(path, &prs).unwrap();
         let branch = enriched.iter().find(|b| b.name == "old-branch").unwrap();
         assert!(branch.pr_number.is_none());
+    }
+
+    #[test]
+    fn test_get_ref_commit_hash() {
+        let (dir, _) = crate::git::test_utils::init_repo_with_commit();
+        let path = dir.path().to_str().unwrap();
+        create_branch(path, "feature-hash").unwrap();
+
+        let head_hash = get_ref_commit_hash(path, "HEAD").unwrap();
+        let main_hash = get_ref_commit_hash(path, "main").unwrap();
+        let feature_hash = get_ref_commit_hash(path, "feature-hash").unwrap();
+
+        assert!(!head_hash.is_empty());
+        assert_eq!(head_hash, main_hash);
+        assert_eq!(main_hash, feature_hash);
     }
 }

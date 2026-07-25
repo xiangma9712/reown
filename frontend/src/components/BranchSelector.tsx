@@ -46,11 +46,22 @@ export function BranchSelector({ prs, selectedBranch, onSelectBranch }: Props) {
     }
   }, [branches, selectedBranch, onSelectBranch]);
 
+  const displayBranches = useMemo(() => {
+    return branches
+      .filter((b) => {
+        if (b.name === "main") return false;
+        if (b.is_remote_deleted) return false;
+        if (b.is_merged) return false;
+        return true;
+      })
+      .sort((a, b) => (b.commit_timestamp ?? 0) - (a.commit_timestamp ?? 0));
+  }, [branches]);
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return branches;
+    if (!search.trim()) return displayBranches;
     const q = search.toLowerCase();
-    return branches.filter((b) => b.name.toLowerCase().includes(q));
-  }, [branches, search]);
+    return displayBranches.filter((b) => b.name.toLowerCase().includes(q));
+  }, [displayBranches, search]);
 
   const selectedInfo = useMemo(
     () => branches.find((b) => b.name === selectedBranch),

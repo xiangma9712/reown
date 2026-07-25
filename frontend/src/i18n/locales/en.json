@@ -35,6 +35,13 @@
     "settingsCloseAriaLabel": "Close settings",
     "shortcutTooltip": "Keyboard shortcut: {{key}}"
   },
+  "settings": {
+    "rerunWizardTitle": "Setup Wizard",
+    "rerunWizardDescription": "Rerun the initial setup wizard to reconfigure options.",
+    "rerunWizardButton": "Rerun Setup Wizard",
+    "rerunWizardConfirmMessage": "Are you sure you want to rerun the setup wizard?",
+    "rerunWizardConfirmButton": "Rerun"
+  },
   "common": {
     "loading": "Loading…",
     "error": "Error: {{message}}",
@@ -189,13 +196,19 @@
   },
   "githubSettings": {
     "title": "GitHub Settings",
-    "description": "Configure your GitHub Personal Access Token. Required for PR fetching, review submission, and automation.",
+    "description": "Configure GitHub authentication required for PR fetching, review submission, and automation.",
+    "loginButton": "Log in to GitHub",
+    "logoutButton": "Log out",
+    "authenticated": "Logged in to GitHub",
+    "unauthenticated": "Not logged in",
+    "deviceFlowDescription": "Securely log in via browser using Device Flow.",
+    "manualTokenTitle": "Manual Token Setup (Fallback)",
     "token": "Personal Access Token",
     "tokenPlaceholder": "ghp_xxxxxxxxxxxxxxxxxxxx",
     "tokenStoredPlaceholder": "Stored (enter a new token to update)",
     "tokenStored": "Token is stored",
     "deleteToken": "Delete token",
-    "tokenDeleted": "Token deleted",
+    "tokenDeleted": "Logged out successfully",
     "showToken": "Show",
     "hideToken": "Hide",
     "save": "Save",

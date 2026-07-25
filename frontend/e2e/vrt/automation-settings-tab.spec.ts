@@ -69,7 +69,7 @@ test.describe("AutomationSettingsTab", () => {
       page.locator(
         '#storybook-root input[type="number"]',
       ).first(),
-    ).not.toHaveValue("25", { timeout: 15_000 });
+    ).toHaveValue("30", { timeout: 15_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "threshold-input.png"
     );
@@ -82,10 +82,10 @@ test.describe("AutomationSettingsTab", () => {
     await page.waitForSelector("text=テスト未追加ペナルティ", {
       timeout: 10_000,
     });
-    // Wait for Storybook play function to update the input value from 15
+    // Wait for Storybook play function to update the input value to 35
     await expect(
       page.locator('#storybook-root input[type="number"][min="0"][max="50"]')
-    ).not.toHaveValue("15", { timeout: 15_000 });
+    ).toHaveValue("35", { timeout: 15_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "missing-test-penalty-interaction.png"
     );

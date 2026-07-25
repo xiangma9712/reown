@@ -1,9 +1,11 @@
 import { vi } from "vitest";
 import type { Commands } from "../invoke";
 
-type MockInvoke = <C extends keyof Commands>(
+export type MockInvoke = <C extends keyof Commands>(
   command: C,
-  args?: Commands[C]["args"]
+  ...rest: Commands[C]["args"] extends Record<string, unknown> | undefined
+    ? [args?: Commands[C]["args"]]
+    : [args: Commands[C]["args"]]
 ) => Promise<Commands[C]["ret"]>;
 
 /**

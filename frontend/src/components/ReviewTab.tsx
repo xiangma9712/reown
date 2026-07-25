@@ -29,6 +29,8 @@ import { AutomationPanel } from "./AutomationPanel";
 import { PrSummaryPanel } from "./PrSummaryPanel";
 import { ReviewHistoryPanel } from "./ReviewHistoryPanel";
 
+const summaryCache = new Map<string, HybridAnalysisResult>();
+
 const categoryBadgeVariant: Record<
   string,
   "success" | "danger" | "warning" | "info" | "default" | "accent"
@@ -102,8 +104,31 @@ export function ReviewTab({
       .catch(() => {});
   }, []);
 
-  // TODO: implement PR loading logic — matchedPr is always null until then
-  const [matchedPr] = useState<PrInfo | null>(null);
+  const [matchedPr, setMatchedPr] = useState<PrInfo | null>(null);
+
+  // Fetch matching PR for the selected branch
+  useEffect(() => {
+    if (
+      !repoInfo?.github_owner ||
+      !repoInfo?.github_repo ||
+      !selectedBranch ||
+      selectedBranch === "main"
+    ) {
+      setMatchedPr(null);
+      return;
+    }
+    invoke("list_pull_requests", {
+      owner: repoInfo.github_owner,
+      repo: repoInfo.github_repo,
+    })
+      .then((prs) => {
+        const matched = prs.find((pr) => pr.head_branch === selectedBranch);
+        setMatchedPr(matched || null);
+      })
+      .catch(() => {
+        setMatchedPr(null);
+      });
+  }, [repoInfo?.github_owner, repoInfo?.github_repo, selectedBranch]);
 
   const loadDiff = useCallback(async () => {
     if (!repoPath || !selectedBranch) return;
@@ -181,15 +206,44 @@ export function ReviewTab({
       .then(setAnalysisResult)
       .catch(() => {});
 
-    // Try hybrid analysis (may fail if LLM not configured)
-    invoke("analyze_pr_risk_with_llm", {
-      owner,
-      repo,
-      prNumber: matchedPr.number,
-    })
-      .then(setHybridResult)
-      .catch(() => {});
-  }, [matchedPr, repoInfo]);
+    // Try hybrid analysis with commit hash caching
+    const fetchLlmAnalysis = async () => {
+      let cacheKey = "";
+      if (repoPath && selectedBranch) {
+        try {
+          const [mainHash, targetHash] = await Promise.all([
+            invoke("get_ref_commit_hash", { repoPath, refName: "main" }),
+            invoke("get_ref_commit_hash", {
+              repoPath,
+              refName: selectedBranch,
+            }),
+          ]);
+          cacheKey = `${mainHash}:${targetHash}`;
+          if (summaryCache.has(cacheKey)) {
+            setHybridResult(summaryCache.get(cacheKey)!);
+            return;
+          }
+        } catch {
+          // Ignore commit hash resolution error and fallback to LLM request
+        }
+      }
+
+      invoke("analyze_pr_risk_with_llm", {
+        owner,
+        repo,
+        prNumber: matchedPr.number,
+      })
+        .then((result) => {
+          if (cacheKey) {
+            summaryCache.set(cacheKey, result);
+          }
+          setHybridResult(result);
+        })
+        .catch(() => {});
+    };
+
+    fetchLlmAnalysis();
+  }, [matchedPr, repoInfo, repoPath, selectedBranch]);
 
   const selectedDiff = selectedIndex >= 0 ? diffs[selectedIndex] : null;
   const selectedPrDiff =

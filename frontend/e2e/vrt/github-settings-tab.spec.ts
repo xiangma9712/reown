@@ -15,11 +15,23 @@ test.describe("GithubSettingsTab", () => {
     await page.goto(
       "/iframe.html?id=components-githubsettingstab--with-token-stored&viewMode=story"
     );
-    await page.waitForSelector("text=トークンは保存されています", {
+    await page.waitForSelector("text=GitHub にログイン済み", {
       timeout: 10_000,
     });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "with-token-stored.png"
+    );
+  });
+
+  test("device flow dialog open", async ({ page }) => {
+    await page.goto(
+      "/iframe.html?id=components-githubsettingstab--device-flow-dialog-open&viewMode=story"
+    );
+    await page.waitForSelector("text=ABCD-1234", {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#storybook-root")).toHaveScreenshot(
+      "device-flow-dialog-open.png"
     );
   });
 });
