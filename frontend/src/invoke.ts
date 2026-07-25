@@ -50,6 +50,10 @@ export type Commands = {
     args: { repoPath: string; baseRef: string; headRef: string };
     ret: FileDiff[];
   };
+  get_ref_commit_hash: {
+    args: { repoPath: string; refName: string };
+    ret: string;
+  };
   list_pull_requests: {
     args: { owner: string; repo: string };
     ret: PrInfo[];
@@ -189,6 +193,7 @@ export type Commands = {
   };
   check_onboarding_needed: { args?: Record<string, unknown>; ret: boolean };
   complete_onboarding: { args?: Record<string, unknown>; ret: void };
+  reset_onboarding: { args?: Record<string, unknown>; ret: void };
 };
 
 export async function invoke<C extends keyof Commands>(

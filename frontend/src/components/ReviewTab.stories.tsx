@@ -118,6 +118,7 @@ export const WithPrInfo: Story = {
       overrideInvoke({
         list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => fixtures.fileDiffs,
+        list_pull_requests: () => fixtures.pullRequests,
         get_pull_request_files: () => fixtures.categorizedFileDiffs,
         list_pr_commits: () => fixtures.commits,
         analyze_pr_risk: () => fixtures.analysisResult,
@@ -135,6 +136,7 @@ export const PrFilesLoading: Story = {
       overrideInvoke({
         list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => fixtures.fileDiffs,
+        list_pull_requests: () => fixtures.pullRequests,
         get_pull_request_files: () =>
           new Promise(() => {
             /* never resolves */
@@ -164,6 +166,7 @@ export const PrFilesError: Story = {
       overrideInvoke({
         list_enriched_branches: () => featureHeadBranches,
         diff_branches: () => fixtures.fileDiffs,
+        list_pull_requests: () => fixtures.pullRequests,
         get_pull_request_files: () =>
           Promise.reject("GitHub API rate limit exceeded"),
         list_pr_commits: () => fixtures.commits,

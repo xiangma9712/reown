@@ -60,13 +60,10 @@ test.describe("ReviewTab", () => {
   });
 
   test("with pr info", async ({ page }) => {
-    // NOTE: matchedPr is always null (TODO in ReviewTab.tsx), so PR info section
-    // does not render. This test captures the branch diff view rendered by
-    // the WithPrInfo story (which provides diff_branches mock data).
     await page.goto(
       "/iframe.html?id=components-reviewtab--with-pr-info&viewMode=story"
     );
-    await page.waitForSelector("text=差分概要", { timeout: 10_000 });
+    await page.waitForSelector("text=#42", { timeout: 10_000 });
     await page.waitForSelector("text=src/auth.ts", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "with-pr-info.png"
@@ -74,25 +71,20 @@ test.describe("ReviewTab", () => {
   });
 
   test("pr files loading", async ({ page }) => {
-    // NOTE: matchedPr is always null (TODO in ReviewTab.tsx), so this story
-    // renders the branch diff view (loading resolves immediately via mock).
     await page.goto(
       "/iframe.html?id=components-reviewtab--pr-files-loading&viewMode=story"
     );
-    await page.waitForSelector("text=差分概要", { timeout: 10_000 });
+    await page.waitForSelector("text=#42", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "pr-files-loading.png"
     );
   });
 
   test("pr files error", async ({ page }) => {
-    // NOTE: matchedPr is always null (TODO in ReviewTab.tsx), so this story
-    // renders the branch diff view rather than the PR error state.
     await page.goto(
       "/iframe.html?id=components-reviewtab--pr-files-error&viewMode=story"
     );
-    await page.waitForSelector("text=差分概要", { timeout: 10_000 });
-    await page.waitForSelector("text=src/auth.ts", { timeout: 10_000 });
+    await page.waitForSelector("text=#42", { timeout: 10_000 });
     await expect(page.locator("#storybook-root")).toHaveScreenshot(
       "pr-files-error.png"
     );

@@ -24,6 +24,7 @@ const defaultHandlers: CommandHandlers = {
   diff_workdir: () => fixtures.fileDiffs,
   diff_commit: () => fixtures.fileDiffs,
   diff_branches: () => fixtures.fileDiffs,
+  get_ref_commit_hash: () => "mock_sha_12345",
   list_pull_requests: () => fixtures.pullRequests,
   get_pull_request_files: () => fixtures.categorizedFileDiffs,
   list_pr_commits: () => fixtures.commits,
@@ -66,9 +67,9 @@ const defaultHandlers: CommandHandlers = {
     interval: 5,
     expires_in: 900,
   }),
-  poll_github_device_flow: () => undefined as never,
   check_onboarding_needed: () => false,
   complete_onboarding: () => undefined as never,
+  reset_onboarding: () => undefined as never,
 };
 
 let currentOverrides: Partial<CommandHandlers> = {};

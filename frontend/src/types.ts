@@ -22,6 +22,9 @@ export interface EnrichedBranchInfo {
   worktree_path: string | null;
   pr_number: number | null;
   pr_title: string | null;
+  commit_timestamp?: number | null;
+  is_merged?: boolean | null;
+  is_remote_deleted?: boolean | null;
 }
 
 export interface DiffLineInfo {
